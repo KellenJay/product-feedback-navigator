@@ -153,17 +153,40 @@ function AnalyzePage() {
       <TabBar active="analyze" />
 
       <main className="mx-auto max-w-[780px] px-6 pb-24 pt-12">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-[28px] font-medium leading-tight text-foreground">
-            Turn raw customer feedback into prioritized roadmaps — in minutes.
+        {/* Hero */}
+        <section className="relative isolate text-center">
+          <div className="hero-glow" aria-hidden />
+          <div className="hero-grid absolute inset-0 -z-10" aria-hidden />
+
+          {/* Eyebrow */}
+          <div className="relative inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1 text-[11px] font-medium text-foreground-muted backdrop-blur">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+            </span>
+            AI feedback intelligence for product managers
+          </div>
+
+          <h1 className="relative mt-5 text-[32px] font-medium leading-[1.15] tracking-tight text-foreground md:text-[38px]">
+            Turn raw customer feedback into{" "}
+            <span className="text-gradient-brand">prioritized roadmaps</span>
+            <span className="text-foreground"> — in minutes.</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-[640px] text-[15px] leading-7 text-foreground-muted">
+          <p className="relative mx-auto mt-4 max-w-[640px] text-[15px] leading-7 text-foreground-muted">
             Paste reviews, upload a document, or let AI research the web.
             InsightFlow analyzes pain points, scores them by impact, and
             generates a structured summary ready for roadmapping.
           </p>
-        </div>
+
+          {/* Trust micro-row */}
+          <div className="relative mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-wider text-foreground-muted">
+            <span>Reddit</span><span className="opacity-40">·</span>
+            <span>Capterra</span><span className="opacity-40">·</span>
+            <span>G2</span><span className="opacity-40">·</span>
+            <span>CSV</span><span className="opacity-40">·</span>
+            <span>PDF</span>
+          </div>
+        </section>
 
         {/* Input */}
         <div className="mt-8">
