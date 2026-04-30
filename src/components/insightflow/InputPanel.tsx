@@ -78,7 +78,7 @@ export function InputPanel(props: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-6">
+    <div className="card-halo rounded-2xl border border-border bg-surface p-6">
       {/* Row 1 */}
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Product name">
@@ -216,7 +216,7 @@ export function InputPanel(props: Props) {
         type="button"
         onClick={onAnalyze}
         disabled={loading}
-        className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[15px] font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
+        className="btn-glow mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
       >
         {loading ? (
           <>
