@@ -37,3 +37,44 @@ export interface AnalysisResult {
 }
 
 export type SourceMode = "paste" | "upload" | "deep-research";
+
+// ----- Market context -----
+
+export interface TrendSignal {
+  statement: string;
+  direction: "growing" | "stable" | "declining";
+  source: string;
+}
+
+export interface CompetitorSignal {
+  name: string;
+  approach: string;
+  signal: "Ahead" | "Watching" | "Lagging";
+}
+
+export interface NewsItem {
+  headline: string;
+  summary: string;
+  source: string;
+  date: string;
+}
+
+export interface MarketSize {
+  statement: string;
+  confident: boolean;
+}
+
+export interface Verdict {
+  outcome: "validates" | "mixed" | "contradicts";
+  label: string;
+  rationale: string;
+  reasoning: string;
+}
+
+export interface MarketContext {
+  trends: TrendSignal[];
+  competitors: CompetitorSignal[];
+  news: NewsItem[];
+  marketSize: MarketSize;
+  verdict: Verdict;
+}
