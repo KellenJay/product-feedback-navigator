@@ -1,65 +1,127 @@
-# Analyze Tab — Save/Export footer + persistence fix
+## Roadmap page — plan
 
-Three small, surgical changes. No redesign, existing styles only.
+Goal: take the latest `AnalysisResult` (already in the in-memory `analyzeStore`) and present it as a defensible, sprint-ready roadmap grouped into **Now**, **Next**, **Later**, with effort, impact, evidence, and export. No new backend yet — purely a transformation of existing analysis data, plus local persistence of user adjustments.
 
----
+### 1. Routing & nav
 
-## 1. Move "Save / Export" block to the very bottom
+- New file: `src/routes/roadmap.tsx` (TanStack file-based route `/roadmap`) with its own `head()` (title, description, og:title, og:description).
+- `src/components/insightflow/TabBar.tsx`: turn the Roadmap tab into a real `<Link to="/roadmap">` (remove `opacity-60` and the "coming soon" toast). Library stays stubbed. Accept `active` of `"analyze" | "roadmap" | "library"` as it already does.
+- `src/routes/__root.tsx`: no changes expected (already provides shell). Will verify on implementation.
 
-Currently the Save to library / Export as PDF row sits inside `ResultsView.tsx` directly under the recommendations — which means it appears *above* the new Market Context panel. Move it so it acts as the true footer for the entire analysis (results + market context).
+### 2. Empty state
 
-- Remove the Save/Export footer block from `src/components/insightflow/ResultsView.tsx` (the `mt-5 flex ... border-t` section near the bottom).
-- Create a new tiny component `src/components/insightflow/AnalysisFooter.tsx` containing:
-  - The "Analysis complete — {productName} · {date}" caption
-  - "Save to library" button (keeps existing toast stub for now)
-  - "Export as PDF" button (keeps existing toast stub for now)
-  - A new **"Back to top"** affordance: a subtle pill-style button with an up-arrow icon (`ArrowUp` from lucide-react) that smooth-scrolls the page to `#results-anchor` (or `window.scrollTo({ top: 0, behavior: "smooth" })`).
-- Mount it in `src/routes/index.tsx` *after* `<MarketContextPanel />` so the order becomes: Results → Market Context → Footer (Save / Export / Back-to-top).
-- Styling: reuse the existing `SecondaryButton` look (border, surface hover) so it matches the rest of the page exactly. The back-to-top button uses the same secondary style with just the icon + "Back to top" text.
+If `analyzeStore.get().result` is `null`:
+- Show a centered card: "No analysis yet" + short copy + primary button → `<Link to="/">Run an analysis</Link>`.
+- Include the same `TabBar` with `active="roadmap"` and the same header so layout is consistent with `/`.
 
-### Save-to-library behavior
-The Library tab is still a "coming soon" stub (see `TabBar.tsx`). For now, keep "Save to library" as a toast confirmation ("Saved — view in Library when it ships"). Wiring real persistence belongs to the upcoming Library/Roadmap work; this prompt only repositions the controls and adds the back-to-top arrow.
+### 3. Data model — derived, not re-fetched
 
----
+Add `src/components/insightflow/roadmap.ts`:
 
-## 2. Add a floating back-to-top arrow once results exist
+- `type Bucket = "now" | "next" | "later"`
+- `type Effort = "S" | "M" | "L"`
+- `interface RoadmapItem { id: string; issueIndex: number; title: string; bucket: Bucket; effort: Effort; impactScore: number; priority: "P1"|"P2"|"P3"; category: string; mentions: number; rationale: string; quotes: Quote[]; }`
+- `deriveRoadmap(result: AnalysisResult): RoadmapItem[]` — default mapping:
+  - `priority === "P1"` → `now`
+  - `priority === "P2"` → `next`
+  - `priority === "P3"` → `later`
+  - `effort` heuristic from `impactScore` + `mentions` (high mentions + low score → S; high score → L; otherwise M). Pure function, deterministic.
+  - `id = `issue-${issueIndex}``
+  - `rationale` = first sentence of `issue.description`.
 
-In addition to the inline "Back to top" button in the footer, add a small floating circular button that appears in the bottom-right corner once `result` is set, so the user doesn't have to scroll all the way down to find it.
+Why derive instead of store: the analysis is the source of truth. The roadmap is a view over it plus user overrides.
 
-- Lives in `src/routes/index.tsx`, conditionally rendered when `result` is truthy.
-- Fixed position (`fixed bottom-6 right-6`), small rounded-full button, primary background, `ArrowUp` icon, soft shadow, fades in.
-- On click → smooth-scrolls to top so the user can switch to the Roadmap tab in `TabBar`.
+### 4. Roadmap state (overrides + persistence)
 
----
+New module `src/components/insightflow/roadmapStore.ts` (same `useSyncExternalStore` pattern as `analyzeStore.ts`):
 
-## 3. Stop the page from clearing itself
+- Holds `Record<string, Partial<Pick<RoadmapItem, "bucket" | "effort">>>` keyed by `id`.
+- Persisted to `localStorage` under `insightflow.roadmap.v1` so reordering survives reload (the analysis itself is intentionally in-memory only — overrides reset the moment a new analysis runs because IDs are tied to issue index, which is fine for v1).
+- Exposes `setBucket(id, bucket)`, `setEffort(id, effort)`, `reset()`.
+- Hook `useRoadmap(result)` returns `{ items, setBucket, setEffort, reset }` — applies overrides on top of `deriveRoadmap(result)`.
 
-**Root cause:** all analyze-tab state (`productName`, `result`, `pastedFeedback`, etc.) lives in the `AnalyzePage` component's `useState`. Any time the component unmounts and remounts — Vite HMR during dev, route transitions, or React StrictMode double-mounts — every value resets. The user perceives this as "the page clears itself after some time."
+### 5. Page layout (`/roadmap`)
 
-**Fix:** lift the analyze-tab state into a module-level store so it survives remounts but is naturally lost on a real page reload (which is exactly what the user asked for).
+Reuses the same `max-w-[780px]` shell, header, and `TabBar` from `/`.
 
-Implementation:
-- Create `src/components/insightflow/analyzeStore.ts` exporting a tiny `useSyncExternalStore`-backed store (or a Zustand-style minimal store — no new dep needed; ~30 lines of plain TS) holding: `productName`, `businessGoal`, `mode`, `pastedFeedback`, `uploadedFile`, `researchQuery`, `result`.
-- Refactor `src/routes/index.tsx` to read/write through that store instead of local `useState`. The `loading` flag stays local (it's transient).
-- Because the store is a module singleton, values persist across:
-  - HMR component swaps
-  - Tab switches inside the SPA (Analyze ↔ Roadmap ↔ Library when those land)
-  - StrictMode double-renders
-- Values are cleared when:
-  - The user does a hard refresh (module is re-evaluated → fresh empty store)
-  - The user navigates away from the site (tab close)
+```text
+┌─ Header (InsightFlow · v1 · Roadmap) ─────────────┐
+├─ TabBar (Analyze | Roadmap* | Library) ───────────┤
+│                                                   │
+│  Eyebrow: "Sprint-ready roadmap"                  │
+│  H1:      Your next three sprints, defended       │
+│  Sub:     Derived from <productName> · N items    │
+│                                                   │
+│  [Summary strip]  P1: 3   P2: 5   P3: 4   Effort  │
+│                                                   │
+│  ── Now (this sprint) ───────────────────────     │
+│   ▣ Item card  · Impact 82 · P1 · M · 14 mentions │
+│     Rationale + 1 quote (collapsible)             │
+│     [Move to Next ▾] [Effort: M ▾]                │
+│                                                   │
+│  ── Next (1–2 sprints) ──────────────────────     │
+│   ...                                             │
+│                                                   │
+│  ── Later (backlog) ─────────────────────────     │
+│   ...                                             │
+│                                                   │
+│  Footer: [Copy as markdown] [Export PDF]          │
+│          [Reset overrides]                        │
+└───────────────────────────────────────────────────┘
+```
 
-This matches the requested behavior exactly: state survives normal in-app movement, only a refresh wipes it.
+### 6. Components to add (under `src/components/insightflow/`)
 
-> Note: we deliberately do **not** use `localStorage`/`sessionStorage`. `sessionStorage` would also survive a refresh, which the user explicitly does not want. A module singleton is the correct tool here.
+- `RoadmapColumn.tsx` — section header (Now / Next / Later) + count + items list.
+- `RoadmapItemCard.tsx` — title, impact pill, priority tag, effort chip, mentions, rationale, expandable evidence (reuses the same quote-rendering style as `ResultsView`), and two inline `<select>`-style menus for **Move to** and **Effort**. Use existing shadcn primitives already in the project (avoid adding new deps); fall back to native `<select>` styled with the same border/bg classes.
+- `RoadmapSummary.tsx` — small stat strip (P1 / P2 / P3 counts, total effort estimate as `S+M+L` tally).
+- `RoadmapFooter.tsx` — Copy as markdown (writes to clipboard via `navigator.clipboard`), Export PDF (toast "Coming next"), Reset overrides (calls `roadmapStore.reset()` + toast).
 
----
+No drag-and-drop library in v1 — keeps deps lean. Move via the per-card menu. We can add `@dnd-kit` later if the user asks.
 
-## Files touched
+### 7. Markdown export
 
-- `src/components/insightflow/ResultsView.tsx` — remove the trailing Save/Export footer block.
-- `src/components/insightflow/AnalysisFooter.tsx` — **new**, holds Save / Export / Back-to-top.
-- `src/components/insightflow/analyzeStore.ts` — **new**, module-level store + `useAnalyzeStore` hook.
-- `src/routes/index.tsx` — swap local `useState` for store hook, mount `<AnalysisFooter />` after `<MarketContextPanel />`, add floating back-to-top button when `result` exists.
+`copyRoadmapMarkdown(items, productName)` builds:
 
-No backend, schema, or styling-system changes. No new npm packages.
+```text
+# Roadmap — <Product>
+_Generated <date> from InsightFlow_
+
+## Now (this sprint)
+- **<title>** — Impact <n> · P1 · Effort M · <mentions> mentions
+  <rationale>
+
+## Next (1–2 sprints)
+...
+```
+
+Copied to clipboard. This is the real "defensible output" the hero copy promised.
+
+### 8. Hero / cross-link from `/`
+
+In `src/routes/index.tsx` `AnalysisFooter` already has "Save to library" / "Export PDF" / "Back to top". Add a primary link in the footer area (or in `ResultsView`'s recommendations section) → `<Link to="/roadmap">Open roadmap →</Link>` so users go straight there after analysis. Single small addition; no layout rewrite.
+
+### 9. Files touched / created
+
+Created:
+- `src/routes/roadmap.tsx`
+- `src/components/insightflow/roadmap.ts` (pure derivation + types)
+- `src/components/insightflow/roadmapStore.ts` (overrides + localStorage)
+- `src/components/insightflow/RoadmapColumn.tsx`
+- `src/components/insightflow/RoadmapItemCard.tsx`
+- `src/components/insightflow/RoadmapSummary.tsx`
+- `src/components/insightflow/RoadmapFooter.tsx`
+
+Edited:
+- `src/components/insightflow/TabBar.tsx` — Roadmap tab becomes a real `<Link>`.
+- `src/routes/index.tsx` — add a single "Open roadmap →" link once results exist.
+
+### 10. Out of scope (can follow up)
+
+- Drag-and-drop reordering (menu-based for v1)
+- Real PDF export (toast for now, matching existing pattern)
+- Persisting the analysis itself across reloads (intentional per earlier decision — only user-driven actions should persist)
+- Library tab and saving multiple roadmaps
+- Auth / multi-user
+
+Confirm and I'll build it.
