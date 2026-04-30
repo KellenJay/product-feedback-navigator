@@ -29,7 +29,7 @@ function normalizeQuote(q: Quote): {
   return q;
 }
 
-export function ResultsView({ result, productName: _productName }: Props) {
+export function ResultsView({ result }: Props) {
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
