@@ -46,28 +46,92 @@ export function InputPanel(props: Props) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [parsing, setParsing] = useState(false);
 
-  const readFile = (file: File) => {
+  const MAX_CHARS = 200_000;
+
+  const finish = (name: string, raw: string) => {
+    const trimmed = raw.replace(/\s+\n/g, "\n").trim();
+    if (!trimmed) {
+      toast.error("No readable text found", {
+        description:
+          "The document may be a scanned image. Try a text-based PDF or paste the feedback.",
+      });
+      return;
+    }
+    const content =
+      trimmed.length > MAX_CHARS ? trimmed.slice(0, MAX_CHARS) : trimmed;
+    setUploadedFile({ name, content });
+    if (trimmed.length > MAX_CHARS) {
+      toast("Document trimmed", {
+        description: `Using the first ${(MAX_CHARS / 1000).toFixed(0)}k characters.`,
+      });
+    }
+  };
+
+  const readPdf = async (file: File) => {
+    const pdfjs: any = await import("pdfjs-dist");
+    const workerSrc = (
+      await import("pdfjs-dist/build/pdf.worker.min.mjs?url")
+    ).default;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjs.getDocument({ data: buf }).promise;
+    let text = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      text +=
+        content.items.map((it: any) => ("str" in it ? it.str : "")).join(" ") +
+        "\n\n";
+    }
+    return text;
+  };
+
+  const readDocx = async (file: File) => {
+    const mammoth: any = await import("mammoth/mammoth.browser");
+    const buf = await file.arrayBuffer();
+    const { value } = await mammoth.extractRawText({ arrayBuffer: buf });
+    return value as string;
+  };
+
+  const readFile = async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "";
-    if (ext === "pdf" || ext === "docx") {
-      toast("PDF/DOCX parsing coming in next build", {
-        description: "Try .txt or .csv for now.",
-      });
+    if (!["txt", "csv", "pdf", "docx", "md"].includes(ext)) {
+      if (ext === "doc") {
+        toast.error("Legacy .doc not supported", {
+          description: "Save as .docx or .pdf and re-upload.",
+        });
+      } else {
+        toast.error("Unsupported file type", {
+          description: "Use .txt, .csv, .pdf, or .docx",
+        });
+      }
       return;
     }
-    if (!["txt", "csv"].includes(ext)) {
-      toast.error("Unsupported file type", {
-        description: "Use .txt, .csv, .pdf, or .docx",
+
+    setParsing(true);
+    try {
+      if (ext === "pdf") {
+        const text = await readPdf(file);
+        finish(file.name, text);
+      } else if (ext === "docx") {
+        const text = await readDocx(file);
+        finish(file.name, text);
+      } else {
+        const text = await file.text();
+        finish(file.name, text);
+      }
+    } catch (e) {
+      console.error("File parse error:", e);
+      toast.error("Could not read file", {
+        description:
+          e instanceof Error ? e.message : "Try a different file format.",
       });
-      return;
+    } finally {
+      setParsing(false);
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = String(e.target?.result || "");
-      setUploadedFile({ name: file.name, content });
-    };
-    reader.onerror = () => toast.error("Could not read file");
-    reader.readAsText(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {
