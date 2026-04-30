@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TabBar } from "@/components/insightflow/TabBar";
 import { InputPanel } from "@/components/insightflow/InputPanel";
 import { ResultsView } from "@/components/insightflow/ResultsView";
 import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel";
-import type { AnalysisResult, SourceMode } from "@/components/insightflow/types";
+import { AnalysisFooter } from "@/components/insightflow/AnalysisFooter";
+import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
+import type { AnalysisResult } from "@/components/insightflow/types";
 
 export const Route = createFileRoute("/")({
   component: AnalyzePage,
@@ -35,17 +38,28 @@ export const Route = createFileRoute("/")({
 });
 
 function AnalyzePage() {
-  const [productName, setProductName] = useState("");
-  const [businessGoal, setBusinessGoal] = useState("");
-  const [mode, setMode] = useState<SourceMode>("paste");
-  const [pastedFeedback, setPastedFeedback] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<{
-    name: string;
-    content: string;
-  } | null>(null);
-  const [researchQuery, setResearchQuery] = useState("");
+  const [state, setState] = useAnalyzeStore();
+  const {
+    productName,
+    businessGoal,
+    mode,
+    pastedFeedback,
+    uploadedFile,
+    researchQuery,
+    result,
+  } = state;
+
+  const setProductName = (v: string) => setState({ productName: v });
+  const setBusinessGoal = (v: string) => setState({ businessGoal: v });
+  const setMode = (m: typeof mode) => setState({ mode: m });
+  const setPastedFeedback = (v: string) => setState({ pastedFeedback: v });
+  const setUploadedFile = (
+    f: { name: string; content: string } | null,
+  ) => setState({ uploadedFile: f });
+  const setResearchQuery = (v: string) => setState({ researchQuery: v });
+  const setResult = (r: AnalysisResult | null) => setState({ result: r });
+
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
 
   const handleAnalyze = async () => {
     if (!productName.trim()) {
@@ -213,7 +227,21 @@ function AnalyzePage() {
             }))}
           />
         )}
+        {result && <AnalysisFooter productName={productName} />}
       </main>
+
+      {result && (
+        <button
+          type="button"
+          onClick={() =>
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }
+          aria-label="Back to top"
+          className="fixed bottom-6 right-6 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:bg-primary-hover hover:shadow-primary/40 animate-in fade-in slide-in-from-bottom-2"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </button>
+      )}
     </div>
   );
 }

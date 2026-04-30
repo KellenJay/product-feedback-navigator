@@ -1,4 +1,3 @@
-import { toast } from "sonner";
 import { Info, ExternalLink } from "lucide-react";
 import {
   Tooltip,
@@ -30,13 +29,7 @@ function normalizeQuote(q: Quote): {
   return q;
 }
 
-export function ResultsView({ result, productName }: Props) {
-  const today = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
+export function ResultsView({ result }: Props) {
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -211,20 +204,6 @@ export function ResultsView({ result, productName }: Props) {
           </section>
         )}
 
-        {/* Section 4 — Save / Export */}
-        <div className="mt-5 flex flex-col items-start justify-between gap-3 border-t border-border pt-4 sm:flex-row sm:items-center">
-          <p className="text-xs text-foreground-muted">
-            Analysis complete — {productName || "Untitled"} · {today}
-          </p>
-          <div className="flex gap-2">
-            <SecondaryButton onClick={() => toast("Coming in next build")}>
-              Save to library
-            </SecondaryButton>
-            <SecondaryButton onClick={() => toast("Coming in next build")}>
-              Export as PDF
-            </SecondaryButton>
-          </div>
-        </div>
       </div>
     </TooltipProvider>
   );
@@ -293,20 +272,3 @@ function PriorityTag({ priority }: { priority: "P1" | "P2" | "P3" }) {
   );
 }
 
-function SecondaryButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
-    >
-      {children}
-    </button>
-  );
-}
