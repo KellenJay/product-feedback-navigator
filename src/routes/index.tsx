@@ -38,17 +38,29 @@ export const Route = createFileRoute("/")({
 });
 
 function AnalyzePage() {
-  const [productName, setProductName] = useState("");
-  const [businessGoal, setBusinessGoal] = useState("");
-  const [mode, setMode] = useState<SourceMode>("paste");
-  const [pastedFeedback, setPastedFeedback] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<{
-    name: string;
-    content: string;
-  } | null>(null);
-  const [researchQuery, setResearchQuery] = useState("");
+  const [state, setState] = useAnalyzeStore();
+  const {
+    productName,
+    businessGoal,
+    mode,
+    pastedFeedback,
+    uploadedFile,
+    researchQuery,
+    result,
+  } = state;
+
+  const setProductName = (v: string) => setState({ productName: v });
+  const setBusinessGoal = (v: string) => setState({ businessGoal: v });
+  const setMode: typeof state extends never ? never : (m: typeof state.mode) => void =
+    (m) => setState({ mode: m });
+  const setPastedFeedback = (v: string) => setState({ pastedFeedback: v });
+  const setUploadedFile = (
+    f: { name: string; content: string } | null,
+  ) => setState({ uploadedFile: f });
+  const setResearchQuery = (v: string) => setState({ researchQuery: v });
+  const setResult = (r: AnalysisResult | null) => setState({ result: r });
+
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
 
   const handleAnalyze = async () => {
     if (!productName.trim()) {
