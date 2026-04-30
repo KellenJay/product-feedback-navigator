@@ -1,55 +1,41 @@
-## Goal
-Re-skin the Analyze tab to match the Helixa reference: deep near-black background with a vertical electric-blue light beam behind the hero, monospace/techy display headings, blue primary CTA, and clean dark cards. Also remove the "Reddit · Capterra · G2 · CSV · PDF" trust row in the hero.
+# Fixes for Analyze tab
 
-## Brand guidelines extracted from the reference
-- Background: near-black `#05060A` with a vertical electric-blue radial spotlight behind the hero (`#1E5BFF` → transparent), softer ambient blue glow at page edges.
-- Surfaces / cards: `#0E1320` with subtle `1px` border at `rgba(255,255,255,0.06)`, large `rounded-2xl` corners, soft inner shadow.
-- Primary brand blue: `#2D6BFF` (hover `#1E5BFF`), used on CTA buttons and the "Most Popular" highlight.
-- Text: primary `#F5F7FA`, muted `#8A93A6`, very-muted `#5B6478`.
-- Accent micro-glows: blue at 20–30% opacity for halos under buttons and around the input card.
-- Typography:
-  - Display headline: monospace techy face — use **JetBrains Mono** (Google Font) at 600, sizes `clamp(40px, 6vw, 72px)`, line-height `1.05`, slight letter-spacing `-0.01em`.
-  - Body: keep DM Sans, 15–16px, line-height 1.65, color muted.
-  - Eyebrow chip + meta: uppercase, tracking-wider, 11px.
-- CTA button: solid blue, white text, `rounded-xl`, `h-11`, soft blue glow shadow (`0 0 40px rgba(45,107,255,0.45)`).
+## 1. Make document upload actually work
 
-## Changes
+**Problem:** When you select a PDF or DOCX file, the app shows a toast saying "PDF/DOCX parsing coming in next build" and silently does nothing. Only `.txt` and `.csv` are read. That's why your upload doesn't go through.
 
-### 1. `src/styles.css`
-- Replace the "GoDaddy after dark" dark palette with the Helixa-inspired palette:
-  - `--background: #05060A`, `--surface/--card: #0E1320`, `--foreground: #F5F7FA`, `--foreground-muted: #8A93A6`.
-  - `--primary: #2D6BFF`, `--primary-hover: #1E5BFF`, `--primary-foreground: #FFFFFF`.
-  - `--accent: #2D6BFF` (drop the coral — reference uses a single blue accent).
-  - `--border: rgba(255,255,255,0.06)`, `--ring: rgba(45,107,255,0.55)`.
-- Add `--font-display: "JetBrains Mono", ui-monospace, monospace` to `@theme`.
-- Replace `.hero-glow` blob animation with a **vertical light-beam** treatment:
-  - `.hero-beam` — large vertical ellipse `radial-gradient(ellipse 40% 90% at 50% 0%, rgba(45,107,255,0.55), transparent 70%)`, plus a tighter inner beam.
-  - Soft side-fade vignette so the beam reads as a column of light.
-  - Keep `.hero-grid` dot pattern but lower opacity to ~6%.
-- Update `.text-gradient-brand` to a blue-to-white gradient (no coral).
-- Add `.btn-glow` utility for the soft blue halo under the primary CTA.
-- Add Google Fonts import for JetBrains Mono in `src/routes/index.tsx` head links (alongside DM Sans).
+**Fix:** Add real in-browser parsing for the file types we advertise.
 
-### 2. `src/routes/index.tsx`
-- Swap `.hero-glow` for the new `.hero-beam` element.
-- Apply `font-display` (JetBrains Mono) class to the H1; tighten size/leading per spec.
-- Update H1 copy styling to use the blue→white gradient on "prioritized roadmaps".
-- **Remove the trust micro-row** ("Reddit · Capterra · G2 · CSV · PDF") entirely.
-- Update the eyebrow chip styling (subtle blue dot, lighter border) to match reference.
-- Add JetBrains Mono link tag in route head.
+- Add two small client-side libraries:
+  - `pdfjs-dist` — extracts text from PDFs in the browser
+  - `mammoth` — extracts text from `.docx`
+- Rewrite `readFile` in `src/components/insightflow/InputPanel.tsx`:
+  - `.txt` / `.csv` → keep current text reader
+  - `.pdf` → use `pdfjs-dist` to read all pages and concatenate text
+  - `.docx` → use `mammoth.extractRawText`
+  - `.doc` (legacy binary Word) → not supported in-browser; show a clear toast asking the user to save as `.docx` or `.pdf`
+  - Show a "Reading file…" loading state on the dropzone while parsing, and a friendly error if parsing fails or the document has no extractable text (e.g. a scanned PDF)
+- After parsing, store the extracted text in `uploadedFile.content` exactly as today, so the existing analyze flow works unchanged.
+- Cap extracted text at ~200k chars on the client to avoid sending oversized payloads (the edge function already truncates to 50k, so nothing downstream changes).
 
-### 3. `src/components/insightflow/InputPanel.tsx`
-- Update the primary "Analyze" button to use the new blue + glow shadow (`btn-glow`).
-- Card now sits on the new `--surface` with a faint blue outer halo (matching the chat-card halo in the reference).
+## 2. Rename priority levels P0/P1/P2 → P1/P2/P3
 
-### 4. `src/components/insightflow/ResultsView.tsx`
-- No structural change. Coral references (P0 badge color) get retuned to use `--destructive` (red) and `--warning` (amber) — accent coral is gone.
-- Source links use blue (`--primary`) instead of coral.
+You want priorities to start at P1, not P0.
 
-## Out of scope
-- No changes to Roadmap or Library tabs.
-- No changes to the Edge Function or data model.
-- No new sections (pricing, testimonials, FAQ from the reference) — only the hero/aesthetic is being adopted.
+- `src/components/insightflow/types.ts`: change `priority: "P0" | "P1" | "P2"` → `priority: "P1" | "P2" | "P3"`.
+- `src/components/insightflow/ResultsView.tsx`:
+  - Update `PriorityTag` to accept `P1 | P2 | P3` with the same color mapping (P1 = red/critical, P2 = amber/high, P3 = muted/medium).
+  - Update the info-icon tooltip above the first pain point to read:
+    - **P1 — Critical.** Blocks core use or causes churn. Fix this sprint.
+    - **P2 — High.** Significant friction for many users. Next 1–2 sprints.
+    - **P3 — Medium.** Quality-of-life improvement. Backlog candidate.
+  - Update the tooltip's `aria-label` to "What do P1, P2, P3 mean?".
+- `supabase/functions/analyze-feedback/index.ts`:
+  - Update the system prompt's "Priority guidance" section to use P1/P2/P3 with the same definitions.
+  - Update the tool schema enum from `["P0","P1","P2"]` to `["P1","P2","P3"]` so the AI returns the new labels.
 
-## Summary
-Re-skin to a Helixa-style dark UI: black background, vertical blue light beam behind the hero, JetBrains Mono display headline, blue CTA with halo glow, single-accent blue palette (coral removed), and the trust row deleted from the hero.
+## Out of scope (intentionally not changing)
+
+- No backend/database changes — there's no stored data using the old labels yet.
+- No design/theme changes.
+- No changes to other tabs.

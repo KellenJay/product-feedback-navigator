@@ -72,7 +72,7 @@ export function ResultsView({ result, productName }: Props) {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  aria-label="What do P0, P1, P2 mean?"
+                  aria-label="What do P1, P2, P3 mean?"
                   className="rounded-full p-0.5 text-foreground-muted transition-colors hover:text-foreground"
                 >
                   <Info className="h-3.5 w-3.5" />
@@ -87,15 +87,15 @@ export function ResultsView({ result, productName }: Props) {
                 </p>
                 <ul className="space-y-1.5 text-[12px] leading-5">
                   <li>
-                    <span className="font-medium text-destructive">P0 — Critical.</span>{" "}
+                    <span className="font-medium text-destructive">P1 — Critical.</span>{" "}
                     Blocks core use or causes churn. Fix this sprint.
                   </li>
                   <li>
-                    <span className="font-medium text-warning">P1 — High.</span>{" "}
+                    <span className="font-medium text-warning">P2 — High.</span>{" "}
                     Significant friction for many users. Next 1–2 sprints.
                   </li>
                   <li>
-                    <span className="font-medium text-foreground">P2 — Medium.</span>{" "}
+                    <span className="font-medium text-foreground">P3 — Medium.</span>{" "}
                     Quality-of-life improvement. Backlog candidate.
                   </li>
                 </ul>
@@ -279,11 +279,11 @@ function Tag({
   );
 }
 
-function PriorityTag({ priority }: { priority: "P0" | "P1" | "P2" }) {
+function PriorityTag({ priority }: { priority: "P1" | "P2" | "P3" }) {
   const cls =
-    priority === "P0"
+    priority === "P1"
       ? "bg-destructive/15 text-destructive"
-      : priority === "P1"
+      : priority === "P2"
         ? "bg-warning/15 text-warning"
         : "bg-muted text-foreground-muted";
   return (
