@@ -78,7 +78,7 @@ export function InputPanel(props: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-6">
+    <div className="card-halo rounded-2xl border border-border bg-surface p-6">
       {/* Row 1 */}
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Product name">
