@@ -204,20 +204,6 @@ export function ResultsView({ result, productName: _productName }: Props) {
           </section>
         )}
 
-        {/* Section 4 — Save / Export */}
-        <div className="mt-5 flex flex-col items-start justify-between gap-3 border-t border-border pt-4 sm:flex-row sm:items-center">
-          <p className="text-xs text-foreground-muted">
-            Analysis complete — {productName || "Untitled"} · {today}
-          </p>
-          <div className="flex gap-2">
-            <SecondaryButton onClick={() => toast("Coming in next build")}>
-              Save to library
-            </SecondaryButton>
-            <SecondaryButton onClick={() => toast("Coming in next build")}>
-              Export as PDF
-            </SecondaryButton>
-          </div>
-        </div>
       </div>
     </TooltipProvider>
   );
