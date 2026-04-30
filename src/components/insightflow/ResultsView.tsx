@@ -272,20 +272,3 @@ function PriorityTag({ priority }: { priority: "P1" | "P2" | "P3" }) {
   );
 }
 
-function SecondaryButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
-    >
-      {children}
-    </button>
-  );
-}
