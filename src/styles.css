@@ -77,49 +77,49 @@
   --ring: oklch(0.625 0.121 162);
 }
 
-/* InsightFlow — "GoDaddy after dark" palette */
+/* InsightFlow — "Helixa" inspired dark blue palette */
 .dark {
-  /* Deep neutral with a faint warm tint — #0E1116 */
-  --background: oklch(0.165 0.008 260);
-  --foreground: oklch(0.965 0.003 260);          /* #F2F4F7 */
-  --foreground-muted: oklch(0.68 0.018 255);     /* #8B95A7 */
+  /* Near-black background — #05060A */
+  --background: oklch(0.115 0.012 270);
+  --foreground: oklch(0.97 0.005 260);            /* #F5F7FA */
+  --foreground-muted: oklch(0.66 0.022 260);      /* #8A93A6 */
 
-  /* Surface / cards — #161B22 */
-  --surface: oklch(0.21 0.012 260);
-  --card: oklch(0.215 0.012 260);
-  --card-foreground: oklch(0.965 0.003 260);
+  /* Surfaces / cards — #0E1320 */
+  --surface: oklch(0.185 0.022 270);
+  --card: oklch(0.185 0.022 270);
+  --card-foreground: oklch(0.97 0.005 260);
 
-  --popover: oklch(0.215 0.012 260);
-  --popover-foreground: oklch(0.965 0.003 260);
+  --popover: oklch(0.205 0.022 270);
+  --popover-foreground: oklch(0.97 0.005 260);
 
-  /* Brand green lifted for dark — #1FB283 */
-  --primary: oklch(0.71 0.135 165);
-  --primary-foreground: oklch(0.14 0.01 260);
-  --primary-hover: oklch(0.76 0.135 165);
+  /* Electric blue — #2D6BFF */
+  --primary: oklch(0.6 0.22 264);
+  --primary-foreground: oklch(1 0 0);
+  --primary-hover: oklch(0.56 0.235 264);
 
-  --secondary: oklch(0.27 0.012 260);
-  --secondary-foreground: oklch(0.965 0.003 260);
+  --secondary: oklch(0.24 0.022 270);
+  --secondary-foreground: oklch(0.97 0.005 260);
 
-  --muted: oklch(0.255 0.012 260);
-  --muted-foreground: oklch(0.68 0.018 255);
+  --muted: oklch(0.22 0.022 270);
+  --muted-foreground: oklch(0.66 0.022 260);
 
-  /* Coral accent — #FF6B5C (GoDaddy-inspired) */
-  --accent: oklch(0.72 0.18 28);
-  --accent-foreground: oklch(0.14 0.01 260);
+  /* Single-accent system: accent matches primary blue */
+  --accent: oklch(0.6 0.22 264);
+  --accent-foreground: oklch(1 0 0);
 
-  /* Sentiment colors retuned for dark */
-  --destructive: oklch(0.72 0.19 22);            /* #F87171 */
+  /* Sentiment colors */
+  --destructive: oklch(0.7 0.2 22);               /* red */
   --destructive-foreground: oklch(0.14 0.01 260);
-  --success: oklch(0.78 0.16 162);               /* #34D399 */
+  --success: oklch(0.78 0.16 162);                /* green */
   --success-foreground: oklch(0.14 0.01 260);
-  --warning: oklch(0.83 0.16 82);                /* #FBBF24 */
+  --warning: oklch(0.83 0.16 82);                 /* amber */
   --warning-foreground: oklch(0.2 0.05 82);
-  --info: oklch(0.74 0.13 250);                  /* #60A5FA */
+  --info: oklch(0.74 0.13 250);
   --info-foreground: oklch(0.14 0.01 260);
 
-  --border: oklch(1 0 0 / 7%);
-  --input: oklch(1 0 0 / 10%);
-  --ring: oklch(0.71 0.135 165 / 60%);
+  --border: oklch(1 0 0 / 6%);
+  --input: oklch(1 0 0 / 8%);
+  --ring: oklch(0.6 0.22 264 / 55%);
 }
 
 @layer base {
@@ -133,67 +133,91 @@
   }
 }
 
+/* Display headline — JetBrains Mono techy face */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 /* Hero — subtle dot grid texture */
 .hero-grid {
   background-image: radial-gradient(
     circle at 1px 1px,
-    color-mix(in oklab, var(--color-foreground) 12%, transparent) 1px,
+    color-mix(in oklab, var(--color-foreground) 8%, transparent) 1px,
     transparent 0
   );
-  background-size: 22px 22px;
+  background-size: 24px 24px;
   mask-image: radial-gradient(
     ellipse 70% 60% at 50% 35%,
-    black 30%,
+    black 25%,
     transparent 75%
   );
 }
 
-/* Hero — animated gradient blobs */
-.hero-glow {
+/* Hero — vertical electric-blue light beam */
+.hero-beam {
   position: absolute;
-  inset: 0;
+  inset: -120px 0 -80px 0;
   pointer-events: none;
   overflow: hidden;
+  z-index: -1;
 }
-.hero-glow::before,
-.hero-glow::after {
+.hero-beam::before {
+  /* wide outer glow */
   content: "";
   position: absolute;
-  border-radius: 9999px;
-  filter: blur(80px);
-  opacity: 0.55;
-  animation: hero-drift 14s ease-in-out infinite;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 95% at 50% 0%,
+      color-mix(in oklab, var(--color-primary) 55%, transparent) 0%,
+      color-mix(in oklab, var(--color-primary) 18%, transparent) 35%,
+      transparent 70%);
 }
-.hero-glow::before {
-  width: 380px;
-  height: 380px;
-  top: -120px;
-  left: 10%;
-  background: var(--color-primary);
-}
-.hero-glow::after {
-  width: 320px;
-  height: 320px;
-  top: -60px;
-  right: 8%;
-  background: var(--color-accent);
-  animation-delay: -7s;
-  opacity: 0.4;
-}
-
-@keyframes hero-drift {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50%      { transform: translate3d(20px, 30px, 0) scale(1.08); }
+.hero-beam::after {
+  /* tight inner column */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 14% 80% at 50% 0%,
+      color-mix(in oklab, var(--color-primary) 75%, white 10%) 0%,
+      color-mix(in oklab, var(--color-primary) 35%, transparent) 40%,
+      transparent 75%);
+  filter: blur(2px);
+  animation: beam-pulse 6s ease-in-out infinite;
 }
 
-/* Headline gradient text */
+@keyframes beam-pulse {
+  0%, 100% { opacity: 0.85; transform: scaleY(1); }
+  50%      { opacity: 1;    transform: scaleY(1.04); }
+}
+
+/* Headline gradient text — blue → white */
 .text-gradient-brand {
   background-image: linear-gradient(
-    100deg,
-    var(--color-primary) 0%,
-    var(--color-accent) 100%
+    180deg,
+    color-mix(in oklab, var(--color-primary) 90%, white 10%) 0%,
+    var(--color-foreground) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
+
+/* Soft blue halo under primary CTA */
+.btn-glow {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-primary) 60%, transparent),
+    0 10px 30px -8px color-mix(in oklab, var(--color-primary) 55%, transparent),
+    0 0 50px color-mix(in oklab, var(--color-primary) 35%, transparent);
+}
+
+/* Subtle blue halo for the input card */
+.card-halo {
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    0 30px 60px -30px color-mix(in oklab, var(--color-primary) 45%, transparent),
+    0 0 80px -20px color-mix(in oklab, var(--color-primary) 25%, transparent);
+}
+
