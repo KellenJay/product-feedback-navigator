@@ -16,7 +16,7 @@ export interface Issue {
   description: string;
   impactScore: number;
   category: string;
-  priority: "P0" | "P1" | "P2";
+  priority: "P1" | "P2" | "P3";
   mentions: number;
   quotes: Quote[];
 }

@@ -57,12 +57,12 @@ ${feedback.slice(0, 50000)}
     const systemPrompt = `You are a senior product manager analyzing user feedback.
 Identify distinct pain points, score them by impact (0-100), assign categories
 (e.g. Onboarding, Performance, Pricing, Reliability, UX, Support, Features),
-priority (P0/P1/P2), and extract representative quotes.
+priority (P1/P2/P3), and extract representative quotes.
 
 Priority guidance:
-- P0 = Critical: blocks core use or causes churn. Fix this sprint.
-- P1 = High: significant friction for many users. Address in next 1-2 sprints.
-- P2 = Medium: quality-of-life improvement. Backlog candidate.
+- P1 = Critical: blocks core use or causes churn. Fix this sprint.
+- P2 = High: significant friction for many users. Address in next 1-2 sprints.
+- P3 = Medium: quality-of-life improvement. Backlog candidate.
 
 For each quote, attempt to attribute the source when the input gives signal
 (e.g. "from Reddit", a CSV column "source", a URL, a date). Use these fields:
@@ -102,7 +102,7 @@ If you cannot reasonably infer a field, set it to null. Never invent sources.`;
                     description: { type: "string" },
                     impactScore: { type: "number" },
                     category: { type: "string" },
-                    priority: { type: "string", enum: ["P0", "P1", "P2"] },
+                    priority: { type: "string", enum: ["P1", "P2", "P3"] },
                     mentions: { type: "number" },
                     quotes: {
                       type: "array",
