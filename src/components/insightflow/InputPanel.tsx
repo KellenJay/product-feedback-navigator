@@ -90,7 +90,8 @@ export function InputPanel(props: Props) {
   };
 
   const readDocx = async (file: File) => {
-    const mammoth: any = await import("mammoth/mammoth.browser");
+    // @ts-expect-error - browser build has no types
+    const mammoth: any = await import("mammoth/mammoth.browser.js");
     const buf = await file.arrayBuffer();
     const { value } = await mammoth.extractRawText({ arrayBuffer: buf });
     return value as string;
