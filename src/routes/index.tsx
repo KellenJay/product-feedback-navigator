@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TabBar } from "@/components/insightflow/TabBar";
 import { InputPanel } from "@/components/insightflow/InputPanel";
 import { ResultsView } from "@/components/insightflow/ResultsView";
 import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel";
-import type { AnalysisResult, SourceMode } from "@/components/insightflow/types";
+import { AnalysisFooter } from "@/components/insightflow/AnalysisFooter";
+import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
+import type { AnalysisResult } from "@/components/insightflow/types";
 
 export const Route = createFileRoute("/")({
   component: AnalyzePage,
