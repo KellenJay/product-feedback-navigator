@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TabBar } from "@/components/insightflow/TabBar";
 import { InputPanel } from "@/components/insightflow/InputPanel";
 import { ResultsView } from "@/components/insightflow/ResultsView";
+import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel";
 import type { AnalysisResult, SourceMode } from "@/components/insightflow/types";
 
 export const Route = createFileRoute("/")({
