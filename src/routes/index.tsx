@@ -227,7 +227,21 @@ function AnalyzePage() {
             }))}
           />
         )}
+        {result && <AnalysisFooter productName={productName} />}
       </main>
+
+      {result && (
+        <button
+          type="button"
+          onClick={() =>
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }
+          aria-label="Back to top"
+          className="fixed bottom-6 right-6 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:bg-primary-hover hover:shadow-primary/40 animate-in fade-in slide-in-from-bottom-2"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </button>
+      )}
     </div>
   );
 }
