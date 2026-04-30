@@ -209,20 +209,37 @@ export function InputPanel(props: Props) {
               <div
                 onDragOver={(e) => {
                   e.preventDefault();
-                  setDragActive(true);
+                  if (!parsing) setDragActive(true);
                 }}
                 onDragLeave={() => setDragActive(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`flex h-[140px] cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed bg-background text-sm text-foreground-muted transition-colors ${
+                onDrop={(e) => {
+                  if (parsing) {
+                    e.preventDefault();
+                    return;
+                  }
+                  handleDrop(e);
+                }}
+                onClick={() => !parsing && fileInputRef.current?.click()}
+                className={`flex h-[140px] flex-col items-center justify-center rounded-md border-2 border-dashed bg-background text-sm text-foreground-muted transition-colors ${
+                  parsing ? "cursor-wait opacity-80" : "cursor-pointer"
+                } ${
                   dragActive
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-foreground/30"
                 }`}
               >
-                <Upload className="mb-2 h-5 w-5" />
-                <span>Drag a file here or click to browse</span>
-                <span className="mt-1 text-xs">.txt, .pdf, .docx, .csv</span>
+                {parsing ? (
+                  <>
+                    <Loader2 className="mb-2 h-5 w-5 animate-spin" />
+                    <span>Reading file…</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mb-2 h-5 w-5" />
+                    <span>Drag a file here or click to browse</span>
+                    <span className="mt-1 text-xs">.txt, .pdf, .docx, .csv</span>
+                  </>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2.5 text-sm">
