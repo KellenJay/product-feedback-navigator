@@ -1,5 +1,6 @@
 import { toast } from "sonner";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 interface Props {
   productName: string;
@@ -21,6 +22,13 @@ export function AnalysisFooter({ productName }: Props) {
         Analysis complete — {productName || "Untitled"} · {today}
       </p>
       <div className="flex flex-wrap gap-2">
+        <Link
+          to="/roadmap"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+        >
+          Open roadmap
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
         <SecondaryButton
           onClick={() =>
             toast.success("Saved", {

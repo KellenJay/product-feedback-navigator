@@ -1,14 +1,9 @@
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 type Tab = "analyze" | "roadmap" | "library";
 
 export function TabBar({ active }: { active: Tab }) {
-  const handleStub = (label: string) => {
-    toast(`${label} coming soon`, {
-      description: "Build next session.",
-    });
-  };
-
   const baseTab =
     "relative px-1 pb-3 pt-1 text-sm transition-colors focus:outline-none";
   const inactive =
@@ -18,25 +13,31 @@ export function TabBar({ active }: { active: Tab }) {
   return (
     <nav className="border-b border-border">
       <div className="mx-auto flex max-w-[780px] items-center gap-7 px-6">
-        <button
-          type="button"
+        <Link
+          to="/"
           className={`${baseTab} ${active === "analyze" ? activeCls : inactive}`}
         >
           Analyze
           {active === "analyze" && (
             <span className="absolute inset-x-0 -bottom-px h-[2px] bg-foreground" />
           )}
-        </button>
-        <button
-          type="button"
-          onClick={() => handleStub("Roadmap")}
-          className={`${baseTab} ${inactive} opacity-60`}
+        </Link>
+        <Link
+          to="/roadmap"
+          className={`${baseTab} ${active === "roadmap" ? activeCls : inactive}`}
         >
           Roadmap
-        </button>
+          {active === "roadmap" && (
+            <span className="absolute inset-x-0 -bottom-px h-[2px] bg-foreground" />
+          )}
+        </Link>
         <button
           type="button"
-          onClick={() => handleStub("Library")}
+          onClick={() =>
+            toast("Library coming soon", {
+              description: "Build next session.",
+            })
+          }
           className={`${baseTab} ${inactive} opacity-60`}
         >
           Library
