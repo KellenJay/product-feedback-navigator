@@ -51,8 +51,7 @@ function AnalyzePage() {
 
   const setProductName = (v: string) => setState({ productName: v });
   const setBusinessGoal = (v: string) => setState({ businessGoal: v });
-  const setMode: typeof state extends never ? never : (m: typeof state.mode) => void =
-    (m) => setState({ mode: m });
+  const setMode = (m: typeof mode) => setState({ mode: m });
   const setPastedFeedback = (v: string) => setState({ pastedFeedback: v });
   const setUploadedFile = (
     f: { name: string; content: string } | null,
