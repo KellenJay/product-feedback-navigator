@@ -184,14 +184,10 @@ function AnalyzePage() {
 
           <h1 className="font-display relative mt-6 text-foreground"
               style={{ fontSize: "clamp(38px, 6vw, 64px)", lineHeight: 1.05 }}>
-            Turn raw customer feedback
-            <br />
-            into <span className="text-gradient-brand">prioritized roadmaps</span>
+            Stop drowning in feedback. Start shipping what matters.
           </h1>
           <p className="relative mx-auto mt-5 max-w-[620px] text-[15px] leading-7 text-foreground-muted">
-            Paste reviews, upload a document, or let AI research the web.
-            InsightFlow analyzes pain points, scores them by impact, and
-            generates a structured summary ready for roadmapping.
+            InsightFlow turns scattered user signals into decisions you can defend. Paste in reviews, upload a research doc, or let InsightFlow search the web for you. In seconds, you get a structured breakdown of your biggest user pain points — scored by frequency, severity, and business impact — plus market context to back it up. The kind of output that makes stakeholders stop questioning and start building.
           </p>
         </section>
 
