@@ -126,13 +126,9 @@ export function ResultsView({ result }: Props) {
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Tag tone="info">{issue.category}</Tag>
                         <PriorityTag priority={issue.priority} />
-                        <button
-                          type="button"
-                          onClick={() => setMentionsIssue(issue)}
-                          className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
-                        >
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted">
                           {issue.mentions} mentions
-                        </button>
+                        </span>
                       </div>
                       <p className="mt-2 text-[13px] leading-6 text-foreground-muted">
                         {issue.description}
