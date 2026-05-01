@@ -169,13 +169,6 @@ export function ResultsView({ result }: Props) {
         )}
 
       </div>
-      <MentionsDialog
-        open={!!mentionsIssue}
-        onOpenChange={(v) => !v && setMentionsIssue(null)}
-        title={mentionsIssue?.title ?? ""}
-        mentions={mentionsIssue?.mentions ?? 0}
-        quotes={mentionsIssue?.quotes ?? []}
-      />
     </TooltipProvider>
   );
 }
