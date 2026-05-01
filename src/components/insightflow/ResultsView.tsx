@@ -79,7 +79,7 @@ export function ResultsView({ result }: Props) {
                     Significant friction for many users. Next 1–2 sprints.
                   </li>
                   <li>
-                    <span className="font-medium text-foreground">P3 — Medium.</span>{" "}
+                    <span className="font-medium text-success">P3 — Medium.</span>{" "}
                     Quality-of-life improvement. Backlog candidate.
                   </li>
                 </ul>
