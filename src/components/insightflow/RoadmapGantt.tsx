@@ -78,14 +78,12 @@ export function RoadmapGantt({ items }: Props) {
                   gridTemplateColumns: `220px repeat(${SPAN}, minmax(0, 1fr))`,
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => setActive(it)}
-                  className="line-clamp-2 pr-2 text-left text-[12px] font-medium leading-tight text-foreground hover:text-primary"
+                <div
+                  className="line-clamp-2 pr-2 text-[12px] font-medium leading-tight text-foreground"
                   title={it.title}
                 >
                   {it.title}
-                </button>
+                </div>
                 {cols.map((_, i) => (
                   <div key={i} className="h-12 px-0.5">
                     {i === colIdx && (
