@@ -1,11 +1,14 @@
-import { Info, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { AnalysisResult, Quote, Sentiment } from "./types";
+import type { AnalysisResult, Issue, Sentiment } from "./types";
+import { QuoteList } from "./QuoteList";
+import { MentionsDialog } from "./MentionsDialog";
 
 interface Props {
   result: AnalysisResult;
