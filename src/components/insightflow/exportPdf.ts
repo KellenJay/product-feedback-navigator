@@ -306,25 +306,46 @@ export function exportRoadmapPdf(items: RoadmapItem[], productName: string) {
       margin: { left: MARGIN, right: MARGIN },
     });
     y = getY(doc);
-    for (const it of inBucket) {
-      if (!it.rationale && !it.quotes?.[0]) continue;
-      y = ensureSpace(doc, y, 16);
-      doc.setFont("helvetica", "bold");
+  }
+
+  // Comments appendix — every quote for every item
+  doc.addPage();
+  let cy = 20;
+  cy = sectionTitle(doc, "Appendix — Comments & evidence", cy);
+  cy = paragraph(
+    doc,
+    "Verbatim user feedback grouped by roadmap item, with attribution where available.",
+    cy,
+  );
+  for (const it of items) {
+    if (!it.quotes?.length && !it.rationale) continue;
+    cy = ensureSpace(doc, cy + 2, 16);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(20);
+    doc.text(`${it.title} — ${formatQuarter(it.quarter)} · ${it.priority}`, MARGIN, cy);
+    cy += 5;
+    if (it.rationale) cy = paragraph(doc, it.rationale, cy);
+    for (const raw of it.quotes ?? []) {
+      cy = ensureSpace(doc, cy, 14);
+      doc.setFont("helvetica", "italic");
       doc.setFontSize(9);
-      doc.setTextColor(20);
-      doc.text(`${it.title} — ${formatQuarter(it.quarter)}`, MARGIN, y);
-      y += 4;
-      if (it.rationale) y = paragraph(doc, it.rationale, y);
-      const q = it.quotes?.[0];
-      if (q) {
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(9);
-        doc.setTextColor(80);
-        const lines = doc.splitTextToSize(`“${quoteText(q)}”`, CONTENT_WIDTH - 4);
-        doc.text(lines, MARGIN + 4, y);
-        y += lines.length * 4 + 2;
+      doc.setTextColor(40);
+      const lines = doc.splitTextToSize(`“${quoteText(raw)}”`, CONTENT_WIDTH - 4);
+      doc.text(lines, MARGIN + 4, cy);
+      cy += lines.length * 4 + 1;
+      const attr = quoteAttr(raw);
+      if (attr) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(120);
+        doc.text(`— ${attr}`, MARGIN + 4, cy);
+        cy += 4;
       }
+      cy += 1;
     }
+    cy += 2;
+  }
   }
 
   doc.save(`${safeName(productName)}-roadmap.pdf`);
