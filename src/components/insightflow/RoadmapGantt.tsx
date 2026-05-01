@@ -1,24 +1,25 @@
+import { useState } from "react";
 import {
   addQuarters,
   currentQuarter,
-  formatQuarter,
   quarterIndex,
   quartersEqual,
   type RoadmapItem,
 } from "./roadmap";
+import { RoadmapItemDialog } from "./RoadmapItemDialog";
 
 interface Props {
   items: RoadmapItem[];
 }
 
-const SPAN = 6; // quarters shown
+const SPAN = 4; // quarters shown
 
 export function RoadmapGantt({ items }: Props) {
+  const [active, setActive] = useState<RoadmapItem | null>(null);
   const start = currentQuarter();
   const cols = Array.from({ length: SPAN }, (_, i) => addQuarters(start, i));
   const startIdx = quarterIndex(start);
 
-  // Items inside the visible window only.
   const visible = items.filter((it) => {
     const idx = quarterIndex(it.quarter);
     return idx >= startIdx && idx < startIdx + SPAN;
@@ -32,7 +33,7 @@ export function RoadmapGantt({ items }: Props) {
         <div
           className="grid items-end gap-1 border-b border-border pb-2"
           style={{
-            gridTemplateColumns: `200px repeat(${SPAN}, minmax(0, 1fr))`,
+            gridTemplateColumns: `220px repeat(${SPAN}, minmax(0, 1fr))`,
           }}
         >
           <div className="text-[11px] font-medium uppercase tracking-wider text-foreground-muted">
@@ -43,11 +44,14 @@ export function RoadmapGantt({ items }: Props) {
             return (
               <div
                 key={`${q.year}-${q.q}`}
-                className={`text-center text-[11px] font-medium ${
+                className={`text-center text-[11px] font-medium leading-tight ${
                   isToday ? "text-primary" : "text-foreground-muted"
                 }`}
               >
-                {formatQuarter(q)}
+                <div>Q{q.q}</div>
+                <div className="text-[10px] text-foreground-muted">
+                  {q.year}
+                </div>
                 {isToday && (
                   <div className="mx-auto mt-1 h-0.5 w-6 rounded-full bg-primary" />
                 )}
@@ -70,15 +74,22 @@ export function RoadmapGantt({ items }: Props) {
                 key={it.id}
                 className="grid items-center gap-1 rounded-md py-1 hover:bg-surface/50"
                 style={{
-                  gridTemplateColumns: `200px repeat(${SPAN}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `220px repeat(${SPAN}, minmax(0, 1fr))`,
                 }}
               >
-                <div className="truncate pr-2 text-[12px] font-medium text-foreground" title={it.title}>
+                <button
+                  type="button"
+                  onClick={() => setActive(it)}
+                  className="line-clamp-2 pr-2 text-left text-[12px] font-medium leading-tight text-foreground hover:text-primary"
+                  title={it.title}
+                >
                   {it.title}
-                </div>
+                </button>
                 {cols.map((_, i) => (
-                  <div key={i} className="h-7 px-0.5">
-                    {i === colIdx && <Bar item={it} />}
+                  <div key={i} className="h-12 px-0.5">
+                    {i === colIdx && (
+                      <Bar item={it} onClick={() => setActive(it)} />
+                    )}
                   </div>
                 ))}
               </div>
@@ -93,23 +104,31 @@ export function RoadmapGantt({ items }: Props) {
           </p>
         )}
       </div>
+
+      <RoadmapItemDialog
+        open={!!active}
+        onOpenChange={(v) => !v && setActive(null)}
+        item={active}
+      />
     </div>
   );
 }
 
-function Bar({ item }: { item: RoadmapItem }) {
+function Bar({ item, onClick }: { item: RoadmapItem; onClick: () => void }) {
   const bg =
     item.priority === "P1"
-      ? "bg-destructive/80 text-destructive-foreground"
+      ? "bg-destructive/80 text-destructive-foreground hover:bg-destructive"
       : item.priority === "P2"
-        ? "bg-warning/80 text-warning-foreground"
-        : "bg-muted text-foreground";
+        ? "bg-warning/80 text-warning-foreground hover:bg-warning"
+        : "bg-muted text-foreground hover:bg-muted/80";
   return (
-    <div
-      className={`flex h-full items-center gap-1 truncate rounded-md px-2 text-[10px] font-medium ${bg}`}
-      title={`${item.title} · ${item.priority} · Effort ${item.effort} · ${item.mentions} mentions`}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex h-full w-full items-center rounded-md px-2 text-left text-[10px] font-medium leading-tight transition-colors ${bg}`}
+      title={`${item.title} · ${item.priority} · Effort ${item.effort} · ${item.mentions} mentions — click for details`}
     >
-      <span className="truncate">{item.title}</span>
-    </div>
+      <span className="line-clamp-2">{item.title}</span>
+    </button>
   );
 }

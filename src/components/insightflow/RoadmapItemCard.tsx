@@ -10,6 +10,8 @@ import {
   type Quarter,
   type RoadmapItem,
 } from "./roadmap";
+import { RoadmapItemDialog } from "./RoadmapItemDialog";
+import { MentionsDialog } from "./MentionsDialog";
 
 interface Props {
   item: RoadmapItem;
@@ -21,6 +23,8 @@ interface Props {
 
 export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Props) {
   const [open, setOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [mentionsOpen, setMentionsOpen] = useState(false);
   const impactColor =
     item.impactScore >= 70
       ? "bg-success/15 text-success"
@@ -36,6 +40,7 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
         : "bg-muted text-foreground-muted";
 
   return (
+    <>
     <article className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-start gap-3">
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground">
@@ -43,9 +48,13 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-[15px] font-medium leading-snug text-foreground">
+            <button
+              type="button"
+              onClick={() => setDetailOpen(true)}
+              className="text-left text-[15px] font-medium leading-snug text-foreground hover:text-primary hover:underline"
+            >
               {item.title}
-            </h3>
+            </button>
             <span
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${impactColor}`}
             >
@@ -65,9 +74,13 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
             <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
               {item.category}
             </span>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted">
+            <button
+              type="button"
+              onClick={() => setMentionsOpen(true)}
+              className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
+            >
               {item.mentions} mentions
-            </span>
+            </button>
             <span
               className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-foreground"
               title={EFFORT_META[item.effort].days}
@@ -144,6 +157,19 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
         </div>
       </div>
     </article>
+      <RoadmapItemDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        item={item}
+      />
+      <MentionsDialog
+        open={mentionsOpen}
+        onOpenChange={setMentionsOpen}
+        title={item.title}
+        mentions={item.mentions}
+        quotes={item.quotes}
+      />
+    </>
   );
 }
 

@@ -12,14 +12,23 @@ function csvRow(cols: unknown[]): string {
   return cols.map(csvEscape).join(",");
 }
 
-function quoteText(q: Quote): string {
-  return typeof q === "string" ? q : q.text;
-}
-
-function quoteSource(q: Quote): string {
-  if (typeof q === "string") return "";
-  const parts = [q.source, q.context, q.date].filter(Boolean);
-  return parts.join(" · ");
+function quoteFields(q: Quote | undefined): {
+  text: string;
+  source: string;
+  context: string;
+  date: string;
+  url: string;
+} {
+  if (!q) return { text: "", source: "", context: "", date: "", url: "" };
+  if (typeof q === "string")
+    return { text: q, source: "", context: "", date: "", url: "" };
+  return {
+    text: q.text ?? "",
+    source: q.source ?? "",
+    context: q.context ?? "",
+    date: q.date ?? "",
+    url: q.url ?? "",
+  };
 }
 
 function safeName(s: string): string {
@@ -47,32 +56,36 @@ export function exportAnalysisCsv(result: AnalysisResult, productName: string) {
     "Impact",
     "Mentions",
     "Description",
-    "Quote 1",
-    "Quote 1 Source",
-    "Quote 2",
-    "Quote 2 Source",
-    "Quote 3",
-    "Quote 3 Source",
+    "Quote #",
+    "Quote Text",
+    "Quote Source",
+    "Quote Context",
+    "Quote Date",
+    "Quote URL",
   ];
-  const rows = result.issues.map((it, i) => {
-    const q1 = it.quotes?.[0];
-    const q2 = it.quotes?.[1];
-    const q3 = it.quotes?.[2];
-    return csvRow([
-      i + 1,
-      it.title,
-      it.priority,
-      it.category,
-      it.impactScore,
-      it.mentions,
-      it.description,
-      q1 ? quoteText(q1) : "",
-      q1 ? quoteSource(q1) : "",
-      q2 ? quoteText(q2) : "",
-      q2 ? quoteSource(q2) : "",
-      q3 ? quoteText(q3) : "",
-      q3 ? quoteSource(q3) : "",
-    ]);
+  const rows: string[] = [];
+  result.issues.forEach((it, i) => {
+    const quotes = it.quotes && it.quotes.length > 0 ? it.quotes : [undefined];
+    quotes.forEach((q, qi) => {
+      const f = quoteFields(q);
+      rows.push(
+        csvRow([
+          i + 1,
+          it.title,
+          it.priority,
+          it.category,
+          it.impactScore,
+          it.mentions,
+          it.description,
+          q ? qi + 1 : "",
+          f.text,
+          f.source,
+          f.context,
+          f.date,
+          f.url,
+        ]),
+      );
+    });
   });
   const csv = [csvRow(header), ...rows].join("\n");
   downloadBlob(csv, `${safeName(productName)}-analysis.csv`, "text/csv;charset=utf-8");
@@ -90,23 +103,39 @@ export function exportRoadmapCsv(items: RoadmapItem[], productName: string) {
     "Mentions",
     "Category",
     "Rationale",
-    "Quote 1",
+    "Quote #",
+    "Quote Text",
+    "Quote Source",
+    "Quote Context",
+    "Quote Date",
+    "Quote URL",
   ];
-  const rows = items.map((it, i) => {
-    const q1 = it.quotes?.[0];
-    return csvRow([
-      i + 1,
-      it.title,
-      it.bucket,
-      formatQuarter(it.quarter),
-      it.priority,
-      it.effort,
-      it.impactScore,
-      it.mentions,
-      it.category,
-      it.rationale,
-      q1 ? quoteText(q1) : "",
-    ]);
+  const rows: string[] = [];
+  items.forEach((it, i) => {
+    const quotes = it.quotes && it.quotes.length > 0 ? it.quotes : [undefined];
+    quotes.forEach((q, qi) => {
+      const f = quoteFields(q);
+      rows.push(
+        csvRow([
+          i + 1,
+          it.title,
+          it.bucket,
+          formatQuarter(it.quarter),
+          it.priority,
+          it.effort,
+          it.impactScore,
+          it.mentions,
+          it.category,
+          it.rationale,
+          q ? qi + 1 : "",
+          f.text,
+          f.source,
+          f.context,
+          f.date,
+          f.url,
+        ]),
+      );
+    });
   });
   const csv = [csvRow(header), ...rows].join("\n");
   downloadBlob(csv, `${safeName(productName)}-roadmap.csv`, "text/csv;charset=utf-8");

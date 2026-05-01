@@ -1,11 +1,14 @@
-import { Info, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { AnalysisResult, Quote, Sentiment } from "./types";
+import type { AnalysisResult, Issue, Sentiment } from "./types";
+import { QuoteList } from "./QuoteList";
+import { MentionsDialog } from "./MentionsDialog";
 
 interface Props {
   result: AnalysisResult;
@@ -18,18 +21,8 @@ const sentimentClasses: Record<Sentiment, string> = {
   Positive: "text-success",
 };
 
-function normalizeQuote(q: Quote): {
-  text: string;
-  source?: string | null;
-  context?: string | null;
-  date?: string | null;
-  url?: string | null;
-} {
-  if (typeof q === "string") return { text: q };
-  return q;
-}
-
 export function ResultsView({ result }: Props) {
+  const [mentionsIssue, setMentionsIssue] = useState<Issue | null>(null);
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -135,43 +128,20 @@ export function ResultsView({ result }: Props) {
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Tag tone="info">{issue.category}</Tag>
                         <PriorityTag priority={issue.priority} />
-                        <Tag tone="muted">{issue.mentions} mentions</Tag>
+                        <button
+                          type="button"
+                          onClick={() => setMentionsIssue(issue)}
+                          className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
+                        >
+                          {issue.mentions} mentions
+                        </button>
                       </div>
                       <p className="mt-2 text-[13px] leading-6 text-foreground-muted">
                         {issue.description}
                       </p>
                       {issue.quotes && issue.quotes.length > 0 && (
-                        <div className="mt-3 space-y-2.5 rounded-md border border-border bg-surface p-3">
-                          {issue.quotes.slice(0, 2).map((raw, qi) => {
-                            const q = normalizeQuote(raw);
-                            const attrParts = [q.source, q.context, q.date]
-                              .filter(Boolean) as string[];
-                            return (
-                              <div key={qi} className="space-y-1">
-                                <p className="text-[12px] italic leading-5 text-foreground">
-                                  “{q.text}”
-                                </p>
-                                {(attrParts.length > 0 || q.url) && (
-                                  <div className="flex items-center gap-2 text-[11px] text-foreground-muted">
-                                    {attrParts.length > 0 && (
-                                      <span>— {attrParts.join(" · ")}</span>
-                                    )}
-                                    {q.url && (
-                                      <a
-                                        href={q.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-0.5 font-medium text-accent hover:underline"
-                                      >
-                                        View source
-                                        <ExternalLink className="h-3 w-3" />
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                        <div className="mt-3">
+                          <QuoteList quotes={issue.quotes} limit={2} />
                         </div>
                       )}
                     </div>
@@ -205,6 +175,13 @@ export function ResultsView({ result }: Props) {
         )}
 
       </div>
+      <MentionsDialog
+        open={!!mentionsIssue}
+        onOpenChange={(v) => !v && setMentionsIssue(null)}
+        title={mentionsIssue?.title ?? ""}
+        mentions={mentionsIssue?.mentions ?? 0}
+        quotes={mentionsIssue?.quotes ?? []}
+      />
     </TooltipProvider>
   );
 }
