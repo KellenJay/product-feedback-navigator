@@ -346,7 +346,6 @@ export function exportRoadmapPdf(items: RoadmapItem[], productName: string) {
     }
     cy += 2;
   }
-  }
 
   doc.save(`${safeName(productName)}-roadmap.pdf`);
 }
