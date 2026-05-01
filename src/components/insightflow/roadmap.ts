@@ -3,12 +3,19 @@ import type { AnalysisResult, Issue, Quote } from "./types";
 export type Bucket = "now" | "next" | "later";
 export type Effort = "S" | "M" | "L";
 
+export interface Quarter {
+  q: 1 | 2 | 3 | 4;
+  year: number;
+}
+
 export interface RoadmapItem {
   id: string;
   issueIndex: number;
   title: string;
   bucket: Bucket;
   effort: Effort;
+  quarter: Quarter;
+  order?: number;
   impactScore: number;
   priority: "P1" | "P2" | "P3";
   category: string;
@@ -51,8 +58,6 @@ function priorityToBucket(p: Issue["priority"]): Bucket {
 }
 
 function deriveEffort(issue: Issue): Effort {
-  // Rough heuristic: high impact = bigger fix; very high mentions w/ low score
-  // suggests a quick UX win.
   if (issue.impactScore >= 75) return "L";
   if (issue.mentions >= 10 && issue.impactScore < 50) return "S";
   return "M";
@@ -64,20 +69,63 @@ function firstSentence(text: string): string {
   return (m ? m[1] : trimmed).trim();
 }
 
-export function deriveRoadmap(result: AnalysisResult): RoadmapItem[] {
-  return result.issues.map((issue, i) => ({
-    id: `issue-${i}`,
-    issueIndex: i,
-    title: issue.title,
-    bucket: priorityToBucket(issue.priority),
-    effort: deriveEffort(issue),
-    impactScore: issue.impactScore,
-    priority: issue.priority,
-    category: issue.category,
-    mentions: issue.mentions,
-    rationale: firstSentence(issue.description),
-    quotes: issue.quotes ?? [],
-  }));
+// ----- Quarter helpers -----
+
+export function currentQuarter(date: Date = new Date()): Quarter {
+  const month = date.getMonth(); // 0-11
+  const q = (Math.floor(month / 3) + 1) as 1 | 2 | 3 | 4;
+  return { q, year: date.getFullYear() };
+}
+
+export function addQuarters(quarter: Quarter, n: number): Quarter {
+  const total = (quarter.year * 4 + (quarter.q - 1)) + n;
+  const year = Math.floor(total / 4);
+  const q = ((total % 4) + 1) as 1 | 2 | 3 | 4;
+  return { q, year };
+}
+
+export function quarterFromBucket(bucket: Bucket, today: Date = new Date()): Quarter {
+  const base = currentQuarter(today);
+  const offset = bucket === "now" ? 0 : bucket === "next" ? 1 : 2;
+  return addQuarters(base, offset);
+}
+
+export function formatQuarter(q: Quarter): string {
+  return `Q${q.q} ${q.year}`;
+}
+
+export function quarterIndex(q: Quarter): number {
+  return q.year * 4 + (q.q - 1);
+}
+
+export function quartersEqual(a: Quarter, b: Quarter): boolean {
+  return a.q === b.q && a.year === b.year;
+}
+
+export function parseQuarter(s: string): Quarter | null {
+  const m = s.match(/^Q([1-4])\s+(\d{4})$/);
+  if (!m) return null;
+  return { q: Number(m[1]) as 1 | 2 | 3 | 4, year: Number(m[2]) };
+}
+
+export function deriveRoadmap(result: AnalysisResult, today: Date = new Date()): RoadmapItem[] {
+  return result.issues.map((issue, i) => {
+    const bucket = priorityToBucket(issue.priority);
+    return {
+      id: `issue-${i}`,
+      issueIndex: i,
+      title: issue.title,
+      bucket,
+      effort: deriveEffort(issue),
+      quarter: quarterFromBucket(bucket, today),
+      impactScore: issue.impactScore,
+      priority: issue.priority,
+      category: issue.category,
+      mentions: issue.mentions,
+      rationale: firstSentence(issue.description),
+      quotes: issue.quotes ?? [],
+    };
+  });
 }
 
 function quoteText(q: Quote): string {
@@ -108,7 +156,7 @@ export function buildRoadmapMarkdown(
     lines.push(`## ${meta.label} (${meta.subtitle})`);
     for (const it of inBucket) {
       lines.push(
-        `- **${it.title}** — Impact ${it.impactScore} · ${it.priority} · Effort ${it.effort} · ${it.mentions} mentions`,
+        `- **${it.title}** — ${formatQuarter(it.quarter)} · Impact ${it.impactScore} · ${it.priority} · Effort ${it.effort} · ${it.mentions} mentions`,
       );
       if (it.rationale) lines.push(`  ${it.rationale}`);
       const q = it.quotes[0];

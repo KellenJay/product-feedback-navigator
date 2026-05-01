@@ -228,7 +228,7 @@ function AnalyzePage() {
             }))}
           />
         )}
-        {result && <AnalysisFooter productName={productName} />}
+        {result && <AnalysisFooter productName={productName} result={result} />}
       </main>
 
       {result && (

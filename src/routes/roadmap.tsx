@@ -1,12 +1,19 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { TabBar } from "@/components/insightflow/TabBar";
 import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
-import { useRoadmap } from "@/components/insightflow/roadmapStore";
+import { roadmapStore, useRoadmap } from "@/components/insightflow/roadmapStore";
 import { RoadmapColumn } from "@/components/insightflow/RoadmapColumn";
 import { RoadmapSummary } from "@/components/insightflow/RoadmapSummary";
 import { RoadmapFooter } from "@/components/insightflow/RoadmapFooter";
-import type { Bucket } from "@/components/insightflow/roadmap";
+import { RoadmapKanban } from "@/components/insightflow/RoadmapKanban";
+import { RoadmapGantt } from "@/components/insightflow/RoadmapGantt";
+import {
+  RoadmapViewTabs,
+  type RoadmapView,
+} from "@/components/insightflow/RoadmapViewTabs";
+import type { Bucket, RoadmapItem } from "@/components/insightflow/roadmap";
 
 export const Route = createFileRoute("/roadmap")({
   component: RoadmapPage,
@@ -16,13 +23,13 @@ export const Route = createFileRoute("/roadmap")({
       {
         name: "description",
         content:
-          "Turn your latest InsightFlow analysis into a sprint-ready roadmap with Now, Next, and Later buckets, effort estimates, and markdown export.",
+          "Turn your latest InsightFlow analysis into a sprint-ready roadmap with Now, Next, and Later buckets, quarter timelines, Kanban and Gantt views.",
       },
       { property: "og:title", content: "Roadmap — InsightFlow" },
       {
         property: "og:description",
         content:
-          "A defensible product roadmap derived from real user feedback — grouped by sprint, scored by impact.",
+          "A defensible product roadmap derived from real user feedback — grouped by sprint, scored by impact, scheduled by quarter.",
       },
     ],
   }),
@@ -49,8 +56,12 @@ function RoadmapPage() {
 
       <TabBar active="roadmap" />
 
-      <main className="mx-auto max-w-[780px] px-6 pb-24 pt-12">
-        {!result ? <EmptyState /> : <RoadmapBody result={result} productName={productName} />}
+      <main className="mx-auto max-w-[1100px] px-6 pb-24 pt-12">
+        {!result ? (
+          <EmptyState />
+        ) : (
+          <RoadmapBody result={result} productName={productName} />
+        )}
       </main>
     </div>
   );
@@ -58,7 +69,7 @@ function RoadmapPage() {
 
 function EmptyState() {
   return (
-    <section className="rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
+    <section className="mx-auto max-w-[780px] rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
       <p className="text-[11px] font-medium uppercase tracking-wider text-foreground-muted">
         No analysis yet
       </p>
@@ -71,7 +82,7 @@ function EmptyState() {
       <p className="mx-auto mt-4 max-w-[480px] text-[14px] leading-7 text-foreground-muted">
         InsightFlow turns your prioritized pain points into a sprint-ready plan.
         Once you've analyzed feedback, the items appear here grouped into Now,
-        Next, and Later.
+        Next, and Later — with quarter timelines, Kanban, and Gantt views.
       </p>
       <Link
         to="/"
@@ -90,13 +101,31 @@ function RoadmapBody({
   result: NonNullable<ReturnType<typeof useAnalyzeStore>[0]["result"]>;
   productName: string;
 }) {
-  const { items, setBucket, setEffort, reset, hasOverrides } =
+  const { items, setBucket, setEffort, setQuarter, reset, hasOverrides } =
     useRoadmap(result);
+  const [view, setView] = useState<RoadmapView>("list");
 
   const buckets: Bucket[] = ["now", "next", "later"];
 
+  // Sort items in each bucket by user `order` (if set), then by impact desc.
+  const sortedItems = sortItems(items);
+
+  const handleReorder = (id: string, beforeId: string | null, bucket: Bucket) => {
+    // Take the bucket's current order, remove the moved id, re-insert at target.
+    const others = sortedItems.filter((i) => i.bucket === bucket && i.id !== id);
+    const insertAt =
+      beforeId === null
+        ? others.length
+        : Math.max(0, others.findIndex((i) => i.id === beforeId));
+    const reordered = [...others];
+    reordered.splice(insertAt, 0, { id } as RoadmapItem);
+    reordered.forEach((it, i) => {
+      roadmapStore.setOrder(it.id, i);
+    });
+  };
+
   return (
-    <>
+    <div className="mx-auto max-w-[1100px]">
       {/* Hero */}
       <section className="relative isolate text-center">
         <div className="hero-beam" aria-hidden />
@@ -120,26 +149,64 @@ function RoadmapBody({
         </p>
       </section>
 
-      <div className="mt-8">
-        <RoadmapSummary items={items} />
+      {/* View tabs sit between hero and KPIs */}
+      <div className="mt-8 flex justify-center">
+        <RoadmapViewTabs value={view} onChange={setView} />
       </div>
 
-      {buckets.map((b) => (
-        <RoadmapColumn
-          key={b}
-          bucket={b}
-          items={items.filter((i) => i.bucket === b)}
-          onMove={setBucket}
-          onEffort={setEffort}
-        />
-      ))}
+      <div className="mx-auto mt-6 max-w-[780px]">
+        <RoadmapSummary items={sortedItems} />
+      </div>
 
-      <RoadmapFooter
-        items={items}
-        productName={productName}
-        hasOverrides={hasOverrides}
-        onReset={reset}
-      />
-    </>
+      {view === "list" && (
+        <div className="mx-auto max-w-[780px]">
+          {buckets.map((b) => (
+            <RoadmapColumn
+              key={b}
+              bucket={b}
+              items={sortedItems.filter((i) => i.bucket === b)}
+              onMove={setBucket}
+              onEffort={setEffort}
+              onQuarter={setQuarter}
+            />
+          ))}
+        </div>
+      )}
+
+      {view === "kanban" && (
+        <RoadmapKanban
+          items={sortedItems}
+          onMoveBucket={setBucket}
+          onReorder={handleReorder}
+        />
+      )}
+
+      {view === "gantt" && <RoadmapGantt items={sortedItems} />}
+
+      <div className="mx-auto max-w-[780px]">
+        <RoadmapFooter
+          items={sortedItems}
+          productName={productName}
+          hasOverrides={hasOverrides}
+          onReset={reset}
+        />
+      </div>
+    </div>
   );
+}
+
+function sortItems(items: RoadmapItem[]): RoadmapItem[] {
+  const buckets: Bucket[] = ["now", "next", "later"];
+  const out: RoadmapItem[] = [];
+  for (const b of buckets) {
+    const inB = items.filter((i) => i.bucket === b);
+    inB.sort((a, c) => {
+      const ao = a.order ?? Number.POSITIVE_INFINITY;
+      const co = c.order ?? Number.POSITIVE_INFINITY;
+      if (ao !== co) return ao - co;
+      return c.impactScore - a.impactScore;
+    });
+    out.push(...inB);
+  }
+  return out;
 }

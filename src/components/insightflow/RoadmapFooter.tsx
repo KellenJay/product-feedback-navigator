@@ -1,6 +1,9 @@
 import { toast } from "sonner";
-import { Copy, FileDown, RotateCcw } from "lucide-react";
+import { Copy, RotateCcw } from "lucide-react";
 import { buildRoadmapMarkdown, type RoadmapItem } from "./roadmap";
+import { ExportMenu } from "./ExportMenu";
+import { exportRoadmapPdf } from "./exportPdf";
+import { exportRoadmapCsv } from "./exportCsv";
 
 interface Props {
   items: RoadmapItem[];
@@ -34,50 +37,46 @@ export function RoadmapFooter({
         defensible from the analysis
       </p>
       <div className="flex flex-wrap gap-2">
-        <SecondaryButton onClick={handleCopy}>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+        >
           <Copy className="h-3.5 w-3.5" />
           Copy as markdown
-        </SecondaryButton>
-        <SecondaryButton
-          onClick={() =>
-            toast("PDF export coming next", {
-              description: "Use markdown copy for now.",
-            })
-          }
-        >
-          <FileDown className="h-3.5 w-3.5" />
-          Export PDF
-        </SecondaryButton>
+        </button>
+        <ExportMenu
+          onExportPdf={() => {
+            try {
+              exportRoadmapPdf(items, productName);
+              toast.success("PDF downloaded");
+            } catch {
+              toast.error("Couldn't export PDF");
+            }
+          }}
+          onExportCsv={() => {
+            try {
+              exportRoadmapCsv(items, productName);
+              toast.success("CSV downloaded");
+            } catch {
+              toast.error("Couldn't export CSV");
+            }
+          }}
+        />
         {hasOverrides && (
-          <SecondaryButton
+          <button
+            type="button"
             onClick={() => {
               onReset();
               toast.success("Reverted to suggested order");
             }}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Reset overrides
-          </SecondaryButton>
+          </button>
         )}
       </div>
     </div>
-  );
-}
-
-function SecondaryButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
-    >
-      {children}
-    </button>
   );
 }
