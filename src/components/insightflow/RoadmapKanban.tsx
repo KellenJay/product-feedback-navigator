@@ -22,7 +22,6 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
     null,
   );
   const [detail, setDetail] = useState<RoadmapItem | null>(null);
-  const [mentions, setMentions] = useState<RoadmapItem | null>(null);
 
   const grouped: Record<Bucket, RoadmapItem[]> = {
     now: items.filter((i) => i.bucket === "now"),
