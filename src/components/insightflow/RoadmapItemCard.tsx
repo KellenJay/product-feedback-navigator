@@ -156,6 +156,19 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
         </div>
       </div>
     </article>
+      <RoadmapItemDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        item={item}
+      />
+      <MentionsDialog
+        open={mentionsOpen}
+        onOpenChange={setMentionsOpen}
+        title={item.title}
+        mentions={item.mentions}
+        quotes={item.quotes}
+      />
+    </>
   );
 }
 
