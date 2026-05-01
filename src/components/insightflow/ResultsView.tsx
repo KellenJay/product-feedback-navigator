@@ -140,37 +140,8 @@ export function ResultsView({ result }: Props) {
                         {issue.description}
                       </p>
                       {issue.quotes && issue.quotes.length > 0 && (
-                        <div className="mt-3 space-y-2.5 rounded-md border border-border bg-surface p-3">
-                          {issue.quotes.slice(0, 2).map((raw, qi) => {
-                            const q = normalizeQuote(raw);
-                            const attrParts = [q.source, q.context, q.date]
-                              .filter(Boolean) as string[];
-                            return (
-                              <div key={qi} className="space-y-1">
-                                <p className="text-[12px] italic leading-5 text-foreground">
-                                  “{q.text}”
-                                </p>
-                                {(attrParts.length > 0 || q.url) && (
-                                  <div className="flex items-center gap-2 text-[11px] text-foreground-muted">
-                                    {attrParts.length > 0 && (
-                                      <span>— {attrParts.join(" · ")}</span>
-                                    )}
-                                    {q.url && (
-                                      <a
-                                        href={q.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-0.5 font-medium text-accent hover:underline"
-                                      >
-                                        View source
-                                        <ExternalLink className="h-3 w-3" />
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                        <div className="mt-3">
+                          <QuoteList quotes={issue.quotes} limit={2} />
                         </div>
                       )}
                     </div>
