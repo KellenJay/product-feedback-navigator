@@ -114,17 +114,11 @@ export function RoadmapGantt({ items }: Props) {
 }
 
 function Bar({ item, onClick }: { item: RoadmapItem; onClick: () => void }) {
-  const bg =
-    item.priority === "P1"
-      ? "bg-destructive/80 text-destructive-foreground hover:bg-destructive"
-      : item.priority === "P2"
-        ? "bg-warning/80 text-warning-foreground hover:bg-warning"
-        : "bg-muted text-foreground hover:bg-muted/80";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-full w-full items-center rounded-md px-2 text-left text-[10px] font-medium leading-tight transition-colors ${bg}`}
+      className={`flex h-full w-full items-center rounded-md px-2 text-left text-[10px] font-medium leading-tight transition-opacity hover:opacity-80 ${priorityClasses(item.priority)}`}
       title={`${item.title} · ${item.priority} · Effort ${item.effort} · ${item.mentions} mentions — click for details`}
     >
       <span className="line-clamp-2">{item.title}</span>
