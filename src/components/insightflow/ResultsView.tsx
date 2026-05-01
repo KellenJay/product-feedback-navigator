@@ -21,18 +21,8 @@ const sentimentClasses: Record<Sentiment, string> = {
   Positive: "text-success",
 };
 
-function normalizeQuote(q: Quote): {
-  text: string;
-  source?: string | null;
-  context?: string | null;
-  date?: string | null;
-  url?: string | null;
-} {
-  if (typeof q === "string") return { text: q };
-  return q;
-}
-
 export function ResultsView({ result }: Props) {
+  const [mentionsIssue, setMentionsIssue] = useState<Issue | null>(null);
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
