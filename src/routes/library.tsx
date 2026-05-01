@@ -189,7 +189,7 @@ function LibraryPage() {
                   active={folderSel === "unfiled"}
                   onClick={() => setFolderSel("unfiled")}
                   icon={<Folder className="h-3.5 w-3.5" />}
-                  label="Unfiled"
+                  label="Unfiled Items"
                   count={saved.filter((e) => !e.folderId).length}
                 />
 
@@ -207,7 +207,7 @@ function LibraryPage() {
                         libraryStore.deleteFolder(f.id);
                         if (folderSel === f.id) setFolderSel("all");
                         toast("Folder deleted", {
-                          description: "Items moved to Unfiled.",
+                          description: "Items moved to Unfiled Items.",
                         });
                       }}
                     />
@@ -257,8 +257,8 @@ function LibraryPage() {
                       {folderSel === "all"
                         ? "Saved"
                         : folderSel === "unfiled"
-                          ? "Unfiled"
-                          : folders.find((f) => f.id === folderSel)?.name ??
+                        ? "Unfiled Items"
+                        : folders.find((f) => f.id === folderSel)?.name ??
                             "Saved"}
                     </h2>
                     <span className="text-[12px] text-foreground-muted">
@@ -491,7 +491,7 @@ function FolderRow({
             <AlertDialogTitle>Delete folder "{name}"?</AlertDialogTitle>
             <AlertDialogDescription>
               The folder will be removed. Any analyses inside it will be moved
-              to Unfiled — they will not be deleted.
+              to Unfiled Items — they will not be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

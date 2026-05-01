@@ -74,7 +74,7 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
 
   const handleMove = (folderId: string | null) => {
     libraryStore.moveToFolder(live.id, folderId);
-    toast.success(folderId ? "Moved to folder" : "Moved to Unfiled");
+    toast.success(folderId ? "Moved to folder" : "Moved to Unfiled Items");
   };
 
   const handleDelete = () => {
@@ -129,7 +129,7 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
               )}
               <p className="mt-1 text-[11px] text-foreground-muted">
                 {live.source} · {formatRelativeDate(live.createdAt)}
-                {folderName ? ` · in ${folderName}` : live.saved ? " · Unfiled" : " · Recent (unsaved)"}
+                {folderName ? ` · in ${folderName}` : live.saved ? " · Unfiled Items" : " · Recent (unsaved)"}
               </p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
                 <DropdownMenuItem onClick={() => handleMove(null)}>
-                  Unfiled
+                  Unfiled Items
                 </DropdownMenuItem>
                 {folders.length > 0 && <DropdownMenuSeparator />}
                 {folders.map((f) => (
