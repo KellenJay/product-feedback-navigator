@@ -5,37 +5,32 @@ import {
   formatQuarter,
   addQuarters,
   currentQuarter,
+  priorityClasses,
   type Bucket,
   type Effort,
   type Quarter,
   type RoadmapItem,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
-import { MentionsDialog } from "./MentionsDialog";
+
+type Priority = "P1" | "P2" | "P3";
 
 interface Props {
   item: RoadmapItem;
   rank: number;
   onMove: (b: Bucket) => void;
+  onPriority: (p: Priority) => void;
   onEffort: (e: Effort) => void;
   onQuarter: (q: Quarter) => void;
 }
 
-export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Props) {
+export function RoadmapItemCard({ item, rank, onMove, onPriority, onEffort, onQuarter }: Props) {
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [mentionsOpen, setMentionsOpen] = useState(false);
   const impactColor =
     item.impactScore >= 70
       ? "bg-success/15 text-success"
       : item.impactScore >= 40
-        ? "bg-warning/15 text-warning"
-        : "bg-muted text-foreground-muted";
-
-  const priorityColor =
-    item.priority === "P1"
-      ? "bg-destructive/15 text-destructive"
-      : item.priority === "P2"
         ? "bg-warning/15 text-warning"
         : "bg-muted text-foreground-muted";
 
@@ -64,7 +59,7 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${priorityColor}`}
+              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${priorityClasses(item.priority)}`}
             >
               {item.priority}
             </span>
@@ -74,13 +69,9 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
             <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
               {item.category}
             </span>
-            <button
-              type="button"
-              onClick={() => setMentionsOpen(true)}
-              className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
-            >
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted">
               {item.mentions} mentions
-            </button>
+            </span>
             <span
               className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-foreground"
               title={EFFORT_META[item.effort].days}
@@ -143,6 +134,16 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
               ]}
             />
             <SelectControl
+              label="Priority"
+              value={item.priority}
+              onChange={(v) => onPriority(v as Priority)}
+              options={[
+                { value: "P1", label: "P1" },
+                { value: "P2", label: "P2" },
+                { value: "P3", label: "P3" },
+              ]}
+            />
+            <SelectControl
               label="Effort"
               value={item.effort}
               onChange={(v) => onEffort(v as Effort)}
@@ -161,13 +162,6 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
         open={detailOpen}
         onOpenChange={setDetailOpen}
         item={item}
-      />
-      <MentionsDialog
-        open={mentionsOpen}
-        onOpenChange={setMentionsOpen}
-        title={item.title}
-        mentions={item.mentions}
-        quotes={item.quotes}
       />
     </>
   );
@@ -213,7 +207,6 @@ function QuarterSelect({
   const choices: Quarter[] = Array.from({ length: 8 }, (_, i) =>
     addQuarters(base, i),
   );
-  // Make sure value is included even if it's older/farther.
   const includes = choices.some((c) => c.q === value.q && c.year === value.year);
   const all = includes ? choices : [value, ...choices];
   const key = (q: Quarter) => `${q.year}-${q.q}`;
