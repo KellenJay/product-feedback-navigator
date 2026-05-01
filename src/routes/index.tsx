@@ -177,7 +177,7 @@ function AnalyzePage() {
             InsightFlow
           </span>
           <span className="text-xs text-foreground-muted">
-            v1 · Analyze
+            {"\n"}
           </span>
         </div>
       </header>

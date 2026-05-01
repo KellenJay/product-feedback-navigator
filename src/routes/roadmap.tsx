@@ -50,7 +50,7 @@ function RoadmapPage() {
           >
             InsightFlow
           </Link>
-          <span className="text-xs text-foreground-muted">v1 · Roadmap</span>
+          <span className="text-xs text-foreground-muted">{"\n"}</span>
         </div>
       </header>
 
