@@ -10,6 +10,8 @@ import {
   type Quarter,
   type RoadmapItem,
 } from "./roadmap";
+import { RoadmapItemDialog } from "./RoadmapItemDialog";
+import { MentionsDialog } from "./MentionsDialog";
 
 interface Props {
   item: RoadmapItem;
