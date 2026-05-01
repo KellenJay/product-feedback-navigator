@@ -57,6 +57,18 @@ function priorityToBucket(p: Issue["priority"]): Bucket {
   return "later";
 }
 
+export function bucketToPriority(b: Bucket): "P1" | "P2" | "P3" {
+  if (b === "now") return "P1";
+  if (b === "next") return "P2";
+  return "P3";
+}
+
+export function priorityClasses(p: "P1" | "P2" | "P3"): string {
+  if (p === "P1") return "bg-destructive/15 text-destructive";
+  if (p === "P2") return "bg-warning/15 text-warning";
+  return "bg-success/15 text-success";
+}
+
 function deriveEffort(issue: Issue): Effort {
   if (issue.impactScore >= 75) return "L";
   if (issue.mentions >= 10 && issue.impactScore < 50) return "S";

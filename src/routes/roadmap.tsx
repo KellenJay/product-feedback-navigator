@@ -101,7 +101,7 @@ function RoadmapBody({
   result: NonNullable<ReturnType<typeof useAnalyzeStore>[0]["result"]>;
   productName: string;
 }) {
-  const { items, setBucket, setEffort, setQuarter, reset, hasOverrides } =
+  const { items, setBucket, setPriority, setEffort, setQuarter, reset, hasOverrides } =
     useRoadmap(result);
   const [view, setView] = useState<RoadmapView>("list");
 
@@ -166,6 +166,7 @@ function RoadmapBody({
               bucket={b}
               items={sortedItems.filter((i) => i.bucket === b)}
               onMove={setBucket}
+              onPriority={setPriority}
               onEffort={setEffort}
               onQuarter={setQuarter}
             />

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Info } from "lucide-react";
 import {
   Tooltip,
@@ -6,9 +5,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { AnalysisResult, Issue, Sentiment } from "./types";
+import type { AnalysisResult, Sentiment } from "./types";
 import { QuoteList } from "./QuoteList";
-import { MentionsDialog } from "./MentionsDialog";
+import { priorityClasses } from "./roadmap";
 
 interface Props {
   result: AnalysisResult;
@@ -22,7 +21,6 @@ const sentimentClasses: Record<Sentiment, string> = {
 };
 
 export function ResultsView({ result }: Props) {
-  const [mentionsIssue, setMentionsIssue] = useState<Issue | null>(null);
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -81,7 +79,7 @@ export function ResultsView({ result }: Props) {
                     Significant friction for many users. Next 1–2 sprints.
                   </li>
                   <li>
-                    <span className="font-medium text-foreground">P3 — Medium.</span>{" "}
+                    <span className="font-medium text-success">P3 — Medium.</span>{" "}
                     Quality-of-life improvement. Backlog candidate.
                   </li>
                 </ul>
@@ -128,13 +126,9 @@ export function ResultsView({ result }: Props) {
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Tag tone="info">{issue.category}</Tag>
                         <PriorityTag priority={issue.priority} />
-                        <button
-                          type="button"
-                          onClick={() => setMentionsIssue(issue)}
-                          className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
-                        >
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted">
                           {issue.mentions} mentions
-                        </button>
+                        </span>
                       </div>
                       <p className="mt-2 text-[13px] leading-6 text-foreground-muted">
                         {issue.description}
@@ -175,13 +169,6 @@ export function ResultsView({ result }: Props) {
         )}
 
       </div>
-      <MentionsDialog
-        open={!!mentionsIssue}
-        onOpenChange={(v) => !v && setMentionsIssue(null)}
-        title={mentionsIssue?.title ?? ""}
-        mentions={mentionsIssue?.mentions ?? 0}
-        quotes={mentionsIssue?.quotes ?? []}
-      />
     </TooltipProvider>
   );
 }
@@ -236,14 +223,8 @@ function Tag({
 }
 
 function PriorityTag({ priority }: { priority: "P1" | "P2" | "P3" }) {
-  const cls =
-    priority === "P1"
-      ? "bg-destructive/15 text-destructive"
-      : priority === "P2"
-        ? "bg-warning/15 text-warning"
-        : "bg-muted text-foreground-muted";
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${priorityClasses(priority)}`}>
       {priority}
     </span>
   );

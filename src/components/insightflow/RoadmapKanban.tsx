@@ -2,11 +2,11 @@ import { useState } from "react";
 import {
   BUCKET_META,
   formatQuarter,
+  priorityClasses,
   type Bucket,
   type RoadmapItem,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
-import { MentionsDialog } from "./MentionsDialog";
 
 interface Props {
   items: RoadmapItem[];
@@ -22,7 +22,6 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
     null,
   );
   const [detail, setDetail] = useState<RoadmapItem | null>(null);
-  const [mentions, setMentions] = useState<RoadmapItem | null>(null);
 
   const grouped: Record<Bucket, RoadmapItem[]> = {
     now: items.filter((i) => i.bucket === "now"),
@@ -100,7 +99,6 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
                       item={item}
                       isDragging={draggingId === item.id}
                       onOpenDetail={() => setDetail(item)}
-                      onOpenMentions={() => setMentions(item)}
                       onDragStart={() => setDraggingId(item.id)}
                       onDragEnd={() => {
                         setDraggingId(null);
@@ -144,13 +142,6 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
         onOpenChange={(v) => !v && setDetail(null)}
         item={detail}
       />
-      <MentionsDialog
-        open={!!mentions}
-        onOpenChange={(v) => !v && setMentions(null)}
-        title={mentions?.title ?? ""}
-        mentions={mentions?.mentions ?? 0}
-        quotes={mentions?.quotes ?? []}
-      />
     </div>
   );
 }
@@ -159,7 +150,6 @@ function KanbanCard({
   item,
   isDragging,
   onOpenDetail,
-  onOpenMentions,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -168,19 +158,11 @@ function KanbanCard({
   item: RoadmapItem;
   isDragging: boolean;
   onOpenDetail: () => void;
-  onOpenMentions: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
 }) {
-  const priorityColor =
-    item.priority === "P1"
-      ? "bg-destructive/15 text-destructive"
-      : item.priority === "P2"
-        ? "bg-warning/15 text-warning"
-        : "bg-muted text-foreground-muted";
-
   return (
     <article
       draggable
@@ -208,7 +190,7 @@ function KanbanCard({
       </button>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         <span
-          className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${priorityColor}`}
+          className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${priorityClasses(item.priority)}`}
         >
           {item.priority}
         </span>
@@ -218,17 +200,9 @@ function KanbanCard({
         <span className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-foreground">
           {item.effort}
         </span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenMentions();
-          }}
-          onMouseDown={(e) => e.stopPropagation()}
-          className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
-        >
+        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground-muted">
           {item.mentions} mentions
-        </button>
+        </span>
         <span className="text-[10px] text-foreground-muted">
           · Impact {item.impactScore}
         </span>

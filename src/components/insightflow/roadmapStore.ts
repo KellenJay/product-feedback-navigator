@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { AnalysisResult } from "./types";
 import {
+  bucketToPriority,
   deriveRoadmap,
   quarterFromBucket,
   type Bucket,
@@ -9,16 +10,21 @@ import {
   type RoadmapItem,
 } from "./roadmap";
 
+type Priority = "P1" | "P2" | "P3";
+
 interface Override {
   bucket?: Bucket;
+  bucketUserSet?: boolean;
   effort?: Effort;
   quarter?: Quarter;
   quarterUserSet?: boolean;
+  priority?: Priority;
+  priorityUserSet?: boolean;
   order?: number;
 }
 type Overrides = Record<string, Override>;
 
-const STORAGE_KEY = "insightflow.roadmap.v2";
+const STORAGE_KEY = "insightflow.roadmap.v3";
 
 function load(): Overrides {
   if (typeof window === "undefined") return {};
@@ -63,14 +69,36 @@ function getServerSnapshot() {
   return {} as Overrides;
 }
 
+function priorityToBucket(p: Priority): Bucket {
+  if (p === "P1") return "now";
+  if (p === "P2") return "next";
+  return "later";
+}
+
 export const roadmapStore = {
   get: () => overrides,
   setBucket: (id: string, bucket: Bucket) => {
     const prev = overrides[id] ?? {};
-    // If user hasn't pinned a quarter, recompute from bucket.
-    const next: Override = { ...prev, bucket };
+    const next: Override = { ...prev, bucket, bucketUserSet: true };
     if (!prev.quarterUserSet) {
       next.quarter = quarterFromBucket(bucket);
+    }
+    if (!prev.priorityUserSet) {
+      next.priority = bucketToPriority(bucket);
+    }
+    overrides = { ...overrides, [id]: next };
+    persist(overrides);
+    emit();
+  },
+  setPriority: (id: string, priority: Priority) => {
+    const prev = overrides[id] ?? {};
+    const next: Override = { ...prev, priority, priorityUserSet: true };
+    if (!prev.bucketUserSet) {
+      const newBucket = priorityToBucket(priority);
+      next.bucket = newBucket;
+      if (!prev.quarterUserSet) {
+        next.quarter = quarterFromBucket(newBucket);
+      }
     }
     overrides = { ...overrides, [id]: next };
     persist(overrides);
@@ -104,6 +132,7 @@ export const roadmapStore = {
 export function useRoadmap(result: AnalysisResult): {
   items: RoadmapItem[];
   setBucket: (id: string, b: Bucket) => void;
+  setPriority: (id: string, p: Priority) => void;
   setEffort: (id: string, e: Effort) => void;
   setQuarter: (id: string, q: Quarter) => void;
   setOrder: (id: string, n: number) => void;
@@ -120,12 +149,14 @@ export function useRoadmap(result: AnalysisResult): {
       bucket: o.bucket ?? it.bucket,
       effort: o.effort ?? it.effort,
       quarter: o.quarter ?? (o.bucket ? quarterFromBucket(o.bucket) : it.quarter),
+      priority: o.priority ?? it.priority,
       order: o.order,
     };
   });
   return {
     items,
     setBucket: roadmapStore.setBucket,
+    setPriority: roadmapStore.setPriority,
     setEffort: roadmapStore.setEffort,
     setQuarter: roadmapStore.setQuarter,
     setOrder: roadmapStore.setOrder,
