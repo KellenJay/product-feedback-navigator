@@ -99,7 +99,6 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
                       item={item}
                       isDragging={draggingId === item.id}
                       onOpenDetail={() => setDetail(item)}
-                      onOpenMentions={() => setMentions(item)}
                       onDragStart={() => setDraggingId(item.id)}
                       onDragEnd={() => {
                         setDraggingId(null);
