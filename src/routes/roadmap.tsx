@@ -111,13 +111,15 @@ function RoadmapBody({
   const sortedItems = sortItems(items);
 
   const handleReorder = (id: string, beforeId: string | null, bucket: Bucket) => {
-    const inBucket = sortedItems.filter((i) => i.bucket === bucket && i.id !== id);
-    const beforeIndex = beforeId ? inBucket.findIndex((i) => i.id === beforeId) : inBucket.length;
-    const insertAt = beforeIndex === -1 ? inBucket.length : beforeIndex;
-    // Assign incremental orders so the moved item lands at insertAt.
-    const target = [...inBucket];
-    target.splice(insertAt, 0, { ...inBucket[0], id }); // placeholder
-    target.forEach((it, i) => {
+    // Take the bucket's current order, remove the moved id, re-insert at target.
+    const others = sortedItems.filter((i) => i.bucket === bucket && i.id !== id);
+    const insertAt =
+      beforeId === null
+        ? others.length
+        : Math.max(0, others.findIndex((i) => i.id === beforeId));
+    const reordered = [...others];
+    reordered.splice(insertAt, 0, { id } as RoadmapItem);
+    reordered.forEach((it, i) => {
       roadmapStore.setOrder(it.id, i);
     });
   };
