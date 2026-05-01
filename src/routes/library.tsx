@@ -126,7 +126,7 @@ function LibraryPage() {
           >
             InsightFlow
           </Link>
-          <span className="text-xs text-foreground-muted">v1 · Library</span>
+          <span className="text-xs text-foreground-muted">{"\n"}</span>
         </div>
       </header>
 
