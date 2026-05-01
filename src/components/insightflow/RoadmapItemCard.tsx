@@ -23,6 +23,8 @@ interface Props {
 
 export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Props) {
   const [open, setOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [mentionsOpen, setMentionsOpen] = useState(false);
   const impactColor =
     item.impactScore >= 70
       ? "bg-success/15 text-success"
