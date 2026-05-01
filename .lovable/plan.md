@@ -1,78 +1,89 @@
 ## Goal
 
-Make the Gantt readable, make every roadmap item (Gantt + Kanban) clickable to a detail dialog, expose all comments behind any "X mentions" pill (Analyze + Roadmap), and export full comment lists in PDF/CSV.
+Cut redundant interactions, fix priority color rules (P3 = green), make priority and bucket move together both ways across all views, and clean up small UI overlaps.
 
-## 1. Gantt: shorter window + readable cells
+## 1. Remove all "X mentions" pop-ups (keep the number visible)
 
-In `src/components/insightflow/RoadmapGantt.tsx`:
+The mentions modal duplicates evidence already shown in-page (Analyze quotes, Roadmap "Show evidence", Roadmap detail dialog). Convert every clickable mentions pill back to a static `<span>`.
 
-- Change `SPAN` from 6 → **4** quarters.
-- Keep the "Item" column readable: bump width from `200px` to `220px` and replace `truncate` with a `line-clamp-2` so the whole theme name is visible (wraps to 2 lines).
-- Quarter header labels: stack `Q2` and `2026` on two lines (`Q2` on top, year below in muted) so labels never clip in narrow columns.
-- Bars: replace `truncate` with `line-clamp-2`, increase row height from `h-7` to `h-12`, add tighter padding so 3–5 words of the title are always visible.
-- Each bar becomes a `<button>` that opens the new shared detail dialog.
+- `src/components/insightflow/ResultsView.tsx` — pill becomes a span; remove `mentionsIssue` state and `<MentionsDialog>`.
+- `src/components/insightflow/RoadmapItemCard.tsx` — pill becomes a span; remove `mentionsOpen` state and `<MentionsDialog>`.
+- `src/components/insightflow/RoadmapKanban.tsx` — pill becomes a span; remove `mentions` state, `onOpenMentions` prop, and `<MentionsDialog>`.
+- Delete `src/components/insightflow/MentionsDialog.tsx` (no remaining importers).
 
-## 2. Kanban: clickable card title
+## 2. P3 color = green (everywhere)
 
-In `src/components/insightflow/RoadmapKanban.tsx`:
+Today P3 uses muted gray. Switch to success-green and apply consistently.
 
-- Wrap the card's `<h4>` title in a `<button>` that opens the detail dialog. Stop propagation so the click does not interfere with drag.
-- Drag-and-drop on the card body keeps working (only the title triggers the dialog).
+A new helper in `src/components/insightflow/roadmap.ts`:
 
-## 3. Shared roadmap item detail dialog (new)
+```ts
+export function priorityClasses(p: "P1" | "P2" | "P3") {
+  if (p === "P1") return "bg-destructive/15 text-destructive";
+  if (p === "P2") return "bg-warning/15 text-warning";
+  return "bg-success/15 text-success"; // P3
+}
+```
 
-Create `src/components/insightflow/RoadmapItemDialog.tsx` using `@/components/ui/dialog`. Given a `RoadmapItem`, it shows the same info the List view exposes:
+Replace inline priority class ladders (currently duplicated in `ResultsView.tsx`, `RoadmapItemCard.tsx`, `RoadmapItemDialog.tsx`, `RoadmapKanban.tsx`) with this helper.
 
-- Title, Impact pill, Priority/Quarter/Category/Effort/Mentions chips.
-- Rationale paragraph.
-- Full evidence list (all quotes, formatted exactly like `ResultsView` quote blocks: italic quote text, `— source · context · date`, optional "View source" link).
+In `ResultsView.tsx`, the P1/P2/P3 explainer tooltip: change the P3 line's `<span>` from `text-foreground` to `text-success` so the legend matches the pills.
 
-Wire it in `RoadmapGantt`, `RoadmapKanban`, and (for parity) make the List card title also open it.
+## 3. Priority ↔ Bucket are linked, both directions
 
-## 4. Clickable "X mentions" → comments dialog
+Today: changing the bucket re-buckets the item but `priority` (P1/P2/P3) stays frozen on the AI-derived value, so a "Now" card can still show P2.
 
-Create `src/components/insightflow/MentionsDialog.tsx`. Triggered from any `N mentions` pill; renders all `quotes` for the issue using the same Analyze quote layout (quote text in italics, then `— source · context · date`, optional View source link).
+Bucket→priority mapping (mirror of the existing `priorityToBucket`):
+- now → P1, next → P2, later → P3.
 
-Make pills clickable (turn the `<span>` into a `<button>` with hover underline) in:
+Implementation:
 
-- `src/components/insightflow/ResultsView.tsx` (issues list, "X mentions" tag)
-- `src/components/insightflow/RoadmapItemCard.tsx`
-- `src/components/insightflow/RoadmapKanban.tsx` (Kanban card)
-- `src/components/insightflow/MarketContextPanel.tsx` (only if it shows a mentions pill — verify and skip if not)
+- `src/components/insightflow/roadmap.ts`: add `bucketToPriority(b: Bucket): "P1"|"P2"|"P3"`.
+- `src/components/insightflow/roadmapStore.ts`:
+  - Extend `Override` with `priority?: "P1"|"P2"|"P3"` and `priorityUserSet?: boolean`.
+  - In `setBucket`: if `!prev.priorityUserSet`, also set `priority = bucketToPriority(bucket)` (alongside the existing quarter recompute).
+  - Add `setPriority(id, priority)`: stores `priority` + `priorityUserSet: true`, AND if `!prev.bucketUserSet` flips `bucket` to `priorityToBucket(priority)` (and recomputes quarter the same way `setBucket` does when `!quarterUserSet`). Add a `bucketUserSet` flag set when the user explicitly drags/picks a bucket so manual choices win.
+  - In `useRoadmap`: apply `priority` override when present.
+- Expose `setPriority` from `useRoadmap`.
 
-The Gantt bar opens the full detail dialog (which already includes evidence), so no separate mentions click is needed there.
+Wire the new control:
 
-## 5. Exports include all comments
+- `src/components/insightflow/RoadmapItemCard.tsx`: add a `Priority` `<SelectControl>` next to Move/Effort/Quarter with options P1/P2/P3, calling `onPriority`.
+- `src/routes/roadmap.tsx`: pass `setPriority` down to each `RoadmapItemCard` (mirror existing `onMove/onEffort/onQuarter` plumbing).
+- `RoadmapKanban.tsx` already calls `onMoveBucket` on drop — no extra change; the store will sync priority automatically (and the card's priority pill will recolor across List/Kanban/Gantt because everything reads `item.priority` from the same hook).
 
-`src/components/insightflow/exportPdf.ts`:
+Result: drag a card from Now→Next, P1 chip turns into yellow P2 everywhere; manually picking P3 in List moves it to Later (unless the user has pinned the bucket). User-pinned values are preserved via the `*UserSet` flags.
 
-- Roadmap PDF: append a "Comments & evidence" appendix section per item that prints **every** quote (not just the first), each with `— source · context · date`. Same layout as the Analysis PDF appendix.
-- Analysis PDF appendix already loops `it.quotes` — keep, but ensure attribution line is always rendered when any of `source/context/date` exist.
+## 4. Dialog X-button no longer overlaps the Impact pill
 
-`src/components/insightflow/exportCsv.ts`:
+Shared `RoadmapItemDialog.tsx` has the title row with the Impact pill on the right; the Radix `<Close>` X sits at `absolute right-4 top-4` and lands on top of the pill.
 
-- Replace fixed "Quote 1/2/3" columns with **one row per comment** (long format):
-  - Analysis CSV: emit a second sheet-style block, OR switch to long format with columns `Rank, Title, Priority, …, Quote, Quote Source, Quote Context, Quote Date, Quote URL` and one row per quote (issue metadata repeats). Long format chosen — simpler and lossless.
-  - Roadmap CSV: same treatment — one row per quote with bucket/quarter/etc. repeated.
+Fix in `src/components/insightflow/RoadmapItemDialog.tsx`:
+- Add `pr-10` to the `DialogHeader` flex row (reserves ~40px so the pill clears the X).
+- The pill stays right-aligned but inside the safe zone.
 
-## Technical notes
+No change to the shared `dialog.tsx` (other dialogs are unaffected).
 
-- Dialog component: shadcn `Dialog` + `DialogContent` with `max-w-2xl` and `max-h-[80vh] overflow-y-auto`.
-- Reuse a single `QuoteList` helper component (new, in `src/components/insightflow/QuoteList.tsx`) used by `ResultsView`, `RoadmapItemDialog`, and `MentionsDialog` so quote rendering stays consistent.
-- Refactor `ResultsView` to use `QuoteList` so the visual format stays in one place.
-- No backend changes; quotes already come through on each `Issue`.
+## 5. Gantt item-column titles: not clickable
+
+In `src/components/insightflow/RoadmapGantt.tsx`, replace the title `<button>` in the Item column with a plain `<div>` (keep `line-clamp-2`, drop hover styling and the `setActive` handler). The Q-column bars remain clickable and continue to open `RoadmapItemDialog`.
 
 ## Files
 
-**New**
-- `src/components/insightflow/QuoteList.tsx`
-- `src/components/insightflow/RoadmapItemDialog.tsx`
+**Edited**
+- `src/components/insightflow/roadmap.ts` — add `bucketToPriority`, `priorityClasses` helpers.
+- `src/components/insightflow/roadmapStore.ts` — link priority↔bucket overrides with `priorityUserSet` / `bucketUserSet` flags; expose `setPriority`.
+- `src/components/insightflow/ResultsView.tsx` — static mentions span, drop dialog import/state, use `priorityClasses`, recolor P3 in tooltip.
+- `src/components/insightflow/RoadmapItemCard.tsx` — static mentions span, drop dialog state, use `priorityClasses`, add Priority select.
+- `src/components/insightflow/RoadmapKanban.tsx` — static mentions span, drop dialog/state/prop, use `priorityClasses`.
+- `src/components/insightflow/RoadmapItemDialog.tsx` — `pr-10` header, use `priorityClasses`.
+- `src/components/insightflow/RoadmapGantt.tsx` — non-clickable item title, use `priorityClasses` for `Bar` background (P3 = success).
+- `src/routes/roadmap.tsx` — thread `setPriority` into `RoadmapItemCard`.
+
+**Deleted**
 - `src/components/insightflow/MentionsDialog.tsx`
 
-**Edited**
-- `src/components/insightflow/RoadmapGantt.tsx` (4-quarter window, readable cells, clickable bars)
-- `src/components/insightflow/RoadmapKanban.tsx` (clickable title)
-- `src/components/insightflow/RoadmapItemCard.tsx` (clickable mentions pill, optional clickable title)
-- `src/components/insightflow/ResultsView.tsx` (clickable mentions pill, use `QuoteList`)
-- `src/components/insightflow/exportPdf.ts` (full comments in roadmap appendix)
-- `src/components/insightflow/exportCsv.ts` (long-format quotes)
+## Out of scope (this turn)
+
+- The Library tab (you'll move there after this lands).
+- Any change to PDF/CSV exports — they already include full evidence per item.
