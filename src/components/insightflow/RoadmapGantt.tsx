@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   addQuarters,
   currentQuarter,
+  priorityClasses,
   quarterIndex,
   quartersEqual,
   type RoadmapItem,
