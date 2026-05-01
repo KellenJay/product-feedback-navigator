@@ -1,20 +1,22 @@
 import { toast } from "sonner";
-import { ArrowUp, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { ExportMenu } from "./ExportMenu";
+import { exportAnalysisPdf } from "./exportPdf";
+import { exportAnalysisCsv } from "./exportCsv";
+import type { AnalysisResult } from "./types";
 
 interface Props {
   productName: string;
+  result: AnalysisResult;
 }
 
-export function AnalysisFooter({ productName }: Props) {
+export function AnalysisFooter({ productName, result }: Props) {
   const today = new Date().toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
   });
-
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
     <div className="mt-6 flex flex-col items-start justify-between gap-3 border-t border-border pt-4 sm:flex-row sm:items-center">
@@ -29,41 +31,36 @@ export function AnalysisFooter({ productName }: Props) {
           Open roadmap
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
-        <SecondaryButton
+        <button
+          type="button"
           onClick={() =>
             toast.success("Saved", {
               description: "View it in Library when that tab ships.",
             })
           }
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
         >
           Save to library
-        </SecondaryButton>
-        <SecondaryButton onClick={() => toast("Coming in next build")}>
-          Export as PDF
-        </SecondaryButton>
-        <SecondaryButton onClick={scrollToTop}>
-          <ArrowUp className="h-3.5 w-3.5" />
-          Back to top
-        </SecondaryButton>
+        </button>
+        <ExportMenu
+          onExportPdf={() => {
+            try {
+              exportAnalysisPdf(result, productName, null);
+              toast.success("PDF downloaded");
+            } catch {
+              toast.error("Couldn't export PDF");
+            }
+          }}
+          onExportCsv={() => {
+            try {
+              exportAnalysisCsv(result, productName);
+              toast.success("CSV downloaded");
+            } catch {
+              toast.error("Couldn't export CSV");
+            }
+          }}
+        />
       </div>
     </div>
-  );
-}
-
-function SecondaryButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
-    >
-      {children}
-    </button>
   );
 }
