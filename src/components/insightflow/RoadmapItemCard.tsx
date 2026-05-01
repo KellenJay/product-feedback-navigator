@@ -2,8 +2,12 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   EFFORT_META,
+  formatQuarter,
+  addQuarters,
+  currentQuarter,
   type Bucket,
   type Effort,
+  type Quarter,
   type RoadmapItem,
 } from "./roadmap";
 
@@ -12,9 +16,10 @@ interface Props {
   rank: number;
   onMove: (b: Bucket) => void;
   onEffort: (e: Effort) => void;
+  onQuarter: (q: Quarter) => void;
 }
 
-export function RoadmapItemCard({ item, rank, onMove, onEffort }: Props) {
+export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Props) {
   const [open, setOpen] = useState(false);
   const impactColor =
     item.impactScore >= 70
@@ -53,6 +58,9 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort }: Props) {
               className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${priorityColor}`}
             >
               {item.priority}
+            </span>
+            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
+              {formatQuarter(item.quarter)}
             </span>
             <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
               {item.category}
@@ -131,6 +139,7 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort }: Props) {
                 { value: "L", label: "L" },
               ]}
             />
+            <QuarterSelect value={item.quarter} onChange={onQuarter} />
           </div>
         </div>
       </div>
@@ -160,6 +169,42 @@ function SelectControl({
         {options.map((o) => (
           <option key={o.value} value={o.value} className="bg-card">
             {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function QuarterSelect({
+  value,
+  onChange,
+}: {
+  value: Quarter;
+  onChange: (q: Quarter) => void;
+}) {
+  const base = currentQuarter();
+  const choices: Quarter[] = Array.from({ length: 8 }, (_, i) =>
+    addQuarters(base, i),
+  );
+  // Make sure value is included even if it's older/farther.
+  const includes = choices.some((c) => c.q === value.q && c.year === value.year);
+  const all = includes ? choices : [value, ...choices];
+  const key = (q: Quarter) => `${q.year}-${q.q}`;
+  return (
+    <label className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground-muted">
+      Quarter
+      <select
+        value={key(value)}
+        onChange={(e) => {
+          const [y, q] = e.target.value.split("-").map(Number);
+          onChange({ q: q as 1 | 2 | 3 | 4, year: y });
+        }}
+        className="cursor-pointer bg-transparent text-[12px] font-medium text-foreground focus:outline-none"
+      >
+        {all.map((c) => (
+          <option key={key(c)} value={key(c)} className="bg-card">
+            {formatQuarter(c)}
           </option>
         ))}
       </select>
