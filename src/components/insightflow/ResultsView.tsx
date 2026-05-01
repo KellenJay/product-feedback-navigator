@@ -223,14 +223,8 @@ function Tag({
 }
 
 function PriorityTag({ priority }: { priority: "P1" | "P2" | "P3" }) {
-  const cls =
-    priority === "P1"
-      ? "bg-destructive/15 text-destructive"
-      : priority === "P2"
-        ? "bg-warning/15 text-warning"
-        : "bg-muted text-foreground-muted";
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${priorityClasses(priority)}`}>
       {priority}
     </span>
   );
