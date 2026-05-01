@@ -154,9 +154,8 @@ Hard rules:
       },
     ];
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
+    const callGateway = () =>
+      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -174,8 +173,20 @@ Hard rules:
             function: { name: "submit_market_context" },
           },
         }),
-      },
-    );
+      });
+
+    // Retry on transient upstream failures (502/503/504) with exponential backoff.
+    let response = await callGateway();
+    let attempts = 0;
+    while (
+      !response.ok &&
+      [502, 503, 504].includes(response.status) &&
+      attempts < 2
+    ) {
+      attempts++;
+      await new Promise((r) => setTimeout(r, 600 * attempts));
+      response = await callGateway();
+    }
 
     if (!response.ok) {
       if (response.status === 429) {
