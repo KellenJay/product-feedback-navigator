@@ -9,6 +9,7 @@ import { ResultsView } from "@/components/insightflow/ResultsView";
 import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel";
 import { AnalysisFooter } from "@/components/insightflow/AnalysisFooter";
 import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
+import { libraryStore } from "@/components/insightflow/libraryStore";
 import type { AnalysisResult } from "@/components/insightflow/types";
 
 export const Route = createFileRoute("/")({
@@ -133,6 +134,22 @@ function AnalyzePage() {
       }
 
       setResult(data as AnalysisResult);
+      // Auto-record into Library as a recent (unsaved) entry.
+      const sourceLabel =
+        mode === "paste"
+          ? "Pasted feedback"
+          : mode === "upload"
+            ? uploadedFile?.name ?? "Uploaded file"
+            : researchQuery
+              ? `Deep research: ${researchQuery.slice(0, 60)}`
+              : "Deep research";
+      libraryStore.recordAnalysis({
+        productName,
+        businessGoal,
+        mode,
+        source: sourceLabel,
+        result: data as AnalysisResult,
+      });
       toast.success("Analysis complete");
       // Scroll to results
       setTimeout(() => {
