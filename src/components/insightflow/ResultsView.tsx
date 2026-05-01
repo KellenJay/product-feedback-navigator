@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Info } from "lucide-react";
 import {
   Tooltip,
@@ -6,9 +5,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { AnalysisResult, Issue, Sentiment } from "./types";
+import type { AnalysisResult, Sentiment } from "./types";
 import { QuoteList } from "./QuoteList";
-import { MentionsDialog } from "./MentionsDialog";
+import { priorityClasses } from "./roadmap";
 
 interface Props {
   result: AnalysisResult;
@@ -22,7 +21,6 @@ const sentimentClasses: Record<Sentiment, string> = {
 };
 
 export function ResultsView({ result }: Props) {
-  const [mentionsIssue, setMentionsIssue] = useState<Issue | null>(null);
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
