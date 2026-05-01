@@ -40,6 +40,7 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
         : "bg-muted text-foreground-muted";
 
   return (
+    <>
     <article className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-start gap-3">
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground">
