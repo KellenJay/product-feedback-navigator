@@ -30,17 +30,12 @@ function Body({ item }: { item: RoadmapItem }) {
       : item.impactScore >= 40
         ? "bg-warning/15 text-warning"
         : "bg-muted text-foreground-muted";
-  const priorityColor =
-    item.priority === "P1"
-      ? "bg-destructive/15 text-destructive"
-      : item.priority === "P2"
-        ? "bg-warning/15 text-warning"
-        : "bg-muted text-foreground-muted";
+  const priorityColor = priorityClasses(item.priority);
 
   return (
     <>
       <DialogHeader>
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 pr-8">
           <DialogTitle className="text-base leading-snug">
             {item.title}
           </DialogTitle>
