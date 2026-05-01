@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EFFORT_META, formatQuarter, type RoadmapItem } from "./roadmap";
+import { EFFORT_META, formatQuarter, priorityClasses, type RoadmapItem } from "./roadmap";
 import { QuoteList } from "./QuoteList";
 
 interface Props {
