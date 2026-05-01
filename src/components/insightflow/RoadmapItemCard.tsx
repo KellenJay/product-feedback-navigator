@@ -73,9 +73,13 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
             <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
               {item.category}
             </span>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted">
+            <button
+              type="button"
+              onClick={() => setMentionsOpen(true)}
+              className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
+            >
               {item.mentions} mentions
-            </span>
+            </button>
             <span
               className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-foreground"
               title={EFFORT_META[item.effort].days}
