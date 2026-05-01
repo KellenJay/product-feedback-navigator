@@ -47,9 +47,13 @@ export function RoadmapItemCard({ item, rank, onMove, onEffort, onQuarter }: Pro
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-[15px] font-medium leading-snug text-foreground">
+            <button
+              type="button"
+              onClick={() => setDetailOpen(true)}
+              className="text-left text-[15px] font-medium leading-snug text-foreground hover:text-primary hover:underline"
+            >
               {item.title}
-            </h3>
+            </button>
             <span
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${impactColor}`}
             >
