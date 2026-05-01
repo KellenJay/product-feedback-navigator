@@ -5,6 +5,8 @@ import {
   type Bucket,
   type RoadmapItem,
 } from "./roadmap";
+import { RoadmapItemDialog } from "./RoadmapItemDialog";
+import { MentionsDialog } from "./MentionsDialog";
 
 interface Props {
   items: RoadmapItem[];
@@ -19,6 +21,8 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
   const [dragOver, setDragOver] = useState<{ bucket: Bucket; beforeId: string | null } | null>(
     null,
   );
+  const [detail, setDetail] = useState<RoadmapItem | null>(null);
+  const [mentions, setMentions] = useState<RoadmapItem | null>(null);
 
   const grouped: Record<Bucket, RoadmapItem[]> = {
     now: items.filter((i) => i.bucket === "now"),
@@ -95,6 +99,8 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
                     <KanbanCard
                       item={item}
                       isDragging={draggingId === item.id}
+                      onOpenDetail={() => setDetail(item)}
+                      onOpenMentions={() => setMentions(item)}
                       onDragStart={() => setDraggingId(item.id)}
                       onDragEnd={() => {
                         setDraggingId(null);
@@ -132,6 +138,19 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
           </div>
         );
       })}
+
+      <RoadmapItemDialog
+        open={!!detail}
+        onOpenChange={(v) => !v && setDetail(null)}
+        item={detail}
+      />
+      <MentionsDialog
+        open={!!mentions}
+        onOpenChange={(v) => !v && setMentions(null)}
+        title={mentions?.title ?? ""}
+        mentions={mentions?.mentions ?? 0}
+        quotes={mentions?.quotes ?? []}
+      />
     </div>
   );
 }
@@ -139,6 +158,8 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
 function KanbanCard({
   item,
   isDragging,
+  onOpenDetail,
+  onOpenMentions,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -146,6 +167,8 @@ function KanbanCard({
 }: {
   item: RoadmapItem;
   isDragging: boolean;
+  onOpenDetail: () => void;
+  onOpenMentions: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
@@ -172,9 +195,17 @@ function KanbanCard({
         isDragging ? "opacity-40" : ""
       }`}
     >
-      <h4 className="text-[13px] font-medium leading-snug text-foreground">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenDetail();
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        className="block w-full text-left text-[13px] font-medium leading-snug text-foreground hover:text-primary hover:underline"
+      >
         {item.title}
-      </h4>
+      </button>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         <span
           className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${priorityColor}`}
@@ -187,8 +218,19 @@ function KanbanCard({
         <span className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-foreground">
           {item.effort}
         </span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenMentions();
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground-muted hover:bg-muted/80 hover:text-foreground"
+        >
+          {item.mentions} mentions
+        </button>
         <span className="text-[10px] text-foreground-muted">
-          · {item.mentions} mentions · Impact {item.impactScore}
+          · Impact {item.impactScore}
         </span>
       </div>
     </article>
