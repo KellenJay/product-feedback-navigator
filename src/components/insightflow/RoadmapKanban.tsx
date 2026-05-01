@@ -142,13 +142,6 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
         onOpenChange={(v) => !v && setDetail(null)}
         item={detail}
       />
-      <MentionsDialog
-        open={!!mentions}
-        onOpenChange={(v) => !v && setMentions(null)}
-        title={mentions?.title ?? ""}
-        mentions={mentions?.mentions ?? 0}
-        quotes={mentions?.quotes ?? []}
-      />
     </div>
   );
 }
