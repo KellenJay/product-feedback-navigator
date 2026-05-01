@@ -2,15 +2,23 @@ import { useSyncExternalStore } from "react";
 import type { AnalysisResult } from "./types";
 import {
   deriveRoadmap,
+  quarterFromBucket,
   type Bucket,
   type Effort,
+  type Quarter,
   type RoadmapItem,
 } from "./roadmap";
 
-type Override = Partial<Pick<RoadmapItem, "bucket" | "effort">>;
+interface Override {
+  bucket?: Bucket;
+  effort?: Effort;
+  quarter?: Quarter;
+  quarterUserSet?: boolean;
+  order?: number;
+}
 type Overrides = Record<string, Override>;
 
-const STORAGE_KEY = "insightflow.roadmap.v1";
+const STORAGE_KEY = "insightflow.roadmap.v2";
 
 function load(): Overrides {
   if (typeof window === "undefined") return {};
@@ -58,12 +66,31 @@ function getServerSnapshot() {
 export const roadmapStore = {
   get: () => overrides,
   setBucket: (id: string, bucket: Bucket) => {
-    overrides = { ...overrides, [id]: { ...overrides[id], bucket } };
+    const prev = overrides[id] ?? {};
+    // If user hasn't pinned a quarter, recompute from bucket.
+    const next: Override = { ...prev, bucket };
+    if (!prev.quarterUserSet) {
+      next.quarter = quarterFromBucket(bucket);
+    }
+    overrides = { ...overrides, [id]: next };
     persist(overrides);
     emit();
   },
   setEffort: (id: string, effort: Effort) => {
     overrides = { ...overrides, [id]: { ...overrides[id], effort } };
+    persist(overrides);
+    emit();
+  },
+  setQuarter: (id: string, quarter: Quarter) => {
+    overrides = {
+      ...overrides,
+      [id]: { ...overrides[id], quarter, quarterUserSet: true },
+    };
+    persist(overrides);
+    emit();
+  },
+  setOrder: (id: string, order: number) => {
+    overrides = { ...overrides, [id]: { ...overrides[id], order } };
     persist(overrides);
     emit();
   },
@@ -78,6 +105,8 @@ export function useRoadmap(result: AnalysisResult): {
   items: RoadmapItem[];
   setBucket: (id: string, b: Bucket) => void;
   setEffort: (id: string, e: Effort) => void;
+  setQuarter: (id: string, q: Quarter) => void;
+  setOrder: (id: string, n: number) => void;
   reset: () => void;
   hasOverrides: boolean;
 } {
@@ -90,12 +119,16 @@ export function useRoadmap(result: AnalysisResult): {
       ...it,
       bucket: o.bucket ?? it.bucket,
       effort: o.effort ?? it.effort,
+      quarter: o.quarter ?? (o.bucket ? quarterFromBucket(o.bucket) : it.quarter),
+      order: o.order,
     };
   });
   return {
     items,
     setBucket: roadmapStore.setBucket,
     setEffort: roadmapStore.setEffort,
+    setQuarter: roadmapStore.setQuarter,
+    setOrder: roadmapStore.setOrder,
     reset: roadmapStore.reset,
     hasOverrides: Object.keys(ov).length > 0,
   };
