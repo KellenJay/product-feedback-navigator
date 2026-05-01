@@ -2,11 +2,11 @@ import { useState } from "react";
 import {
   BUCKET_META,
   formatQuarter,
+  priorityClasses,
   type Bucket,
   type RoadmapItem,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
-import { MentionsDialog } from "./MentionsDialog";
 
 interface Props {
   items: RoadmapItem[];
