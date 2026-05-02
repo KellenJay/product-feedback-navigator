@@ -111,10 +111,22 @@ export const roadmapStore = {
     emit();
   },
   setQuarter: (id: string, quarter: Quarter) => {
-    overrides = {
-      ...overrides,
-      [id]: { ...overrides[id], quarter, quarterUserSet: true },
+    const prev = overrides[id] ?? {};
+    const next: Override = {
+      ...prev,
+      quarter,
+      quarterUserSet: true,
     };
+    // Cascade: bucket and priority follow the quarter unless the user has
+    // explicitly set them.
+    const derivedBucket = bucketFromQuarter(quarter);
+    if (!prev.bucketUserSet) {
+      next.bucket = derivedBucket;
+    }
+    if (!prev.priorityUserSet) {
+      next.priority = bucketToPriority(derivedBucket);
+    }
+    overrides = { ...overrides, [id]: next };
     persist(overrides);
     emit();
   },
