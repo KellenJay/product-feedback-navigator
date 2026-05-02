@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
-  EFFORT_META,
   formatQuarter,
   addQuarters,
   currentQuarter,
@@ -12,8 +11,6 @@ import {
   type RoadmapItem,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
-
-type Priority = "P1" | "P2" | "P3";
 
 interface Props {
   item: RoadmapItem;
