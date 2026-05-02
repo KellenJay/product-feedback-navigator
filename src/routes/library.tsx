@@ -159,8 +159,8 @@ function LibraryPage() {
             <span className="text-gradient-brand">on tap</span>
           </h1>
           <p className="relative mx-auto mt-4 max-w-[560px] text-[14px] leading-7 text-foreground-muted">
-            Save the analyses worth keeping, organize them in folders, and
-            revisit recent searches for up to 7 days — even if you forgot to
+            Save the analyses worth keeping, organize them in folders and
+            revisit recent searches for up to 7 days even if you forgot to
             save them.
           </p>
         </section>
@@ -326,7 +326,7 @@ function LibraryPage() {
                 <header className="flex items-baseline justify-between border-b border-border pb-2">
                   <div className="flex items-baseline gap-2">
                     <h2 className="text-base font-semibold text-foreground">
-                      Recent (unsaved)
+                      Recent Search (unsaved)
                     </h2>
                     <span className="text-[12px] text-foreground-muted">
                       Removed after 7 days
