@@ -77,12 +77,12 @@ function EmptyState() {
         className="font-display mx-auto mt-3 max-w-[460px] text-foreground"
         style={{ fontSize: "clamp(26px, 4vw, 36px)", lineHeight: 1.1 }}
       >
-        Run an analysis first — your roadmap builds itself.
+        Run an analysis first, then your roadmap builds itself.
       </h1>
       <p className="mx-auto mt-4 max-w-[480px] text-[14px] leading-7 text-foreground-muted">
         InsightFlow turns your prioritized pain points into a sprint-ready plan.
-        Once you've analyzed feedback, the items appear here grouped into Now,
-        Next, and Later — with quarter timelines, Kanban, and Gantt views.
+        Once you've analyzed feedback, the items appear here with quarter
+        timelines, Kanban and Gantt views.
       </p>
       <Link
         to="/"
