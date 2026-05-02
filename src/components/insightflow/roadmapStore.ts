@@ -15,17 +15,14 @@ type Priority = "P1" | "P2" | "P3";
 
 interface Override {
   bucket?: Bucket;
-  bucketUserSet?: boolean;
   effort?: Effort;
   quarter?: Quarter;
-  quarterUserSet?: boolean;
   priority?: Priority;
-  priorityUserSet?: boolean;
   order?: number;
 }
 type Overrides = Record<string, Override>;
 
-const STORAGE_KEY = "insightflow.roadmap.v3";
+const STORAGE_KEY = "insightflow.roadmap.v4";
 
 function load(): Overrides {
   if (typeof window === "undefined") return {};
@@ -76,32 +73,36 @@ function priorityToBucket(p: Priority): Bucket {
   return "later";
 }
 
+// Bucket ↔ Priority ↔ Quarter are kept in lock-step. Whichever the user
+// changes, the other two are recomputed so all three views stay consistent.
 export const roadmapStore = {
   get: () => overrides,
   setBucket: (id: string, bucket: Bucket) => {
     const prev = overrides[id] ?? {};
-    const next: Override = { ...prev, bucket, bucketUserSet: true };
-    if (!prev.quarterUserSet) {
-      next.quarter = quarterFromBucket(bucket);
-    }
-    if (!prev.priorityUserSet) {
-      next.priority = bucketToPriority(bucket);
-    }
-    overrides = { ...overrides, [id]: next };
+    overrides = {
+      ...overrides,
+      [id]: {
+        ...prev,
+        bucket,
+        priority: bucketToPriority(bucket),
+        quarter: quarterFromBucket(bucket),
+      },
+    };
     persist(overrides);
     emit();
   },
   setPriority: (id: string, priority: Priority) => {
     const prev = overrides[id] ?? {};
-    const next: Override = { ...prev, priority, priorityUserSet: true };
-    if (!prev.bucketUserSet) {
-      const newBucket = priorityToBucket(priority);
-      next.bucket = newBucket;
-      if (!prev.quarterUserSet) {
-        next.quarter = quarterFromBucket(newBucket);
-      }
-    }
-    overrides = { ...overrides, [id]: next };
+    const newBucket = priorityToBucket(priority);
+    overrides = {
+      ...overrides,
+      [id]: {
+        ...prev,
+        priority,
+        bucket: newBucket,
+        quarter: quarterFromBucket(newBucket),
+      },
+    };
     persist(overrides);
     emit();
   },
@@ -112,21 +113,16 @@ export const roadmapStore = {
   },
   setQuarter: (id: string, quarter: Quarter) => {
     const prev = overrides[id] ?? {};
-    const next: Override = {
-      ...prev,
-      quarter,
-      quarterUserSet: true,
+    const newBucket = bucketFromQuarter(quarter);
+    overrides = {
+      ...overrides,
+      [id]: {
+        ...prev,
+        quarter,
+        bucket: newBucket,
+        priority: bucketToPriority(newBucket),
+      },
     };
-    // Cascade: bucket and priority follow the quarter unless the user has
-    // explicitly set them.
-    const derivedBucket = bucketFromQuarter(quarter);
-    if (!prev.bucketUserSet) {
-      next.bucket = derivedBucket;
-    }
-    if (!prev.priorityUserSet) {
-      next.priority = bucketToPriority(derivedBucket);
-    }
-    overrides = { ...overrides, [id]: next };
     persist(overrides);
     emit();
   },

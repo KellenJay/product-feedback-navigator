@@ -41,14 +41,14 @@ export const BUCKET_META: Record<
   later: {
     label: "Later",
     subtitle: "Backlog",
-    tone: "text-foreground-muted",
+    tone: "text-success",
   },
 };
 
-export const EFFORT_META: Record<Effort, { label: string; days: string }> = {
-  S: { label: "S", days: "~1–2 days" },
-  M: { label: "M", days: "~3–5 days" },
-  L: { label: "L", days: "~1–2 weeks" },
+export const EFFORT_META: Record<Effort, { label: string }> = {
+  S: { label: "Small" },
+  M: { label: "Medium" },
+  L: { label: "Large" },
 };
 
 function priorityToBucket(p: Issue["priority"]): Bucket {
@@ -175,7 +175,7 @@ export function buildRoadmapMarkdown(
     lines.push(`## ${meta.label} (${meta.subtitle})`);
     for (const it of inBucket) {
       lines.push(
-        `- **${it.title}** — ${formatQuarter(it.quarter)} · Impact ${it.impactScore} · ${it.priority} · Effort ${it.effort} · ${it.mentions} mentions`,
+        `- **${it.title}** — ${formatQuarter(it.quarter)} · Impact ${it.impactScore} · ${it.priority} · Effort ${EFFORT_META[it.effort].label} · ${it.mentions} mentions`,
       );
       if (it.rationale) lines.push(`  ${it.rationale}`);
       const q = it.quotes[0];

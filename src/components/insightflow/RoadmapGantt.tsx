@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   addQuarters,
   currentQuarter,
+  EFFORT_META,
   priorityClasses,
   quarterIndex,
   quartersEqual,
@@ -191,7 +192,7 @@ function Bar({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={`flex h-full w-full cursor-grab items-center rounded-md px-2 text-left text-[10px] font-medium leading-tight transition-opacity hover:opacity-80 active:cursor-grabbing ${priorityClasses(item.priority)}`}
-      title={`${item.title} · ${item.priority} · Effort ${item.effort} · ${item.mentions} mentions — drag to reschedule, click for details`}
+      title={`${item.title} · ${item.priority} · Effort ${EFFORT_META[item.effort].label} · ${item.mentions} mentions — drag to reschedule, click for details`}
     >
       <span className="line-clamp-2 pointer-events-none">{item.title}</span>
     </button>

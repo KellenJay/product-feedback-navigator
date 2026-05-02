@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { MarketContext } from "./types";
 
 interface Props {
@@ -78,7 +77,7 @@ export function MarketContextPanel({
         <span className="text-foreground-muted/60"> · Auto-generated based on your analysis</span>
       </h2>
 
-      {loading && <LoadingState />}
+      {loading && <StreamingActivityLog productName={productName} />}
 
       {!loading && error && (
         <div className="mt-4 flex items-start gap-3 rounded-md border border-border bg-surface p-3 text-[13px]">
@@ -190,19 +189,61 @@ export function MarketContextPanel({
   );
 }
 
-function LoadingState() {
+function StreamingActivityLog({ productName }: { productName: string }) {
+  const steps = [
+    `Scanning training data for "${productName || "this product"}" reviews…`,
+    "Reading G2, Capterra, and Reddit threads…",
+    "Analyzing competitor positioning and signals…",
+    "Cross-referencing industry trends from the last 90 days…",
+    "Synthesizing market verdict against your pain points…",
+  ];
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    if (active >= steps.length - 1) return;
+    const t = setTimeout(() => setActive((a) => a + 1), 1400 + active * 200);
+    return () => clearTimeout(t);
+  }, [active, steps.length]);
+
   return (
     <div className="mt-4">
-      <div className="space-y-2.5">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-[88%]" />
-        <Skeleton className="h-4 w-[72%]" />
-      </div>
-      <p className="mt-3 text-[13px] text-foreground-muted">
-        Pulling market signals, competitor activity, and industry trends…
-      </p>
-      <p className="mt-1 text-[11px] text-foreground-muted/70">
-        Synthesized from AI training data
+      <ul className="space-y-2">
+        {steps.map((s, i) => {
+          const done = i < active;
+          const current = i === active;
+          return (
+            <li
+              key={i}
+              className={`flex items-start gap-2.5 text-[13px] leading-6 transition-opacity duration-300 ${
+                done || current ? "opacity-100" : "opacity-40"
+              }`}
+            >
+              <span className="mt-1 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                {done ? (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                ) : current ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                ) : (
+                  <span className="h-1.5 w-1.5 rounded-full bg-foreground-muted/40" />
+                )}
+              </span>
+              <span
+                className={
+                  done
+                    ? "text-foreground-muted line-through decoration-foreground-muted/30"
+                    : current
+                      ? "text-foreground"
+                      : "text-foreground-muted"
+                }
+              >
+                {s}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-[11px] text-foreground-muted/70">
+        Synthesized from AI training data · This may take a few seconds
       </p>
     </div>
   );

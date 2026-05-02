@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   BUCKET_META,
+  EFFORT_META,
   formatQuarter,
   priorityClasses,
   type Bucket,
@@ -198,7 +199,7 @@ function KanbanCard({
           {formatQuarter(item.quarter)}
         </span>
         <span className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-foreground">
-          {item.effort}
+          {EFFORT_META[item.effort].label}
         </span>
         <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground-muted">
           {item.mentions} mentions

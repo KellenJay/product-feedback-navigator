@@ -4,6 +4,8 @@ import { Toaster, toast } from "sonner";
 import {
   Bookmark,
   BookmarkCheck,
+  ChevronDown,
+  ChevronRight,
   Clock,
   FolderPlus,
   Folder,
@@ -59,10 +61,16 @@ type FolderSel = "all" | "unfiled" | string;
 function LibraryPage() {
   const { entries, folders } = useLibrary();
   const [folderSel, setFolderSel] = useState<FolderSel>("all");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    all: true,
+  });
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<LibraryEntry | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [folderDraft, setFolderDraft] = useState("");
+
+  const toggleExpanded = (key: string) =>
+    setExpanded((m) => ({ ...m, [key]: !m[key] }));
 
   const saved = useMemo(() => entries.filter((e) => e.saved), [entries]);
   const recent = useMemo(
@@ -180,29 +188,50 @@ function LibraryPage() {
               <nav className="mt-2 space-y-0.5">
                 <FolderItem
                   active={folderSel === "all"}
-                  onClick={() => setFolderSel("all")}
+                  expanded={!!expanded["all"]}
+                  onToggle={() => toggleExpanded("all")}
+                  onClick={() => {
+                    setFolderSel("all");
+                    if (!expanded["all"]) toggleExpanded("all");
+                  }}
                   icon={<LibraryIcon className="h-3.5 w-3.5" />}
                   label="All saved"
                   count={saved.length}
+                  children={saved}
+                  onSelectEntry={(e) => setDetail(e)}
                 />
                 <FolderItem
                   active={folderSel === "unfiled"}
-                  onClick={() => setFolderSel("unfiled")}
+                  expanded={!!expanded["unfiled"]}
+                  onToggle={() => toggleExpanded("unfiled")}
+                  onClick={() => {
+                    setFolderSel("unfiled");
+                    if (!expanded["unfiled"]) toggleExpanded("unfiled");
+                  }}
                   icon={<Folder className="h-3.5 w-3.5" />}
                   label="Unfiled Items"
                   count={saved.filter((e) => !e.folderId).length}
+                  children={saved.filter((e) => !e.folderId)}
+                  onSelectEntry={(e) => setDetail(e)}
                 />
 
                 {folders.map((f) => {
-                  const count = saved.filter((e) => e.folderId === f.id).length;
+                  const inFolder = saved.filter((e) => e.folderId === f.id);
                   return (
                     <FolderRow
                       key={f.id}
                       folderId={f.id}
                       name={f.name}
-                      count={count}
+                      count={inFolder.length}
                       active={folderSel === f.id}
-                      onSelect={() => setFolderSel(f.id)}
+                      expanded={!!expanded[f.id]}
+                      onToggle={() => toggleExpanded(f.id)}
+                      entries={inFolder}
+                      onSelectEntry={(e) => setDetail(e)}
+                      onSelect={() => {
+                        setFolderSel(f.id);
+                        if (!expanded[f.id]) toggleExpanded(f.id);
+                      }}
                       onDelete={() => {
                         libraryStore.deleteFolder(f.id);
                         if (folderSel === f.id) setFolderSel("all");
@@ -373,33 +402,65 @@ function EmptyState() {
 
 function FolderItem({
   active,
+  expanded,
+  onToggle,
   onClick,
   icon,
   label,
   count,
+  children,
+  onSelectEntry,
 }: {
   active: boolean;
+  expanded: boolean;
+  onToggle: () => void;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
   count: number;
+  children: LibraryEntry[];
+  onSelectEntry: (e: LibraryEntry) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors ${
-        active
-          ? "bg-primary/10 text-primary"
-          : "text-foreground hover:bg-surface"
-      }`}
-    >
-      <span className="flex items-center gap-2 truncate">
-        {icon}
-        <span className="truncate">{label}</span>
-      </span>
-      <span className="text-[10px] text-foreground-muted">{count}</span>
-    </button>
+    <div>
+      <div
+        className={`group flex items-center gap-1 rounded-md pr-2 transition-colors ${
+          active ? "bg-primary/10" : "hover:bg-surface"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="rounded p-1 text-foreground-muted hover:text-foreground"
+          aria-label={expanded ? "Collapse" : "Expand"}
+        >
+          {expanded ? (
+            <ChevronDown className="h-3 w-3" />
+          ) : (
+            <ChevronRight className="h-3 w-3" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onClick}
+          className={`flex flex-1 items-center justify-between gap-2 py-1.5 text-left text-[13px] transition-colors ${
+            active ? "text-primary" : "text-foreground"
+          }`}
+        >
+          <span className="flex items-center gap-2 truncate">
+            {icon}
+            <span className="truncate">{label}</span>
+          </span>
+          <span className="text-[10px] text-foreground-muted">{count}</span>
+        </button>
+      </div>
+      {expanded && (
+        <ChildList entries={children} onSelectEntry={onSelectEntry} />
+      )}
+    </div>
   );
 }
 
@@ -408,6 +469,10 @@ function FolderRow({
   name,
   count,
   active,
+  expanded,
+  onToggle,
+  entries,
+  onSelectEntry,
   onSelect,
   onDelete,
 }: {
@@ -415,6 +480,10 @@ function FolderRow({
   name: string;
   count: number;
   active: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  entries: LibraryEntry[];
+  onSelectEntry: (e: LibraryEntry) => void;
   onSelect: () => void;
   onDelete: () => void;
 }) {
@@ -449,63 +518,117 @@ function FolderRow({
   }
 
   return (
-    <div
-      className={`group flex items-center justify-between gap-1 rounded-md pr-1 transition-colors ${
-        active ? "bg-primary/10" : "hover:bg-surface"
-      }`}
-    >
-      <button
-        type="button"
-        onClick={onSelect}
-        className={`flex flex-1 items-center gap-2 truncate px-2 py-1.5 text-left text-[13px] ${
-          active ? "text-primary" : "text-foreground"
+    <div>
+      <div
+        className={`group flex items-center gap-1 rounded-md pr-1 transition-colors ${
+          active ? "bg-primary/10" : "hover:bg-surface"
         }`}
       >
-        <Folder className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">{name}</span>
-      </button>
-      <span className="text-[10px] text-foreground-muted">{count}</span>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setRenaming(true);
-        }}
-        className="hidden rounded p-1 text-foreground-muted hover:text-foreground group-hover:inline-flex"
-        aria-label="Rename folder"
-      >
-        <Pencil className="h-3 w-3" />
-      </button>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="rounded p-1 text-foreground-muted hover:text-foreground"
+          aria-label={expanded ? "Collapse" : "Expand"}
+        >
+          {expanded ? (
+            <ChevronDown className="h-3 w-3" />
+          ) : (
+            <ChevronRight className="h-3 w-3" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onSelect}
+          className={`flex flex-1 items-center gap-2 truncate py-1.5 text-left text-[13px] ${
+            active ? "text-primary" : "text-foreground"
+          }`}
+        >
+          <Folder className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{name}</span>
+        </button>
+        <span className="text-[10px] text-foreground-muted">{count}</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setRenaming(true);
+          }}
+          className="hidden rounded p-1 text-foreground-muted hover:text-foreground group-hover:inline-flex"
+          aria-label="Rename folder"
+        >
+          <Pencil className="h-3 w-3" />
+        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              type="button"
+              className="hidden rounded p-1 text-foreground-muted hover:text-destructive group-hover:inline-flex"
+              aria-label="Delete folder"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete folder "{name}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The folder will be removed. Any analyses inside it will be moved
+                to Unfiled Items — they will not be deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete folder
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+      {expanded && (
+        <ChildList entries={entries} onSelectEntry={onSelectEntry} />
+      )}
+    </div>
+  );
+}
+
+function ChildList({
+  entries,
+  onSelectEntry,
+}: {
+  entries: LibraryEntry[];
+  onSelectEntry: (e: LibraryEntry) => void;
+}) {
+  const sorted = [...entries].sort((a, b) => b.createdAt - a.createdAt);
+  if (sorted.length === 0) {
+    return (
+      <p className="ml-7 mt-0.5 px-2 py-1 text-[11px] italic text-foreground-muted">
+        Empty
+      </p>
+    );
+  }
+  return (
+    <ul className="ml-7 mt-0.5 space-y-0.5 border-l border-border pl-2">
+      {sorted.map((e) => (
+        <li key={e.id}>
           <button
             type="button"
-            className="hidden rounded p-1 text-foreground-muted hover:text-destructive group-hover:inline-flex"
-            aria-label="Delete folder"
+            onClick={() => onSelectEntry(e)}
+            title={e.title}
+            className="flex w-full items-center gap-1.5 truncate rounded-md px-2 py-1 text-left text-[12px] text-foreground-muted transition-colors hover:bg-surface hover:text-foreground"
           >
-            <Trash2 className="h-3 w-3" />
+            <FileText className="h-3 w-3 shrink-0" />
+            <span className="truncate">{e.title}</span>
           </button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete folder "{name}"?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The folder will be removed. Any analyses inside it will be moved
-              to Unfiled Items — they will not be deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={onDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete folder
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 
