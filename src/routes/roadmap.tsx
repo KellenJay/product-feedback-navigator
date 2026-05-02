@@ -166,7 +166,6 @@ function RoadmapBody({
               bucket={b}
               items={sortedItems.filter((i) => i.bucket === b)}
               onMove={setBucket}
-              onPriority={setPriority}
               onEffort={setEffort}
               onQuarter={setQuarter}
             />
