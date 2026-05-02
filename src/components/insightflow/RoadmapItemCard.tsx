@@ -65,18 +65,12 @@ export function RoadmapItemCard({
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <PillSelect
-                value={item.priority}
-                onChange={(v) => onPriority(v as Priority)}
-                className={priorityClasses(item.priority)}
-                ariaLabel="Change priority"
-                options={[
-                  { value: "P1", label: "P1" },
-                  { value: "P2", label: "P2" },
-                  { value: "P3", label: "P3" },
-                ]}
-                display={item.priority}
-              />
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${priorityClasses(item.priority)}`}
+                title="Priority is set by the bucket (Now/Next/Later)"
+              >
+                {item.priority}
+              </span>
               <PillSelect
                 value={quarterKey(item.quarter)}
                 onChange={(v) => {
@@ -91,7 +85,7 @@ export function RoadmapItemCard({
                 }))}
                 display={formatQuarter(item.quarter)}
               />
-              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
+              <span className="rounded-full border border-border/60 bg-foreground/5 px-2 py-0.5 text-[11px] font-medium text-foreground">
                 {item.category}
               </span>
               <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted">
@@ -103,11 +97,11 @@ export function RoadmapItemCard({
                 className="bg-surface text-foreground border border-border"
                 ariaLabel="Change effort"
                 options={[
-                  { value: "S", label: "Small" },
-                  { value: "M", label: "Medium" },
-                  { value: "L", label: "Large" },
+                  { value: "S", label: "S" },
+                  { value: "M", label: "M" },
+                  { value: "L", label: "L" },
                 ]}
-                display={`Effort: ${EFFORT_META[item.effort].label}`}
+                display={`Effort ${item.effort}`}
               />
             </div>
 
