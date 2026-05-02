@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { AnalysisResult } from "./types";
 import {
   bucketToPriority,
+  bucketFromQuarter,
   deriveRoadmap,
   quarterFromBucket,
   type Bucket,
