@@ -150,7 +150,7 @@ export function InputPanel(props: Props) {
           <input
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            placeholder="e.g. GoDaddy Managed WordPress"
+            placeholder="e.g. Notion"
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </Field>
@@ -281,7 +281,7 @@ export function InputPanel(props: Props) {
               <input
                 value={researchQuery}
                 onChange={(e) => setResearchQuery(e.target.value)}
-                placeholder="e.g. GoDaddy Managed WordPress reviews on Reddit, G2, Capterra"
+                placeholder="e.g. Notion reviews on Reddit, G2, Capterra"
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </Field>

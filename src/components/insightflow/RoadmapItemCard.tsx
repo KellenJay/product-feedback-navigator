@@ -104,13 +104,12 @@ export function RoadmapItemCard({
                 onChange={(v) => onEffort(v as Effort)}
                 className="bg-surface text-foreground border border-border"
                 ariaLabel="Change effort"
-                title={EFFORT_META[item.effort].days}
                 options={[
-                  { value: "S", label: `S · ${EFFORT_META.S.days}` },
-                  { value: "M", label: `M · ${EFFORT_META.M.days}` },
-                  { value: "L", label: `L · ${EFFORT_META.L.days}` },
+                  { value: "S", label: "Small" },
+                  { value: "M", label: "Medium" },
+                  { value: "L", label: "Large" },
                 ]}
-                display={`Effort ${item.effort}`}
+                display={`Effort: ${EFFORT_META[item.effort].label}`}
               />
             </div>
 
