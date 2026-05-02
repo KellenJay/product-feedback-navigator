@@ -19,7 +19,6 @@ interface Props {
   item: RoadmapItem;
   rank: number;
   onMove: (b: Bucket) => void;
-  onPriority: (p: Priority) => void;
   onEffort: (e: Effort) => void;
   onQuarter: (q: Quarter) => void;
 }
@@ -28,7 +27,6 @@ export function RoadmapItemCard({
   item,
   rank,
   onMove,
-  onPriority,
   onEffort,
   onQuarter,
 }: Props) {
