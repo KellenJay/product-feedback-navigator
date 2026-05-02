@@ -39,8 +39,10 @@ export function RoadmapColumn({ bucket, items, onMove, onEffort, onQuarter }: Pr
               item={item}
               rank={i + 1}
               onMove={(b) => onMove(item.id, b)}
-              onPriority={(p) => onPriority(item.id, p)}
               onEffort={(e) => onEffort(item.id, e)}
+              onQuarter={(q) => onQuarter(item.id, q)}
+            />
+          ))}
               onQuarter={(q) => onQuarter(item.id, q)}
             />
           ))}
