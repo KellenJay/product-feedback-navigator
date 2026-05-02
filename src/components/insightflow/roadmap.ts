@@ -102,6 +102,13 @@ export function quarterFromBucket(bucket: Bucket, today: Date = new Date()): Qua
   return addQuarters(base, offset);
 }
 
+export function bucketFromQuarter(q: Quarter, today: Date = new Date()): Bucket {
+  const diff = quarterIndex(q) - quarterIndex(currentQuarter(today));
+  if (diff <= 0) return "now";
+  if (diff === 1) return "next";
+  return "later";
+}
+
 export function formatQuarter(q: Quarter): string {
   return `Q${q.q} ${q.year}`;
 }
