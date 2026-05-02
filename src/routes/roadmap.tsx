@@ -182,7 +182,9 @@ function RoadmapBody({
         />
       )}
 
-      {view === "gantt" && <RoadmapGantt items={sortedItems} />}
+      {view === "gantt" && (
+        <RoadmapGantt items={sortedItems} onQuarter={setQuarter} />
+      )}
 
       <div className="mx-auto max-w-[780px]">
         <RoadmapFooter
