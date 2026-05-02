@@ -61,10 +61,16 @@ type FolderSel = "all" | "unfiled" | string;
 function LibraryPage() {
   const { entries, folders } = useLibrary();
   const [folderSel, setFolderSel] = useState<FolderSel>("all");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    all: true,
+  });
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<LibraryEntry | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [folderDraft, setFolderDraft] = useState("");
+
+  const toggleExpanded = (key: string) =>
+    setExpanded((m) => ({ ...m, [key]: !m[key] }));
 
   const saved = useMemo(() => entries.filter((e) => e.saved), [entries]);
   const recent = useMemo(
@@ -182,29 +188,50 @@ function LibraryPage() {
               <nav className="mt-2 space-y-0.5">
                 <FolderItem
                   active={folderSel === "all"}
-                  onClick={() => setFolderSel("all")}
+                  expanded={!!expanded["all"]}
+                  onToggle={() => toggleExpanded("all")}
+                  onClick={() => {
+                    setFolderSel("all");
+                    if (!expanded["all"]) toggleExpanded("all");
+                  }}
                   icon={<LibraryIcon className="h-3.5 w-3.5" />}
                   label="All saved"
                   count={saved.length}
+                  children={saved}
+                  onSelectEntry={(e) => setDetail(e)}
                 />
                 <FolderItem
                   active={folderSel === "unfiled"}
-                  onClick={() => setFolderSel("unfiled")}
+                  expanded={!!expanded["unfiled"]}
+                  onToggle={() => toggleExpanded("unfiled")}
+                  onClick={() => {
+                    setFolderSel("unfiled");
+                    if (!expanded["unfiled"]) toggleExpanded("unfiled");
+                  }}
                   icon={<Folder className="h-3.5 w-3.5" />}
                   label="Unfiled Items"
                   count={saved.filter((e) => !e.folderId).length}
+                  children={saved.filter((e) => !e.folderId)}
+                  onSelectEntry={(e) => setDetail(e)}
                 />
 
                 {folders.map((f) => {
-                  const count = saved.filter((e) => e.folderId === f.id).length;
+                  const inFolder = saved.filter((e) => e.folderId === f.id);
                   return (
                     <FolderRow
                       key={f.id}
                       folderId={f.id}
                       name={f.name}
-                      count={count}
+                      count={inFolder.length}
                       active={folderSel === f.id}
-                      onSelect={() => setFolderSel(f.id)}
+                      expanded={!!expanded[f.id]}
+                      onToggle={() => toggleExpanded(f.id)}
+                      entries={inFolder}
+                      onSelectEntry={(e) => setDetail(e)}
+                      onSelect={() => {
+                        setFolderSel(f.id);
+                        if (!expanded[f.id]) toggleExpanded(f.id);
+                      }}
                       onDelete={() => {
                         libraryStore.deleteFolder(f.id);
                         if (folderSel === f.id) setFolderSel("all");
