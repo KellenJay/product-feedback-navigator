@@ -129,7 +129,7 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
               )}
               <p className="mt-1 text-[11px] text-foreground-muted">
                 {live.source} · {formatRelativeDate(live.createdAt)}
-                {folderName ? ` · in ${folderName}` : live.saved ? " · Unfiled Items" : " · Recent (unsaved)"}
+                {folderName ? ` · in ${folderName}` : live.saved ? " · Unfiled Items" : " · Recent Search (unsaved)"}
               </p>
             </div>
           </div>
