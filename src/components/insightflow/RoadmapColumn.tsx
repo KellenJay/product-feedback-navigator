@@ -43,9 +43,6 @@ export function RoadmapColumn({ bucket, items, onMove, onEffort, onQuarter }: Pr
               onQuarter={(q) => onQuarter(item.id, q)}
             />
           ))}
-              onQuarter={(q) => onQuarter(item.id, q)}
-            />
-          ))}
         </div>
       )}
     </section>
