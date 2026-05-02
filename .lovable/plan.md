@@ -1,89 +1,45 @@
-## Goal
+## Goals
 
-Cut redundant interactions, fix priority color rules (P3 = green), make priority and bucket move together both ways across all views, and clean up small UI overlaps.
+1. **Roadmap → Gantt view**: make tickets drag-and-droppable across quarter columns. Dropping into a new quarter updates the item's quarter and cascades priority + bucket + color exactly like the existing dropdown logic.
+2. **Roadmap → List view**: declutter each card by removing the row of bottom dropdowns (Priority / Effort / Quarter) and turning the top inline pills (P1, Q2 26, Effort) into clickable dropdowns. Keep the "Move to Now/Next/Later" dropdown — it stays at the bottom by the Evidence area.
+3. **Library**: no changes — user concluded the current rename/delete behavior is fine.
 
-## 1. Remove all "X mentions" pop-ups (keep the number visible)
+## Scope
 
-The mentions modal duplicates evidence already shown in-page (Analyze quotes, Roadmap "Show evidence", Roadmap detail dialog). Convert every clickable mentions pill back to a static `<span>`.
+### 1. `RoadmapGantt.tsx` — drag & drop bars between quarter columns
+- Add HTML5 drag handlers (`draggable`, `onDragStart`, `onDragOver`, `onDrop`) so each `<Bar>` can be picked up and each grid cell becomes a drop target.
+- On drop, call a new `onQuarterChange(itemId, quarter)` prop wired to `roadmapStore.setQuarter`. Reuse the same store call the List view already uses, so all the existing cascade logic (priority/bucket/color stays consistent based on quarter→bucket relationship — see note below) works.
+- Quarter→bucket cascade: extend `roadmapStore` with a `setQuarterCascade` action (or extend `setQuarter`) that, when the user moves an item to a future quarter, also updates bucket and (if not user-overridden) priority — current quarter → `now`/P1 (red), +1 quarter → `next`/P2 (yellow), +2 or beyond → `later`/P3 (green). This matches the user's expectation: dragging "battery life" to Q3 2026 (1 quarter out from current Q2 2026) turns it yellow/P2.
+- Visual feedback while dragging: highlight the hovered drop cell (e.g. ring or bg-primary/10) and dim the source row.
+- Pass `onQuarterChange` from `src/routes/roadmap.tsx` (already has access to `setQuarter` from `useRoadmap`).
+- The existing click-to-open dialog must still work — only initiate drag from a pointer drag, not a click.
 
-- `src/components/insightflow/ResultsView.tsx` — pill becomes a span; remove `mentionsIssue` state and `<MentionsDialog>`.
-- `src/components/insightflow/RoadmapItemCard.tsx` — pill becomes a span; remove `mentionsOpen` state and `<MentionsDialog>`.
-- `src/components/insightflow/RoadmapKanban.tsx` — pill becomes a span; remove `mentions` state, `onOpenMentions` prop, and `<MentionsDialog>`.
-- Delete `src/components/insightflow/MentionsDialog.tsx` (no remaining importers).
+### 2. `RoadmapItemCard.tsx` — inline pill dropdowns, remove bottom controls
+- Delete the bottom "Priority / Effort / Quarter" `SelectControl` row entirely.
+- Keep the "Move to" `SelectControl` — render it next to / below the "Show evidence" toggle so it remains as the only bottom control.
+- Convert the three pill spans in the metadata row into native `<select>` controls styled to look identical to the current pills:
+  - **P1 pill** → select with options P1/P2/P3, keeps `priorityClasses(value)` styling so color updates live (red/yellow/green).
+  - **Q2 26 pill** → select with the same 8-quarter list as `QuarterSelect`, keeps `bg-primary/15 text-primary` styling.
+  - **Effort pill** → select with S/M/L, keeps current styling and tooltip with `EFFORT_META[value].days`.
+- The Category and Mentions pills stay as static spans (read-only).
+- Implementation note: build a small `PillSelect` helper that wraps a `<select>` in the pill's classes and uses an absolutely-positioned transparent `<select>` over a styled span (standard pattern) so the dropdown chevron isn't required and styling stays clean.
 
-## 2. P3 color = green (everywhere)
+### 3. No changes
+- `RoadmapItemDialog.tsx` (popup details) — leave as is.
+- `RoadmapKanban.tsx` — leave as is.
+- `roadmap.ts` types — no shape changes; may add a small `bucketFromQuarter(q, today)` helper used by the cascade.
+- Library page — no changes this round.
 
-Today P3 uses muted gray. Switch to success-green and apply consistently.
+## Files to edit
 
-A new helper in `src/components/insightflow/roadmap.ts`:
+- `src/components/insightflow/roadmapStore.ts` — add cascade behavior to `setQuarter` (or new `setQuarterAndCascade`) so dragging on Gantt updates bucket + priority unless user-overridden.
+- `src/components/insightflow/roadmap.ts` — add `bucketFromQuarter(q, today)` helper.
+- `src/components/insightflow/RoadmapGantt.tsx` — drag-and-drop on bars + quarter columns; accept `onQuarter` prop.
+- `src/routes/roadmap.tsx` — pass `setQuarter` to `<RoadmapGantt>`.
+- `src/components/insightflow/RoadmapItemCard.tsx` — restructure pill row into inline dropdowns; remove bottom Priority/Effort/Quarter controls; keep Move-to.
 
-```ts
-export function priorityClasses(p: "P1" | "P2" | "P3") {
-  if (p === "P1") return "bg-destructive/15 text-destructive";
-  if (p === "P2") return "bg-warning/15 text-warning";
-  return "bg-success/15 text-success"; // P3
-}
-```
+## Acceptance criteria
 
-Replace inline priority class ladders (currently duplicated in `ResultsView.tsx`, `RoadmapItemCard.tsx`, `RoadmapItemDialog.tsx`, `RoadmapKanban.tsx`) with this helper.
-
-In `ResultsView.tsx`, the P1/P2/P3 explainer tooltip: change the P3 line's `<span>` from `text-foreground` to `text-success` so the legend matches the pills.
-
-## 3. Priority ↔ Bucket are linked, both directions
-
-Today: changing the bucket re-buckets the item but `priority` (P1/P2/P3) stays frozen on the AI-derived value, so a "Now" card can still show P2.
-
-Bucket→priority mapping (mirror of the existing `priorityToBucket`):
-- now → P1, next → P2, later → P3.
-
-Implementation:
-
-- `src/components/insightflow/roadmap.ts`: add `bucketToPriority(b: Bucket): "P1"|"P2"|"P3"`.
-- `src/components/insightflow/roadmapStore.ts`:
-  - Extend `Override` with `priority?: "P1"|"P2"|"P3"` and `priorityUserSet?: boolean`.
-  - In `setBucket`: if `!prev.priorityUserSet`, also set `priority = bucketToPriority(bucket)` (alongside the existing quarter recompute).
-  - Add `setPriority(id, priority)`: stores `priority` + `priorityUserSet: true`, AND if `!prev.bucketUserSet` flips `bucket` to `priorityToBucket(priority)` (and recomputes quarter the same way `setBucket` does when `!quarterUserSet`). Add a `bucketUserSet` flag set when the user explicitly drags/picks a bucket so manual choices win.
-  - In `useRoadmap`: apply `priority` override when present.
-- Expose `setPriority` from `useRoadmap`.
-
-Wire the new control:
-
-- `src/components/insightflow/RoadmapItemCard.tsx`: add a `Priority` `<SelectControl>` next to Move/Effort/Quarter with options P1/P2/P3, calling `onPriority`.
-- `src/routes/roadmap.tsx`: pass `setPriority` down to each `RoadmapItemCard` (mirror existing `onMove/onEffort/onQuarter` plumbing).
-- `RoadmapKanban.tsx` already calls `onMoveBucket` on drop — no extra change; the store will sync priority automatically (and the card's priority pill will recolor across List/Kanban/Gantt because everything reads `item.priority` from the same hook).
-
-Result: drag a card from Now→Next, P1 chip turns into yellow P2 everywhere; manually picking P3 in List moves it to Later (unless the user has pinned the bucket). User-pinned values are preserved via the `*UserSet` flags.
-
-## 4. Dialog X-button no longer overlaps the Impact pill
-
-Shared `RoadmapItemDialog.tsx` has the title row with the Impact pill on the right; the Radix `<Close>` X sits at `absolute right-4 top-4` and lands on top of the pill.
-
-Fix in `src/components/insightflow/RoadmapItemDialog.tsx`:
-- Add `pr-10` to the `DialogHeader` flex row (reserves ~40px so the pill clears the X).
-- The pill stays right-aligned but inside the safe zone.
-
-No change to the shared `dialog.tsx` (other dialogs are unaffected).
-
-## 5. Gantt item-column titles: not clickable
-
-In `src/components/insightflow/RoadmapGantt.tsx`, replace the title `<button>` in the Item column with a plain `<div>` (keep `line-clamp-2`, drop hover styling and the `setActive` handler). The Q-column bars remain clickable and continue to open `RoadmapItemDialog`.
-
-## Files
-
-**Edited**
-- `src/components/insightflow/roadmap.ts` — add `bucketToPriority`, `priorityClasses` helpers.
-- `src/components/insightflow/roadmapStore.ts` — link priority↔bucket overrides with `priorityUserSet` / `bucketUserSet` flags; expose `setPriority`.
-- `src/components/insightflow/ResultsView.tsx` — static mentions span, drop dialog import/state, use `priorityClasses`, recolor P3 in tooltip.
-- `src/components/insightflow/RoadmapItemCard.tsx` — static mentions span, drop dialog state, use `priorityClasses`, add Priority select.
-- `src/components/insightflow/RoadmapKanban.tsx` — static mentions span, drop dialog/state/prop, use `priorityClasses`.
-- `src/components/insightflow/RoadmapItemDialog.tsx` — `pr-10` header, use `priorityClasses`.
-- `src/components/insightflow/RoadmapGantt.tsx` — non-clickable item title, use `priorityClasses` for `Bar` background (P3 = success).
-- `src/routes/roadmap.tsx` — thread `setPriority` into `RoadmapItemCard`.
-
-**Deleted**
-- `src/components/insightflow/MentionsDialog.tsx`
-
-## Out of scope (this turn)
-
-- The Library tab (you'll move there after this lands).
-- Any change to PDF/CSV exports — they already include full evidence per item.
+- On Gantt: I can drag any bar to a different quarter column. Color and priority badge update to match the new quarter (Now=red/P1, Next=yellow/P2, Later=green/P3). Clicking a bar still opens the detail dialog.
+- On List: each card shows a single bottom control ("Move to") next to the evidence toggle. The P1/Quarter/Effort pills at the top of the card are now interactive dropdowns. Changing any one updates the card live and persists.
+- Library tab is unchanged.
