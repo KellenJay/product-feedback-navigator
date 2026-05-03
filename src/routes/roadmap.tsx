@@ -13,6 +13,7 @@ import {
   RoadmapViewTabs,
   type RoadmapView,
 } from "@/components/insightflow/RoadmapViewTabs";
+import { PRDPanel } from "@/components/insightflow/PRDPanel";
 import type { Bucket, RoadmapItem } from "@/components/insightflow/roadmap";
 
 export const Route = createFileRoute("/roadmap")({
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/roadmap")({
 });
 
 function RoadmapPage() {
-  const [{ result, productName }] = useAnalyzeStore();
+  const [{ result, productName, businessGoal }] = useAnalyzeStore();
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,7 +61,11 @@ function RoadmapPage() {
         {!result ? (
           <EmptyState />
         ) : (
-          <RoadmapBody result={result} productName={productName} />
+          <RoadmapBody
+            result={result}
+            productName={productName}
+            businessGoal={businessGoal}
+          />
         )}
       </main>
     </div>
@@ -97,9 +102,11 @@ function EmptyState() {
 function RoadmapBody({
   result,
   productName,
+  businessGoal,
 }: {
   result: NonNullable<ReturnType<typeof useAnalyzeStore>[0]["result"]>;
   productName: string;
+  businessGoal: string;
 }) {
   const { items, setBucket, setPriority, setEffort, setQuarter, reset, hasOverrides } =
     useRoadmap(result);
@@ -186,6 +193,12 @@ function RoadmapBody({
       )}
 
       <div className="mx-auto max-w-[780px]">
+        <PRDPanel
+          productName={productName}
+          businessGoal={businessGoal}
+          items={sortedItems}
+          executiveSummary={result.executiveSummary}
+        />
         <RoadmapFooter
           items={sortedItems}
           productName={productName}
