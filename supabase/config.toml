@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.market-context]
 verify_jwt = false
+
+[functions.generate-prd]
+verify_jwt = false
