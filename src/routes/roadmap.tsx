@@ -36,7 +36,7 @@ export const Route = createFileRoute("/roadmap")({
 });
 
 function RoadmapPage() {
-  const [{ result, productName }] = useAnalyzeStore();
+  const [{ result, productName, businessGoal }] = useAnalyzeStore();
 
   return (
     <div className="min-h-screen bg-background">
