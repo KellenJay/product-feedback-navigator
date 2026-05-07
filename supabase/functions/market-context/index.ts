@@ -223,8 +223,23 @@ Hard rules:
     }
 
     const data = await response.json();
-    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
+    const context = extractContext(data);
+    if (!context) {
+      // One retry — Gemini sometimes skips the tool call on first try.
+      const retry = await callGateway();
+      if (retry.ok) {
+        const retryData = await retry.json();
+        const retryCtx = extractContext(retryData);
+        if (retryCtx) {
+          return new Response(JSON.stringify(retryCtx), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+      console.error(
+        "No structured context. Raw:",
+        JSON.stringify(data).slice(0, 800),
+      );
       return new Response(
         JSON.stringify({ error: "AI did not return structured context." }),
         {
@@ -233,8 +248,6 @@ Hard rules:
         },
       );
     }
-
-    const context = JSON.parse(toolCall.function.arguments);
     return new Response(JSON.stringify(context), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
