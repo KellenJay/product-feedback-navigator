@@ -93,12 +93,13 @@ export function RoadmapItemCard({
                 onChange={(v) => onEffort(v as Effort)}
                 className="bg-surface text-foreground border border-border"
                 ariaLabel="Change effort"
+                title="Effort: L=Low, M=Medium, H=High"
                 options={[
-                  { value: "S", label: "S" },
-                  { value: "M", label: "M" },
                   { value: "L", label: "L" },
+                  { value: "M", label: "M" },
+                  { value: "H", label: "H" },
                 ]}
-                display={`Effort ${item.effort}`}
+                display={item.effort}
               />
             </div>
 

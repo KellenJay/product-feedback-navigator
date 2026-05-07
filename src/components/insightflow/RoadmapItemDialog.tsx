@@ -62,8 +62,11 @@ function Body({ item }: { item: RoadmapItem }) {
         <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground-muted">
           {item.mentions} mentions
         </span>
-        <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-foreground">
-          Effort: {EFFORT_META[item.effort].label}
+        <span
+          className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-foreground"
+          title={`Effort ${EFFORT_META[item.effort].label}`}
+        >
+          Effort {item.effort}
         </span>
         <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-foreground capitalize">
           {item.bucket}

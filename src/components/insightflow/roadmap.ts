@@ -1,7 +1,7 @@
 import type { AnalysisResult, Issue, Quote } from "./types";
 
 export type Bucket = "now" | "next" | "later";
-export type Effort = "S" | "M" | "L";
+export type Effort = "L" | "M" | "H";
 
 export interface Quarter {
   q: 1 | 2 | 3 | 4;
@@ -46,9 +46,9 @@ export const BUCKET_META: Record<
 };
 
 export const EFFORT_META: Record<Effort, { label: string }> = {
-  S: { label: "Small" },
+  L: { label: "Low" },
   M: { label: "Medium" },
-  L: { label: "Large" },
+  H: { label: "High" },
 };
 
 function priorityToBucket(p: Issue["priority"]): Bucket {
@@ -70,8 +70,8 @@ export function priorityClasses(p: "P1" | "P2" | "P3"): string {
 }
 
 function deriveEffort(issue: Issue): Effort {
-  if (issue.impactScore >= 75) return "L";
-  if (issue.mentions >= 10 && issue.impactScore < 50) return "S";
+  if (issue.impactScore >= 75) return "H";
+  if (issue.mentions >= 10 && issue.impactScore < 50) return "L";
   return "M";
 }
 

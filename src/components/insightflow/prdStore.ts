@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { PRD, PRDResponse } from "./prd";
+import { normalizeEffort, type PRD, type PRDResponse } from "./prd";
 import type { RoadmapItem } from "./roadmap";
 
 type Status = "idle" | "loading" | "ready" | "error";
@@ -22,9 +22,22 @@ function load(): State {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return { prd: null, status: "idle", error: null, key: null };
     const parsed = JSON.parse(raw);
+    let prd: PRD | null = parsed.prd ?? null;
+    if (prd) {
+      prd = {
+        ...prd,
+        epics: prd.epics.map((ep) => ({
+          ...ep,
+          userStories: ep.userStories.map((s) => ({
+            ...s,
+            estimatedEffort: normalizeEffort(s.estimatedEffort),
+          })),
+        })),
+      };
+    }
     return {
-      prd: parsed.prd ?? null,
-      status: parsed.prd ? "ready" : "idle",
+      prd,
+      status: prd ? "ready" : "idle",
       error: null,
       key: parsed.key ?? null,
     };
@@ -93,7 +106,17 @@ async function generate(
     if (error) throw new Error(error.message || "PRD generation failed");
     const resp = data as PRDResponse;
     if (!resp?.prd) throw new Error("Malformed PRD response");
-    set({ prd: resp.prd, status: "ready", error: null, key });
+    const normalized: PRD = {
+      ...resp.prd,
+      epics: resp.prd.epics.map((ep) => ({
+        ...ep,
+        userStories: ep.userStories.map((s) => ({
+          ...s,
+          estimatedEffort: normalizeEffort(s.estimatedEffort),
+        })),
+      })),
+    };
+    set({ prd: normalized, status: "ready", error: null, key });
   } catch (e) {
     set({
       status: "error",

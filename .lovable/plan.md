@@ -1,60 +1,76 @@
-# Add Auto-Generated PRD Section to Roadmap
+## 1. Effort terms → L / M / H (Low / Medium / High)
 
-Below the roadmap views, add a **Product Requirements Document** panel that's generated automatically (no extra button) from the current roadmap output, rendered collapsed by default with tabs, PDF export, and copy-to-clipboard.
+Today the Effort scale is **S / M / L** meaning Small / Medium / Large, and the UI shows e.g. "Effort S". You want **L / M / H** meaning Low / Medium / High, displayed as just the letter.
 
-## Note on the AI provider
-The spec says "Claude API call." This project uses **Lovable AI** (built-in, no key required) — calling Claude directly would require the user to add an Anthropic API key. I'll use Lovable AI (`google/gemini-3-flash-preview` by default, or `openai/gpt-5` for stronger structured reasoning) with the **exact system prompt you provided**, returning the same JSON schema. If you'd rather pay/connect Anthropic specifically, say so and I'll swap the provider.
-
-## What gets built
-
-### 1. New edge function: `generate-prd`
-- Path: `supabase/functions/generate-prd/index.ts` (+ `verify_jwt = false` in `supabase/config.toml`).
-- Input: `{ productName, businessGoal, roadmapItems }`.
-- Calls Lovable AI Gateway with the verbatim system prompt from the request and the roadmap serialized as the user message.
-- Uses **tool calling** (`submit_prd`) with a JSON schema mirroring the PRD shape (prd.title/version/status/overview/problemStatement/goals/nonGoals/epics[…userStories[…acceptanceCriteria, designNotes, devNotes, estimatedEffort S|M|L|XL, priority P1|P2|P3]]/executionGuide[…]/successMetrics/openQuestions).
-- Handles 429 / 402 with friendly messages, same as `analyze-feedback`.
-
-### 2. New types & store
-- `src/components/insightflow/prd.ts` — TypeScript types for the PRD JSON.
-- `src/components/insightflow/prdStore.ts` — small store keyed by analysis (uses `useAnalyzeStore` result as input signal). Caches the latest PRD in memory + localStorage so it persists across navigation. Exposes `{ prd, status: "idle"|"loading"|"ready"|"error", error, regenerate() }`.
-- Auto-trigger: when `RoadmapBody` mounts with a `result` and there's no cached PRD for that result hash, fire the generation in the background. Roadmap renders immediately; PRD card shows skeleton until ready.
-
-### 3. New UI: `PRDPanel.tsx` (+ subcomponents)
-Mounted in `src/routes/roadmap.tsx` directly under the existing roadmap views (above `RoadmapFooter`). Width matches the 780px column.
-
-**Header bar (always visible):**
-- Left: `Product Requirements Document · v1.0 · Draft` (status pill colored).
-- Right: `View full PRD ↓` / `Collapse ↑` toggle, `Export PDF`, `Copy`.
-- While loading: header shows shimmer + "Drafting PRD…"; while errored: shows Retry.
-
-**Collapsed:** just the header bar (matches existing card styling — `rounded-2xl border bg-surface`).
-
-**Expanded:** tab bar reusing the look of `RoadmapViewTabs`, with 4 tabs:
-
-1. **Overview** — title, version pill, status pill, overview paragraph, problem statement, numbered goals list, non-goals as muted/strikethrough list.
-2. **Epics & User Stories** — each epic = card with ID, title, description, businessValue. Stories below are collapsible rows (Radix `Collapsible`) showing: ID + title, italic "As a… I want… so that…", acceptance criteria as visual unchecked checkboxes (Given/When/Then), design notes in blue-left-bordered callout, dev notes in purple-left-bordered callout, Effort + Priority pills (reusing `priorityClasses` from `roadmap.ts` and a parallel `effortClasses` helper).
-3. **Execution Guide** — per phase: card with sprint, focus, task list, dependencies, risks, then a distinct "PM Recommendation" surface box (`bg-primary/5 border-l-4 border-primary` with subtle icon) for `recommendedApproach`.
-4. **Success Metrics & Open Questions** — numbered metrics list with a static target value column; open questions list with an amber `Unresolved` pill.
-
-### 4. Export & copy
-- `src/components/insightflow/exportPrdPdf.ts` — new jsPDF builder; renders all 4 tabs sequentially with section headers, callouts as colored blocks, pills as filled rects. Filename: `{productName}-prd.pdf`.
-- Copy: serializes PRD as structured plain text (markdown-ish: `# Title`, `## Epic E1 — …`, `### Story E1-S1`, AC as `- [ ] …`, etc.) and writes to clipboard with a sonner toast — same UX as the existing roadmap copy.
-
-## Files
-
-**New:**
-- `supabase/functions/generate-prd/index.ts`
+- `src/components/insightflow/roadmap.ts`
+  - Change `Effort` type from `"S" | "M" | "L"` → `"L" | "M" | "H"`.
+  - Update `EFFORT_META` labels to `Low / Medium / High`.
+  - Update `deriveEffort()` thresholds so impact ≥ 75 → `H`, low‑mention low‑impact → `L`, otherwise `M`.
+  - `buildRoadmapMarkdown` keeps a `Effort Low/Medium/High` word in markdown export (clearer in plaintext).
+- `src/components/insightflow/RoadmapItemCard.tsx`
+  - Dropdown options become `L / M / H`.
+  - Display text drops the word — show just the letter (e.g. `L`, `M`, `H`) instead of `Effort L`.
+- `src/components/insightflow/RoadmapSummary.tsx`, `RoadmapKanban.tsx`, `RoadmapItemDialog.tsx`, `RoadmapGantt.tsx` — update tag rendering to show only the letter.
+- `src/components/insightflow/exportPdf.ts`, `exportCsv.ts` — column header stays "Effort", value is the letter.
+- `src/components/insightflow/roadmapStore.ts`
+  - Add a one‑time migration in `load()` that rewrites any persisted override `effort` from old `S/M/L` (Small/Medium/Large) to new `L/M/H` (Low/Medium/High) using mapping `S→L`, `M→M`, `L→H`. Bump storage key to `insightflow.roadmap.v5` so the rewrite happens once on read.
 - `src/components/insightflow/prd.ts`
-- `src/components/insightflow/prdStore.ts`
-- `src/components/insightflow/PRDPanel.tsx`
-- `src/components/insightflow/PRDOverview.tsx`
-- `src/components/insightflow/PRDEpics.tsx`
-- `src/components/insightflow/PRDExecution.tsx`
-- `src/components/insightflow/PRDMetrics.tsx`
-- `src/components/insightflow/exportPrdPdf.ts`
+  - `PRDEffort` becomes `"L" | "M" | "H"` (drop `XL`).
+  - `effortClasses` updated; PRD generation function (`supabase/functions/generate-prd/index.ts`) prompt and JSON schema updated to emit `L/M/H` and the JSON normalizer maps any legacy `S→L`, `XL→H`.
+- `PRDPanel.tsx` — story chip shows just the letter.
 
-**Edited:**
-- `supabase/config.toml` — register `generate-prd` with `verify_jwt = false`.
-- `src/routes/roadmap.tsx` — render `<PRDPanel />` above `<RoadmapFooter />` inside `RoadmapBody`.
+## 2. Save analysis = save everything (roadmap + PRD + market context)
 
-No DB migrations, no new dependencies (reuses `jspdf`, `jspdf-autotable`, `sonner`, Radix Collapsible).
+Currently a "saved" library entry only contains the raw `AnalysisResult`. The roadmap overrides, the generated PRD, and the market context live in three separate global stores keyed by nothing, so reopening an entry re‑does work and loses tweaks.
+
+- Extend `LibraryEntry` (`libraryStore.ts`):
+  ```ts
+  roadmapOverrides?: Record<string, RoadmapOverride>;
+  prd?: PRD | null;
+  marketContext?: MarketContext | null;
+  ```
+- New helper `libraryStore.captureSnapshot(id)` reads the current contents of `roadmapStore`, `prdStore`, and a new `marketContextStore` and writes them onto the entry.
+- Wire up:
+  - `libraryStore.save(id)` and `moveToFolder(id, …)` call `captureSnapshot(id)` first, so "Save to library" persists the full bundle.
+  - The Roadmap tab also auto‑updates the snapshot on every roadmap/PRD change **only if the entry is already saved** (so unsaved Recent items stay frozen at first analyze).
+
+## 3. Reopening from library should NOT re‑analyze
+
+Today, opening an entry → "Open in Analyze" only restores `productName / businessGoal / mode / result`. The Roadmap tab then triggers `generate‑prd` and the Analyze tab triggers `market‑context` again, costing money.
+
+- Add `marketContextStore.ts` (same pattern as `prdStore`) keyed by entry id; hydrate it from `entry.marketContext` when opening.
+- `LibraryEntryDialog.handleOpenInAnalyze`:
+  - Push the entry id into `analyzeStore.set({ ..., entryId })`.
+  - Hydrate `roadmapStore` from `entry.roadmapOverrides`, `prdStore` from `entry.prd`, `marketContextStore` from `entry.marketContext`.
+- `MarketContextPanel.tsx`:
+  - Read from `marketContextStore` first; only call the edge function if no cached context exists for the current entry id.
+  - Add an **"Analyze again"** button rendered just above the existing analysis‑completed footer (and just below the verdict card). Click → re‑invokes `market-context`, replaces the cached version, and (if the entry is saved) updates the library snapshot. Same pattern for `prdStore` (skip auto‑generate when a saved PRD is hydrated).
+
+## 4. PRD PDF export — fit A4, proper structure
+
+`exportPrdPdf.ts` overflows the page because section headers (`h1/h2/h3`) and bullet lines call `doc.text(text, …)` with no wrap, and the bottom‑of‑page check uses a hardcoded `285` instead of the real A4 height (297mm).
+
+Rewrite the helpers so every text write goes through `splitTextToSize`:
+
+- Constants: `PAGE_HEIGHT = 297`, `MARGIN_TOP = 20`, `MARGIN_BOTTOM = 20`, `usable = PAGE_HEIGHT - MARGIN_BOTTOM`.
+- New `writeWrapped(doc, text, { x, y, size, font, lineHeight, color })` that wraps to `CONTENT_WIDTH - (x - MARGIN)` and adds a page when `y + lineHeight > usable`.
+- `h1` (18pt bold), `h2` (13pt bold + thin underline), `h3` (11pt bold) all wrap.
+- Paragraphs: 10pt regular, line height 5.5mm, dark grey.
+- Bullets/checkboxes: hanging indent so wrapped lines align under the text, not under the `•`/`☐`.
+- Each major section (`Overview`, `Epics`, `Execution`, `Metrics`) starts on a new page only if there isn't ~40mm of room left, instead of always `addPage()`.
+- Title block: title wraps; subtitle (`v1.0 · Draft · Generated …`) on its own line.
+- File still saved as `<product>-prd.pdf`. After implementing, render the PDF and visually QA each page to confirm nothing clips.
+
+## 5. "Create new folder" inside the move‑to‑folder dropdown
+
+In `LibraryEntryDialog.tsx`, the "Move to folder" dropdown only lists existing folders. Add an inline option at the bottom:
+
+- A `+ New folder…` `DropdownMenuItem` that, when clicked, swaps to a small inline input inside the menu (`onSelect={e => e.preventDefault()}` to keep the menu open).
+- Pressing Enter calls `libraryStore.createFolder(name)` then `libraryStore.moveToFolder(entry.id, newFolder.id)` and closes the menu with a toast `Moved to "<name>"`.
+- Pressing Escape or blurring with empty input cancels.
+- Existing top‑level "+ New folder" button on the Library page is left untouched.
+
+## Out of scope (per your instructions)
+
+- No changes to the analysis‑completed footer, GoDaddy/date/export buttons row, or anything else not listed above.
+- No backend schema changes (everything still local‑storage based).
