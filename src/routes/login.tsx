@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Toaster, toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,14 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const target = search.redirect ?? "/";
+
+  // Bounce as soon as a session appears (handles OAuth callback race).
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) navigate({ to: target, replace: true });
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate, target]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -80,7 +88,7 @@ function LoginPage() {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + target,
+        redirect_uri: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(target)}`,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
