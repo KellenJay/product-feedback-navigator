@@ -17,8 +17,11 @@ import {
 } from "@/components/insightflow/RoadmapViewTabs";
 import { PRDPanel } from "@/components/insightflow/PRDPanel";
 import type { Bucket, RoadmapItem } from "@/components/insightflow/roadmap";
+import { requireAuth } from "@/lib/authGuard";
+import { saveRoadmap } from "@/lib/cloudSync";
 
 export const Route = createFileRoute("/roadmap")({
+  beforeLoad: requireAuth,
   component: RoadmapPage,
   head: () => ({
     meta: [

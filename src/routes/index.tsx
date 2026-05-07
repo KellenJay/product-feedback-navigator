@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { requireAuth } from "@/lib/authGuard";
+import { saveAnalysis } from "@/lib/cloudSync";
 import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +18,7 @@ import { marketContextStore } from "@/components/insightflow/marketContextStore"
 import type { AnalysisResult } from "@/components/insightflow/types";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: requireAuth,
   component: AnalyzePage,
   head: () => ({
     meta: [
@@ -159,6 +162,23 @@ function AnalyzePage() {
       roadmapStore.hydrate({});
       prdStore.reset();
       marketContextStore.hydrate(null, newEntry.id);
+      // Persist to cloud (background; non-blocking).
+      void saveAnalysis({
+        productName,
+        businessGoal,
+        mode,
+        source: sourceLabel,
+        rawFeedback: feedback,
+        result: data as AnalysisResult,
+      }).then((res) => {
+        if (res?.sessionId) {
+          // Replace the local-only entry id with the cloud session id so
+          // subsequent saves (roadmap, PRD, market context) reference the
+          // correct row.
+          setState({ entryId: res.sessionId });
+          marketContextStore.hydrate(null, res.sessionId);
+        }
+      });
       toast.success("Analysis complete");
       // Scroll to results
       setTimeout(() => {
