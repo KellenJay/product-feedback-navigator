@@ -17,7 +17,7 @@ interface Props {
   topPainPoints: { title: string; impactScore: number }[];
 }
 
-async function fetchContext(
+export async function fetchContext(
   productName: string,
   businessGoal: string,
   topPainPoints: { title: string; impactScore: number }[],
@@ -76,17 +76,14 @@ export function MarketContextPanel({
   const [showReasoning, setShowReasoning] = useState(false);
   const entryId = analyzeStore.get().entryId;
 
-  useEffect(() => {
-    // Cached for this entry → skip refetch.
-    if (snap.context && snap.key === entryId) return;
-    if (snap.status === "loading") return;
-    void fetchContext(productName, businessGoal, topPainPoints, entryId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entryId]);
+  // Note: no auto-fetch. Market context only runs when the user explicitly
+  // clicks "Generate market context" or "Analyze again". Saved entries
+  // hydrate via marketContextStore.hydrate() in LibraryEntryDialog.
 
   const loading = snap.status === "loading";
   const error = snap.status === "error" ? snap.error : null;
   const data = snap.context;
+  const isIdle = !loading && !error && !data;
 
   return (
     <section className="mt-5 animate-in fade-in slide-in-from-bottom-3 duration-500 rounded-xl border border-border bg-card p-5">
@@ -94,6 +91,23 @@ export function MarketContextPanel({
         Market context
         <span className="text-foreground-muted/60"> · Auto-generated based on your analysis</span>
       </h2>
+
+      {isIdle && (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-md border border-dashed border-border bg-surface p-4 text-[13px]">
+          <p className="text-foreground-muted">
+            No market context yet. Generate one to scan trends, competitors, and recent industry news.
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              fetchContext(productName, businessGoal, topPainPoints, entryId)
+            }
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-hover"
+          >
+            Generate market context
+          </button>
+        </div>
+      )}
 
       {loading && <StreamingActivityLog productName={productName} />}
 
