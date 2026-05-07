@@ -120,12 +120,21 @@ function LibraryPage() {
     );
   }, [recent, query]);
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = async () => {
     if (!folderDraft.trim()) {
       setCreatingFolder(false);
       return;
     }
-    const f = libraryStore.createFolder(folderDraft);
+    const cloud = await import("@/lib/cloudSync").then((m) =>
+      m.createFolder(folderDraft),
+    );
+    const f = cloud ?? libraryStore.createFolder(folderDraft);
+    if (cloud) {
+      libraryStore.hydrate({
+        entries: libraryStore.get().entries,
+        folders: [cloud, ...libraryStore.get().folders.filter((x) => x.id !== cloud.id)],
+      });
+    }
     setFolderDraft("");
     setCreatingFolder(false);
     setFolderSel(f.id);
