@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
-import type { AnalysisResult } from "./types";
+import type { AnalysisResult, MarketContext } from "./types";
+import type { PRD } from "./prd";
+import type { Overrides as RoadmapOverrides } from "./roadmapStore";
 
 export interface LibraryEntry {
   id: string;
@@ -12,6 +14,11 @@ export interface LibraryEntry {
   createdAt: number; // ms epoch
   saved: boolean;
   folderId: string | null;
+  // Full bundle persisted alongside the analysis so reopening doesn't re-run
+  // expensive AI calls. All optional for backwards-compat with old entries.
+  roadmapOverrides?: RoadmapOverrides;
+  prd?: PRD | null;
+  marketContext?: MarketContext | null;
 }
 
 export interface LibraryFolder {
