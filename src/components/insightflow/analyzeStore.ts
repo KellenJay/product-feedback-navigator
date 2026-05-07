@@ -9,6 +9,9 @@ export interface AnalyzeState {
   uploadedFile: { name: string; content: string } | null;
   researchQuery: string;
   result: AnalysisResult | null;
+  // Library entry id this analyze session is bound to. Set after a fresh
+  // analysis runs (to record into Library) and when reopening from Library.
+  entryId: string | null;
 }
 
 const initialState: AnalyzeState = {
@@ -19,6 +22,7 @@ const initialState: AnalyzeState = {
   uploadedFile: null,
   researchQuery: "",
   result: null,
+  entryId: null,
 };
 
 // Module-level singleton — survives component remounts (HMR, tab switches,
