@@ -52,6 +52,9 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
   const navigate = useNavigate();
   const [renaming, setRenaming] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const newFolderInputRef = useRef<HTMLInputElement>(null);
 
   if (!entry) return null;
   // Always read fresh entry from store (in case it was updated)
