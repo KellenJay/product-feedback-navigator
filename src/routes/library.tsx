@@ -74,6 +74,13 @@ function LibraryPage() {
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [folderDraft, setFolderDraft] = useState("");
 
+  // Hydrate from cloud on mount.
+  useEffect(() => {
+    void loadLibrary().then((res) => {
+      if (res) libraryStore.hydrate(res);
+    });
+  }, []);
+
   const toggleExpanded = (key: string) =>
     setExpanded((m) => ({ ...m, [key]: !m[key] }));
 
