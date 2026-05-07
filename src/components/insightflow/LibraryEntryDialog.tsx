@@ -96,6 +96,20 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
     toast.success(folderId ? "Moved to folder" : "Moved to Unfiled Items");
   };
 
+  const handleCreateAndMove = () => {
+    const name = newFolderName.trim();
+    if (!name) {
+      setCreatingFolder(false);
+      setNewFolderName("");
+      return;
+    }
+    const folder = libraryStore.createFolder(name);
+    libraryStore.moveToFolder(live.id, folder.id);
+    setCreatingFolder(false);
+    setNewFolderName("");
+    toast.success(`Moved to "${folder.name}"`);
+  };
+
   const handleDelete = () => {
     libraryStore.remove(live.id);
     onOpenChange(false);
