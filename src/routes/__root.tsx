@@ -29,14 +29,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "InsightFlow" },
+      { name: "description", content: "AI-powered product feedback intelligence for product leaders. Analyze user pain points, validate with market research, and generate roadmaps and PRDs in minutes" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "InsightFlow" },
+      { property: "og:description", content: "AI-powered product feedback intelligence for product leaders. Analyze user pain points, validate with market research, and generate roadmaps and PRDs in minutes" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "InsightFlow" },
+      { name: "twitter:description", content: "AI-powered product feedback intelligence for product leaders. Analyze user pain points, validate with market research, and generate roadmaps and PRDs in minutes" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/205bcc84-9e0c-4e3a-a1c5-6526b3c74981" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/205bcc84-9e0c-4e3a-a1c5-6526b3c74981" },
     ],
     links: [
       {
