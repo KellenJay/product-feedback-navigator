@@ -67,7 +67,12 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
       businessGoal: live.businessGoal,
       mode: live.mode,
       result: live.result,
+      entryId: live.id,
     });
+    // Hydrate downstream stores so we don't re-run AI calls.
+    roadmapStore.hydrate(live.roadmapOverrides ?? {});
+    prdStore.hydrate(live.prd ?? null);
+    marketContextStore.hydrate(live.marketContext ?? null, live.id);
     onOpenChange(false);
     navigate({ to: "/" });
     toast.success("Opened in Analyze");
