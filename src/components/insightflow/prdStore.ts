@@ -128,6 +128,11 @@ async function generate(
 export const prdStore = {
   get: () => state,
   generate,
+  hydrate: (prd: PRD | null) => {
+    state = { prd, status: prd ? "ready" : "idle", error: null, key: prd ? "hydrated" : null };
+    persist(state);
+    emit();
+  },
   reset: () => {
     state = { prd: null, status: "idle", error: null, key: null };
     persist(state);
