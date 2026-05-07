@@ -10,6 +10,9 @@ import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel"
 import { AnalysisFooter } from "@/components/insightflow/AnalysisFooter";
 import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
 import { libraryStore } from "@/components/insightflow/libraryStore";
+import { roadmapStore } from "@/components/insightflow/roadmapStore";
+import { prdStore } from "@/components/insightflow/prdStore";
+import { marketContextStore } from "@/components/insightflow/marketContextStore";
 import type { AnalysisResult } from "@/components/insightflow/types";
 
 export const Route = createFileRoute("/")({
@@ -143,13 +146,19 @@ function AnalyzePage() {
             : researchQuery
               ? `Deep research: ${researchQuery.slice(0, 60)}`
               : "Deep research";
-      libraryStore.recordAnalysis({
+      const newEntry = libraryStore.recordAnalysis({
         productName,
         businessGoal,
         mode,
         source: sourceLabel,
         result: data as AnalysisResult,
       });
+      // New analysis → bind session to the new entry, and clear stale
+      // roadmap/PRD/market caches so they regenerate from scratch.
+      setState({ entryId: newEntry.id });
+      roadmapStore.hydrate({});
+      prdStore.reset();
+      marketContextStore.hydrate(null, newEntry.id);
       toast.success("Analysis complete");
       // Scroll to results
       setTimeout(() => {
