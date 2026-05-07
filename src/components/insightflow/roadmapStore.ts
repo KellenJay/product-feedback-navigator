@@ -13,14 +13,14 @@ import {
 
 type Priority = "P1" | "P2" | "P3";
 
-interface Override {
+export interface Override {
   bucket?: Bucket;
   effort?: Effort;
   quarter?: Quarter;
   priority?: Priority;
   order?: number;
 }
-type Overrides = Record<string, Override>;
+export type Overrides = Record<string, Override>;
 
 const STORAGE_KEY = "insightflow.roadmap.v5";
 const LEGACY_KEY = "insightflow.roadmap.v4";
@@ -170,6 +170,11 @@ export const roadmapStore = {
   },
   reset: () => {
     overrides = {};
+    persist(overrides);
+    emit();
+  },
+  hydrate: (next: Overrides | null | undefined) => {
+    overrides = next ? { ...next } : {};
     persist(overrides);
     emit();
   },
