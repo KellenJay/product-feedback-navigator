@@ -119,11 +119,44 @@ export const libraryStore = {
     return entry;
   },
 
-  save(id: string, folderId: string | null = null) {
+  captureSnapshot(id: string) {
+    const ro = roadmapStore.get();
+    const prd = prdStore.get().prd;
+    const mc = marketContextStore.get().context;
     state = {
       ...state,
       entries: state.entries.map((e) =>
-        e.id === id ? { ...e, saved: true, folderId } : e,
+        e.id === id
+          ? {
+              ...e,
+              roadmapOverrides: ro,
+              prd,
+              marketContext: mc,
+            }
+          : e,
+      ),
+    };
+    emit();
+  },
+
+  save(id: string, folderId: string | null = null) {
+    // Snapshot current roadmap/PRD/market context onto entry first.
+    const ro = roadmapStore.get();
+    const prd = prdStore.get().prd;
+    const mc = marketContextStore.get().context;
+    state = {
+      ...state,
+      entries: state.entries.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              saved: true,
+              folderId,
+              roadmapOverrides: ro,
+              prd,
+              marketContext: mc,
+            }
+          : e,
       ),
     };
     emit();
@@ -157,10 +190,22 @@ export const libraryStore = {
   },
 
   moveToFolder(id: string, folderId: string | null) {
+    const ro = roadmapStore.get();
+    const prd = prdStore.get().prd;
+    const mc = marketContextStore.get().context;
     state = {
       ...state,
       entries: state.entries.map((e) =>
-        e.id === id ? { ...e, folderId, saved: true } : e,
+        e.id === id
+          ? {
+              ...e,
+              folderId,
+              saved: true,
+              roadmapOverrides: ro,
+              prd,
+              marketContext: mc,
+            }
+          : e,
       ),
     };
     emit();
