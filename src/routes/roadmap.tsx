@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { TabBar } from "@/components/insightflow/TabBar";
 import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
 import { roadmapStore, useRoadmap } from "@/components/insightflow/roadmapStore";
+import { prdStore } from "@/components/insightflow/prdStore";
+import { libraryStore } from "@/components/insightflow/libraryStore";
 import { RoadmapColumn } from "@/components/insightflow/RoadmapColumn";
 import { RoadmapSummary } from "@/components/insightflow/RoadmapSummary";
 import { RoadmapFooter } from "@/components/insightflow/RoadmapFooter";
