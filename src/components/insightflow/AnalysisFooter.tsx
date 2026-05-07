@@ -4,6 +4,9 @@ import { Link } from "@tanstack/react-router";
 import { ExportMenu } from "./ExportMenu";
 import { exportAnalysisPdf } from "./exportPdf";
 import { exportAnalysisCsv } from "./exportCsv";
+import { analyzeStore } from "./analyzeStore";
+import { libraryStore } from "./libraryStore";
+import { pinEntry } from "@/lib/cloudSync";
 import type { AnalysisResult } from "./types";
 
 interface Props {
@@ -17,6 +20,24 @@ export function AnalysisFooter({ productName, result }: Props) {
     day: "numeric",
     year: "numeric",
   });
+
+  const handleSave = async () => {
+    const id = analyzeStore.get().entryId;
+    if (!id) {
+      toast.error("Nothing to save yet");
+      return;
+    }
+    const lib = libraryStore.get();
+    const e = lib.entries.find((x) => x.id === id);
+    if (e?.saved) {
+      toast.success("Already saved to library ✓");
+      return;
+    }
+    libraryStore.save(id);
+    const ok = await pinEntry(id);
+    if (ok) toast.success("Saved to library ✓");
+    else toast.error("Save failed — please try again");
+  };
 
   return (
     <div className="mt-6 flex flex-col items-start justify-between gap-3 border-t border-border pt-4 sm:flex-row sm:items-center">
@@ -33,11 +54,7 @@ export function AnalysisFooter({ productName, result }: Props) {
         </Link>
         <button
           type="button"
-          onClick={() =>
-            toast.success("Saved", {
-              description: "View it in Library when that tab ships.",
-            })
-          }
+          onClick={handleSave}
           className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
         >
           Save to library

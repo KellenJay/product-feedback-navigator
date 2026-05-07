@@ -95,6 +95,16 @@ function uid() {
 export const libraryStore = {
   get: () => state,
 
+  hydrate(next: { entries: LibraryEntry[]; folders: LibraryFolder[] }) {
+    const cloudIds = new Set(next.entries.map((e) => e.id));
+    const localOnly = state.entries.filter((e) => !cloudIds.has(e.id));
+    state = pruneExpired({
+      entries: [...next.entries, ...localOnly],
+      folders: next.folders,
+    });
+    emit();
+  },
+
   recordAnalysis(input: {
     productName: string;
     businessGoal: string;

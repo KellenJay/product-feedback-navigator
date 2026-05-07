@@ -40,6 +40,14 @@ import { analyzeStore } from "./analyzeStore";
 import { roadmapStore } from "./roadmapStore";
 import { prdStore } from "./prdStore";
 import { marketContextStore } from "./marketContextStore";
+import {
+  pinEntry,
+  unpinEntry,
+  deleteEntry,
+  renameEntry,
+  moveEntryToFolder,
+  createFolder as createFolderCloud,
+} from "@/lib/cloudSync";
 
 interface Props {
   entry: LibraryEntry | null;
@@ -81,37 +89,54 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
     toast.success("Opened in Analyze");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (live.saved) {
       libraryStore.unsave(live.id);
+      void unpinEntry(live.id);
       toast("Removed from library", { description: "Moved back to Recent." });
     } else {
       libraryStore.save(live.id);
-      toast.success("Saved to library");
+      const ok = await pinEntry(live.id);
+      if (ok) toast.success("Saved to library");
+      else toast.error("Save failed — please try again");
     }
   };
 
   const handleMove = (folderId: string | null) => {
     libraryStore.moveToFolder(live.id, folderId);
+    void moveEntryToFolder(live.id, folderId);
     toast.success(folderId ? "Moved to folder" : "Moved to Unfiled Items");
   };
 
-  const handleCreateAndMove = () => {
+  const handleCreateAndMove = async () => {
     const name = newFolderName.trim();
     if (!name) {
       setCreatingFolder(false);
       setNewFolderName("");
       return;
     }
-    const folder = libraryStore.createFolder(name);
-    libraryStore.moveToFolder(live.id, folder.id);
+    const cloud = await createFolderCloud(name);
+    if (cloud) {
+      // Replace the local placeholder via hydrate-style merge.
+      libraryStore.hydrate({
+        entries: libraryStore.get().entries,
+        folders: [cloud, ...libraryStore.get().folders],
+      });
+      libraryStore.moveToFolder(live.id, cloud.id);
+      void moveEntryToFolder(live.id, cloud.id);
+      toast.success(`Moved to "${cloud.name}"`);
+    } else {
+      const folder = libraryStore.createFolder(name);
+      libraryStore.moveToFolder(live.id, folder.id);
+      toast.success(`Moved to "${folder.name}"`);
+    }
     setCreatingFolder(false);
     setNewFolderName("");
-    toast.success(`Moved to "${folder.name}"`);
   };
 
   const handleDelete = () => {
     libraryStore.remove(live.id);
+    void deleteEntry(live.id);
     onOpenChange(false);
     toast("Deleted");
   };
@@ -122,6 +147,7 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
   };
   const commitRename = () => {
     libraryStore.rename(live.id, titleDraft);
+    void renameEntry(live.id, titleDraft.trim() || live.title);
     setRenaming(false);
   };
 

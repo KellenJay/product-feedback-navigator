@@ -36,7 +36,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+import { requireAuth } from "@/lib/authGuard";
+import { useEffect } from "react";
+import { loadLibrary } from "@/lib/cloudSync";
+
 export const Route = createFileRoute("/library")({
+  beforeLoad: requireAuth,
   component: LibraryPage,
   head: () => ({
     meta: [
@@ -68,6 +73,13 @@ function LibraryPage() {
   const [detail, setDetail] = useState<LibraryEntry | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [folderDraft, setFolderDraft] = useState("");
+
+  // Hydrate from cloud on mount.
+  useEffect(() => {
+    void loadLibrary().then((res) => {
+      if (res) libraryStore.hydrate(res);
+    });
+  }, []);
 
   const toggleExpanded = (key: string) =>
     setExpanded((m) => ({ ...m, [key]: !m[key] }));
@@ -108,12 +120,21 @@ function LibraryPage() {
     );
   }, [recent, query]);
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = async () => {
     if (!folderDraft.trim()) {
       setCreatingFolder(false);
       return;
     }
-    const f = libraryStore.createFolder(folderDraft);
+    const cloud = await import("@/lib/cloudSync").then((m) =>
+      m.createFolder(folderDraft),
+    );
+    const f = cloud ?? libraryStore.createFolder(folderDraft);
+    if (cloud) {
+      libraryStore.hydrate({
+        entries: libraryStore.get().entries,
+        folders: [cloud, ...libraryStore.get().folders.filter((x) => x.id !== cloud.id)],
+      });
+    }
     setFolderDraft("");
     setCreatingFolder(false);
     setFolderSel(f.id);
@@ -234,6 +255,7 @@ function LibraryPage() {
                       }}
                       onDelete={() => {
                         libraryStore.deleteFolder(f.id);
+                        void import("@/lib/cloudSync").then((m) => m.deleteFolder(f.id));
                         if (folderSel === f.id) setFolderSel("all");
                         toast("Folder deleted", {
                           description: "Items moved to Unfiled Items.",
@@ -351,9 +373,11 @@ function LibraryPage() {
                         key={e.id}
                         entry={e}
                         onOpen={() => setDetail(e)}
-                        onSave={() => {
+                        onSave={async () => {
                           libraryStore.save(e.id);
-                          toast.success("Saved to library");
+                          const ok = await import("@/lib/cloudSync").then((m) => m.pinEntry(e.id));
+                          if (ok) toast.success("Saved to library");
+                          else toast.error("Save failed — please try again");
                         }}
                       />
                     ))}
