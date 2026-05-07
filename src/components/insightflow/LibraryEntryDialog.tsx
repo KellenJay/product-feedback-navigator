@@ -210,9 +210,41 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
                     {f.name}
                   </DropdownMenuItem>
                 ))}
-                {folders.length === 0 && (
-                  <DropdownMenuItem disabled className="text-foreground-muted">
-                    No folders yet
+                <DropdownMenuSeparator />
+                {creatingFolder ? (
+                  <div
+                    className="px-2 py-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      ref={newFolderInputRef}
+                      autoFocus
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleCreateAndMove();
+                        }
+                        if (e.key === "Escape") {
+                          setCreatingFolder(false);
+                          setNewFolderName("");
+                        }
+                      }}
+                      placeholder="Folder name"
+                      className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+                ) : (
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setCreatingFolder(true);
+                    }}
+                    className="text-foreground-muted"
+                  >
+                    <FolderPlus className="mr-2 h-3.5 w-3.5" />
+                    New folder…
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
