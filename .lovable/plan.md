@@ -1,76 +1,89 @@
-## 1. Effort terms → L / M / H (Low / Medium / High)
+## Goal
 
-Today the Effort scale is **S / M / L** meaning Small / Medium / Large, and the UI shows e.g. "Effort S". You want **L / M / H** meaning Low / Medium / High, displayed as just the letter.
+Move InsightFlow's persistence layer off `localStorage` and onto Lovable Cloud (the backend already attached to this project), behind real authentication. Library entries become user-scoped rows in Postgres so they survive across devices. No UI redesign — just an Auth gate, plus background save/load wiring.
 
-- `src/components/insightflow/roadmap.ts`
-  - Change `Effort` type from `"S" | "M" | "L"` → `"L" | "M" | "H"`.
-  - Update `EFFORT_META` labels to `Low / Medium / High`.
-  - Update `deriveEffort()` thresholds so impact ≥ 75 → `H`, low‑mention low‑impact → `L`, otherwise `M`.
-  - `buildRoadmapMarkdown` keeps a `Effort Low/Medium/High` word in markdown export (clearer in plaintext).
-- `src/components/insightflow/RoadmapItemCard.tsx`
-  - Dropdown options become `L / M / H`.
-  - Display text drops the word — show just the letter (e.g. `L`, `M`, `H`) instead of `Effort L`.
-- `src/components/insightflow/RoadmapSummary.tsx`, `RoadmapKanban.tsx`, `RoadmapItemDialog.tsx`, `RoadmapGantt.tsx` — update tag rendering to show only the letter.
-- `src/components/insightflow/exportPdf.ts`, `exportCsv.ts` — column header stays "Effort", value is the letter.
-- `src/components/insightflow/roadmapStore.ts`
-  - Add a one‑time migration in `load()` that rewrites any persisted override `effort` from old `S/M/L` (Small/Medium/Large) to new `L/M/H` (Low/Medium/High) using mapping `S→L`, `M→M`, `L→H`. Bump storage key to `insightflow.roadmap.v5` so the rewrite happens once on read.
-- `src/components/insightflow/prd.ts`
-  - `PRDEffort` becomes `"L" | "M" | "H"` (drop `XL`).
-  - `effortClasses` updated; PRD generation function (`supabase/functions/generate-prd/index.ts`) prompt and JSON schema updated to emit `L/M/H` and the JSON normalizer maps any legacy `S→L`, `XL→H`.
-- `PRDPanel.tsx` — story chip shows just the letter.
+## What changes for the user
 
-## 2. Save analysis = save everything (roadmap + PRD + market context)
+1. **Sign-in required.** First visit shows a Login page (Email + Password and "Continue with Google"). After signing in, the existing Analyze / Roadmap / Library tabs work exactly as today.
+2. **Library is now cloud-backed.** Every analysis auto-saves to your account. The "Save to library" button pins it (so it doesn't expire after 7 days) and shows a real success/failure toast. Roadmap edits and PRD changes auto-sync to the same row.
+3. **Cross-device.** Sign in on another browser → your library is there.
 
-Currently a "saved" library entry only contains the raw `AnalysisResult`. The roadmap overrides, the generated PRD, and the market context live in three separate global stores keyed by nothing, so reopening an entry re‑does work and loses tweaks.
+## What does NOT change
 
-- Extend `LibraryEntry` (`libraryStore.ts`):
-  ```ts
-  roadmapOverrides?: Record<string, RoadmapOverride>;
-  prd?: PRD | null;
-  marketContext?: MarketContext | null;
-  ```
-- New helper `libraryStore.captureSnapshot(id)` reads the current contents of `roadmapStore`, `prdStore`, and a new `marketContextStore` and writes them onto the entry.
-- Wire up:
-  - `libraryStore.save(id)` and `moveToFolder(id, …)` call `captureSnapshot(id)` first, so "Save to library" persists the full bundle.
-  - The Roadmap tab also auto‑updates the snapshot on every roadmap/PRD change **only if the entry is already saved** (so unsaved Recent items stay frozen at first analyze).
+- No visual redesign, no tab restructuring, no changes to Claude/AI calls, no changes to the Roadmap/PRD/Market Context generation logic.
+- The existing `localStorage` cache is kept as an offline mirror so the app stays snappy and works briefly if the network blips.
 
-## 3. Reopening from library should NOT re‑analyze
+## Database (Lovable Cloud)
 
-Today, opening an entry → "Open in Analyze" only restores `productName / businessGoal / mode / result`. The Roadmap tab then triggers `generate‑prd` and the Analyze tab triggers `market‑context` again, costing money.
+Four tables, all with RLS scoped to `user_id = auth.uid()`:
 
-- Add `marketContextStore.ts` (same pattern as `prdStore`) keyed by entry id; hydrate it from `entry.marketContext` when opening.
-- `LibraryEntryDialog.handleOpenInAnalyze`:
-  - Push the entry id into `analyzeStore.set({ ..., entryId })`.
-  - Hydrate `roadmapStore` from `entry.roadmapOverrides`, `prdStore` from `entry.prd`, `marketContextStore` from `entry.marketContext`.
-- `MarketContextPanel.tsx`:
-  - Read from `marketContextStore` first; only call the edge function if no cached context exists for the current entry id.
-  - Add an **"Analyze again"** button rendered just above the existing analysis‑completed footer (and just below the verdict card). Click → re‑invokes `market-context`, replaces the cached version, and (if the entry is saved) updates the library snapshot. Same pattern for `prdStore` (skip auto‑generate when a saved PRD is hydrated).
+- **profiles** — `user_id` (FK auth.users, cascade), `display_name`, `created_at`. Auto-created via `handle_new_user()` trigger on signup.
+- **projects** — `user_id`, `product_name`, `business_goal`.
+- **analysis_sessions** — `user_id`, `project_id` (FK), `product_name`, `business_goal`, `raw_feedback`, `feedback_source` (`paste`|`upload`|`research`), `analysis_output` jsonb, `market_context_output` jsonb, `model_version`.
+- **roadmaps** — `user_id`, `project_id` (FK), `analysis_session_id` (FK, set null), `product_name`, `roadmap_output` jsonb, `prd_output` jsonb, `roadmap_overrides` jsonb.
+- **eval_runs** — `user_id`, `analysis_session_id` (FK cascade), score columns, `grader_output` jsonb. (Schema only — no UI yet.)
 
-## 4. PRD PDF export — fit A4, proper structure
+RLS: per-table policies — `select/insert/update/delete using (auth.uid() = user_id)`. No `using (true)` open policies.
 
-`exportPrdPdf.ts` overflows the page because section headers (`h1/h2/h3`) and bullet lines call `doc.text(text, …)` with no wrap, and the bottom‑of‑page check uses a hardcoded `285` instead of the real A4 height (297mm).
+Indexes on `(user_id, created_at desc)` for each table.
 
-Rewrite the helpers so every text write goes through `splitTextToSize`:
+## Auth
 
-- Constants: `PAGE_HEIGHT = 297`, `MARGIN_TOP = 20`, `MARGIN_BOTTOM = 20`, `usable = PAGE_HEIGHT - MARGIN_BOTTOM`.
-- New `writeWrapped(doc, text, { x, y, size, font, lineHeight, color })` that wraps to `CONTENT_WIDTH - (x - MARGIN)` and adds a page when `y + lineHeight > usable`.
-- `h1` (18pt bold), `h2` (13pt bold + thin underline), `h3` (11pt bold) all wrap.
-- Paragraphs: 10pt regular, line height 5.5mm, dark grey.
-- Bullets/checkboxes: hanging indent so wrapped lines align under the text, not under the `•`/`☐`.
-- Each major section (`Overview`, `Epics`, `Execution`, `Metrics`) starts on a new page only if there isn't ~40mm of room left, instead of always `addPage()`.
-- Title block: title wraps; subtitle (`v1.0 · Draft · Generated …`) on its own line.
-- File still saved as `<product>-prd.pdf`. After implementing, render the PDF and visually QA each page to confirm nothing clips.
+Use Lovable Cloud's managed auth (no third-party Supabase project, no `sb_publishable_...` key — that key belongs to a different project I can't manage migrations on).
 
-## 5. "Create new folder" inside the move‑to‑folder dropdown
+- Enable **Email + Password** with email verification (no auto-confirm).
+- Enable **Google** via the Lovable Cloud managed flow (`lovable.auth.signInWithOAuth("google", ...)`).
+- Add Password HIBP check.
 
-In `LibraryEntryDialog.tsx`, the "Move to folder" dropdown only lists existing folders. Add an inline option at the bottom:
+## Routes & guards
 
-- A `+ New folder…` `DropdownMenuItem` that, when clicked, swaps to a small inline input inside the menu (`onSelect={e => e.preventDefault()}` to keep the menu open).
-- Pressing Enter calls `libraryStore.createFolder(name)` then `libraryStore.moveToFolder(entry.id, newFolder.id)` and closes the menu with a toast `Moved to "<name>"`.
-- Pressing Escape or blurring with empty input cancels.
-- Existing top‑level "+ New folder" button on the Library page is left untouched.
+```text
+src/routes/
+  __root.tsx            (unchanged shell)
+  login.tsx             (NEW — email/password form + Google button)
+  reset-password.tsx    (NEW — required for password recovery)
+  _authenticated.tsx    (NEW — beforeLoad redirects to /login if no session)
+  _authenticated/
+    index.tsx           (move current src/routes/index.tsx here — Analyze)
+    roadmap.tsx         (moved)
+    library.tsx         (moved)
+```
 
-## Out of scope (per your instructions)
+Header gets a small "user email · Sign out" affordance (no redesign — same TabBar styling).
 
-- No changes to the analysis‑completed footer, GoDaddy/date/export buttons row, or anything else not listed above.
-- No backend schema changes (everything still local‑storage based).
+## Persistence wiring
+
+New module `src/lib/cloudSync.ts` exposes:
+- `saveAnalysis(input) → { projectId, sessionId }`
+- `saveRoadmap({ projectId, sessionId, roadmap, prd, overrides })`
+- `loadLibrary() → LibraryEntry[]` (joins projects + latest analysis_session + latest roadmap, mapped into the existing `LibraryEntry` shape so the Library UI doesn't change)
+- `pinEntry(sessionId)` / `unpinEntry(sessionId)` (sets a `saved` boolean column)
+- `deleteEntry(sessionId)`, `renameEntry`, `moveToFolder`, `createFolder`
+
+Hook points (no UI changes):
+- `src/routes/index.tsx` — after analyze succeeds, call `saveAnalysis`, store `entryId` in `analyzeStore` (already exists).
+- `src/routes/roadmap.tsx` — the existing `useEffect` that mirrors to `libraryStore` also calls `saveRoadmap` (debounced 1s).
+- `src/components/insightflow/MarketContextPanel.tsx` — on success, patch `analysis_sessions.market_context_output`.
+- `src/components/insightflow/AnalysisFooter.tsx` — replace the "Coming soon" toast with: pinned → "Already saved", else `pinEntry()` → "Saved to library ✓" / "Save failed".
+- `src/routes/library.tsx` — on mount, hydrate `libraryStore` from `loadLibrary()` (keeps localStorage as fallback).
+
+All cloud calls are wrapped in try/catch; failures log to console + show a toast but never block the UI.
+
+## Files to add / edit
+
+**New:** `src/routes/login.tsx`, `src/routes/reset-password.tsx`, `src/routes/_authenticated.tsx`, `src/lib/cloudSync.ts`, `src/integrations/lovable/*` (generated by the Configure Social Auth tool).
+
+**Move:** `src/routes/{index,roadmap,library}.tsx` → `src/routes/_authenticated/`.
+
+**Edit:** `analyzeStore.ts`, `libraryStore.ts` (add cloud hydration), `AnalysisFooter.tsx`, `MarketContextPanel.tsx`, `TabBar.tsx` (add sign-out button).
+
+## Out of scope (for this pass)
+
+- Eval runner UI (table created, but no page).
+- Migrating existing localStorage entries to the cloud (one-time best-effort import on first login can be added later if you want).
+- Sharing library entries between users.
+
+## Confirm before I implement
+
+- Email verification ON (users must click a link before they can sign in)?
+- Display name on signup, or skip and just use email?

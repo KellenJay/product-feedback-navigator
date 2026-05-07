@@ -14,7 +14,241 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analysis_sessions: {
+        Row: {
+          analysis_output: Json | null
+          business_goal: string | null
+          created_at: string
+          feedback_source: string | null
+          folder_id: string | null
+          id: string
+          market_context_output: Json | null
+          model_version: string | null
+          product_name: string
+          project_id: string | null
+          raw_feedback: string | null
+          saved: boolean
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_output?: Json | null
+          business_goal?: string | null
+          created_at?: string
+          feedback_source?: string | null
+          folder_id?: string | null
+          id?: string
+          market_context_output?: Json | null
+          model_version?: string | null
+          product_name: string
+          project_id?: string | null
+          raw_feedback?: string | null
+          saved?: boolean
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_output?: Json | null
+          business_goal?: string | null
+          created_at?: string
+          feedback_source?: string | null
+          folder_id?: string | null
+          id?: string
+          market_context_output?: Json | null
+          model_version?: string | null
+          product_name?: string
+          project_id?: string | null
+          raw_feedback?: string | null
+          saved?: boolean
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eval_runs: {
+        Row: {
+          actionability_score: number | null
+          analysis_session_id: string | null
+          categorization_score: number | null
+          created_at: string
+          grader_output: Json | null
+          id: string
+          prd_completeness_score: number | null
+          prioritization_score: number | null
+          total_score: number | null
+          user_id: string
+        }
+        Insert: {
+          actionability_score?: number | null
+          analysis_session_id?: string | null
+          categorization_score?: number | null
+          created_at?: string
+          grader_output?: Json | null
+          id?: string
+          prd_completeness_score?: number | null
+          prioritization_score?: number | null
+          total_score?: number | null
+          user_id: string
+        }
+        Update: {
+          actionability_score?: number | null
+          analysis_session_id?: string | null
+          categorization_score?: number | null
+          created_at?: string
+          grader_output?: Json | null
+          id?: string
+          prd_completeness_score?: number | null
+          prioritization_score?: number | null
+          total_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eval_runs_analysis_session_id_fkey"
+            columns: ["analysis_session_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          business_goal: string | null
+          created_at: string
+          id: string
+          product_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_goal?: string | null
+          created_at?: string
+          id?: string
+          product_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_goal?: string | null
+          created_at?: string
+          id?: string
+          product_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      roadmaps: {
+        Row: {
+          analysis_session_id: string | null
+          created_at: string
+          id: string
+          prd_output: Json | null
+          product_name: string
+          project_id: string | null
+          roadmap_output: Json | null
+          roadmap_overrides: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_session_id?: string | null
+          created_at?: string
+          id?: string
+          prd_output?: Json | null
+          product_name: string
+          project_id?: string | null
+          roadmap_output?: Json | null
+          roadmap_overrides?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_session_id?: string | null
+          created_at?: string
+          id?: string
+          prd_output?: Json | null
+          product_name?: string
+          project_id?: string | null
+          roadmap_output?: Json | null
+          roadmap_overrides?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmaps_analysis_session_id_fkey"
+            columns: ["analysis_session_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roadmaps_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
