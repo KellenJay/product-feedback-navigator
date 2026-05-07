@@ -9,6 +9,7 @@ import {
 } from "./marketContextStore";
 import { analyzeStore } from "./analyzeStore";
 import { libraryStore } from "./libraryStore";
+import { patchMarketContext } from "@/lib/cloudSync";
 
 interface Props {
   productName: string;
@@ -57,6 +58,7 @@ async function fetchContext(
           marketContext: res as MarketContext,
         });
       }
+      void patchMarketContext(entryId, res as MarketContext);
     }
   } catch (e) {
     marketContextStore.setError(
