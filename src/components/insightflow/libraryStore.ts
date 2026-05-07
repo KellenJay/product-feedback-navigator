@@ -195,6 +195,26 @@ export const libraryStore = {
     };
     emit();
   },
+
+  // Update the persisted bundle (roadmap overrides, PRD, market context)
+  // attached to an entry. Used so saved entries always reflect the latest
+  // state of the roadmap/PRD/market panels.
+  updateBundle(
+    id: string,
+    bundle: {
+      roadmapOverrides?: RoadmapOverrides;
+      prd?: PRD | null;
+      marketContext?: MarketContext | null;
+    },
+  ) {
+    state = {
+      ...state,
+      entries: state.entries.map((e) =>
+        e.id === id ? { ...e, ...bundle } : e,
+      ),
+    };
+    emit();
+  },
 };
 
 export function useLibrary(): LibraryState {
