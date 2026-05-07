@@ -152,6 +152,8 @@ export function usePRD(opts: {
   useEffect(() => {
     if (opts.items.length === 0) return;
     if (snap.status === "loading") return;
+    // If hydrated from a saved entry, don't auto-regenerate.
+    if (snap.key === "hydrated" && snap.prd) return;
     if (snap.key === key && snap.prd) return;
     void generate(
       opts.productName,
