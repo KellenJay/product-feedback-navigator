@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Bookmark, BookmarkCheck, FolderInput, Trash2, ExternalLink, Pencil } from "lucide-react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  FolderInput,
+  Trash2,
+  ExternalLink,
+  Pencil,
+  FolderPlus,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +37,9 @@ import {
 import { ResultsView } from "./ResultsView";
 import { libraryStore, useLibrary, formatRelativeDate, type LibraryEntry } from "./libraryStore";
 import { analyzeStore } from "./analyzeStore";
+import { roadmapStore } from "./roadmapStore";
+import { prdStore } from "./prdStore";
+import { marketContextStore } from "./marketContextStore";
 
 interface Props {
   entry: LibraryEntry | null;
