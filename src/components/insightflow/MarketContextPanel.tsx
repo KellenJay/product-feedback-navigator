@@ -3,6 +3,12 @@ import { toast } from "sonner";
 import { AlertCircle, RefreshCw, Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { MarketContext } from "./types";
+import {
+  marketContextStore,
+  useMarketContext,
+} from "./marketContextStore";
+import { analyzeStore } from "./analyzeStore";
+import { libraryStore } from "./libraryStore";
 
 interface Props {
   productName: string;
@@ -10,65 +16,75 @@ interface Props {
   topPainPoints: { title: string; impactScore: number }[];
 }
 
+async function fetchContext(
+  productName: string,
+  businessGoal: string,
+  topPainPoints: { title: string; impactScore: number }[],
+  key: string | null,
+) {
+  marketContextStore.setLoading(key);
+  try {
+    const { data: res, error: fnErr } = await supabase.functions.invoke(
+      "market-context",
+      { body: { productName, businessGoal, topPainPoints } },
+    );
+    if (fnErr) {
+      const msg = (fnErr as { message?: string })?.message ?? "Failed";
+      if (msg.includes("429")) {
+        toast.error("Rate limited", {
+          description: "Too many requests. Try again in a moment.",
+        });
+      } else if (msg.includes("402")) {
+        toast.error("AI credits exhausted", {
+          description: "Add credits in your workspace to continue.",
+        });
+      }
+      marketContextStore.setError(msg);
+      return;
+    }
+    if ((res as { error?: string })?.error) {
+      marketContextStore.setError((res as { error: string }).error);
+      return;
+    }
+    marketContextStore.setReady(res as MarketContext, key);
+    // If session is bound to a saved entry, persist the new context too.
+    const entryId = analyzeStore.get().entryId;
+    if (entryId) {
+      const lib = libraryStore.get();
+      const e = lib.entries.find((x) => x.id === entryId);
+      if (e?.saved) {
+        libraryStore.updateBundle(entryId, {
+          marketContext: res as MarketContext,
+        });
+      }
+    }
+  } catch (e) {
+    marketContextStore.setError(
+      e instanceof Error ? e.message : "Unknown error",
+    );
+  }
+}
+
 export function MarketContextPanel({
   productName,
   businessGoal,
   topPainPoints,
 }: Props) {
-  const [data, setData] = useState<MarketContext | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const snap = useMarketContext();
   const [showReasoning, setShowReasoning] = useState(false);
-  const [attempt, setAttempt] = useState(0);
+  const entryId = analyzeStore.get().entryId;
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setData(null);
-    setShowReasoning(false);
-
-    (async () => {
-      try {
-        const { data: res, error: fnErr } = await supabase.functions.invoke(
-          "market-context",
-          { body: { productName, businessGoal, topPainPoints } },
-        );
-
-        if (cancelled) return;
-
-        if (fnErr) {
-          const msg = (fnErr as { message?: string })?.message ?? "Failed";
-          if (msg.includes("429")) {
-            toast.error("Rate limited", {
-              description: "Too many requests. Try again in a moment.",
-            });
-          } else if (msg.includes("402")) {
-            toast.error("AI credits exhausted", {
-              description: "Add credits in your workspace to continue.",
-            });
-          }
-          setError(msg);
-          return;
-        }
-        if ((res as { error?: string })?.error) {
-          setError((res as { error: string }).error);
-          return;
-        }
-        setData(res as MarketContext);
-      } catch (e) {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Unknown error");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
+    // Cached for this entry → skip refetch.
+    if (snap.context && snap.key === entryId) return;
+    if (snap.status === "loading") return;
+    void fetchContext(productName, businessGoal, topPainPoints, entryId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempt]);
+  }, [entryId]);
+
+  const loading = snap.status === "loading";
+  const error = snap.status === "error" ? snap.error : null;
+  const data = snap.context;
 
   return (
     <section className="mt-5 animate-in fade-in slide-in-from-bottom-3 duration-500 rounded-xl border border-border bg-card p-5">
@@ -88,7 +104,9 @@ export function MarketContextPanel({
           </div>
           <button
             type="button"
-            onClick={() => setAttempt((a) => a + 1)}
+            onClick={() =>
+              fetchContext(productName, businessGoal, topPainPoints, entryId)
+            }
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs text-foreground hover:bg-surface"
           >
             <RefreshCw className="h-3 w-3" />
@@ -183,6 +201,20 @@ export function MarketContextPanel({
             showReasoning={showReasoning}
             onToggle={() => setShowReasoning((s) => !s)}
           />}
+
+          {/* Analyze again */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() =>
+                fetchContext(productName, businessGoal, topPainPoints, entryId)
+              }
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs text-foreground hover:bg-surface"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Analyze again
+            </button>
+          </div>
         </div>
       )}
     </section>

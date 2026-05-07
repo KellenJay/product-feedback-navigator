@@ -202,7 +202,7 @@ function KanbanCard({
           className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-foreground"
           title={`Effort ${EFFORT_META[item.effort].label}`}
         >
-          {item.effort}
+          Effort {item.effort}
         </span>
         <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground-muted">
           {item.mentions} mentions

@@ -128,6 +128,11 @@ async function generate(
 export const prdStore = {
   get: () => state,
   generate,
+  hydrate: (prd: PRD | null) => {
+    state = { prd, status: prd ? "ready" : "idle", error: null, key: prd ? "hydrated" : null };
+    persist(state);
+    emit();
+  },
   reset: () => {
     state = { prd: null, status: "idle", error: null, key: null };
     persist(state);
@@ -147,6 +152,8 @@ export function usePRD(opts: {
   useEffect(() => {
     if (opts.items.length === 0) return;
     if (snap.status === "loading") return;
+    // If hydrated from a saved entry, don't auto-regenerate.
+    if (snap.key === "hydrated" && snap.prd) return;
     if (snap.key === key && snap.prd) return;
     void generate(
       opts.productName,

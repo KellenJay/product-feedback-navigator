@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Bookmark, BookmarkCheck, FolderInput, Trash2, ExternalLink, Pencil } from "lucide-react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  FolderInput,
+  Trash2,
+  ExternalLink,
+  Pencil,
+  FolderPlus,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +37,9 @@ import {
 import { ResultsView } from "./ResultsView";
 import { libraryStore, useLibrary, formatRelativeDate, type LibraryEntry } from "./libraryStore";
 import { analyzeStore } from "./analyzeStore";
+import { roadmapStore } from "./roadmapStore";
+import { prdStore } from "./prdStore";
+import { marketContextStore } from "./marketContextStore";
 
 interface Props {
   entry: LibraryEntry | null;
@@ -41,6 +52,9 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
   const navigate = useNavigate();
   const [renaming, setRenaming] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const newFolderInputRef = useRef<HTMLInputElement>(null);
 
   if (!entry) return null;
   // Always read fresh entry from store (in case it was updated)
@@ -56,7 +70,12 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
       businessGoal: live.businessGoal,
       mode: live.mode,
       result: live.result,
+      entryId: live.id,
     });
+    // Hydrate downstream stores so we don't re-run AI calls.
+    roadmapStore.hydrate(live.roadmapOverrides ?? {});
+    prdStore.hydrate(live.prd ?? null);
+    marketContextStore.hydrate(live.marketContext ?? null, live.id);
     onOpenChange(false);
     navigate({ to: "/" });
     toast.success("Opened in Analyze");
@@ -75,6 +94,20 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
   const handleMove = (folderId: string | null) => {
     libraryStore.moveToFolder(live.id, folderId);
     toast.success(folderId ? "Moved to folder" : "Moved to Unfiled Items");
+  };
+
+  const handleCreateAndMove = () => {
+    const name = newFolderName.trim();
+    if (!name) {
+      setCreatingFolder(false);
+      setNewFolderName("");
+      return;
+    }
+    const folder = libraryStore.createFolder(name);
+    libraryStore.moveToFolder(live.id, folder.id);
+    setCreatingFolder(false);
+    setNewFolderName("");
+    toast.success(`Moved to "${folder.name}"`);
   };
 
   const handleDelete = () => {
@@ -177,9 +210,41 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
                     {f.name}
                   </DropdownMenuItem>
                 ))}
-                {folders.length === 0 && (
-                  <DropdownMenuItem disabled className="text-foreground-muted">
-                    No folders yet
+                <DropdownMenuSeparator />
+                {creatingFolder ? (
+                  <div
+                    className="px-2 py-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      ref={newFolderInputRef}
+                      autoFocus
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleCreateAndMove();
+                        }
+                        if (e.key === "Escape") {
+                          setCreatingFolder(false);
+                          setNewFolderName("");
+                        }
+                      }}
+                      placeholder="Folder name"
+                      className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+                ) : (
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setCreatingFolder(true);
+                    }}
+                    className="text-foreground-muted"
+                  >
+                    <FolderPlus className="mr-2 h-3.5 w-3.5" />
+                    New folder…
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>

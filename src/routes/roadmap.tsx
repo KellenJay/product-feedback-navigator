@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { TabBar } from "@/components/insightflow/TabBar";
 import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
 import { roadmapStore, useRoadmap } from "@/components/insightflow/roadmapStore";
+import { prdStore } from "@/components/insightflow/prdStore";
+import { libraryStore } from "@/components/insightflow/libraryStore";
 import { RoadmapColumn } from "@/components/insightflow/RoadmapColumn";
 import { RoadmapSummary } from "@/components/insightflow/RoadmapSummary";
 import { RoadmapFooter } from "@/components/insightflow/RoadmapFooter";
@@ -111,6 +113,21 @@ function RoadmapBody({
   const { items, setBucket, setPriority, setEffort, setQuarter, reset, hasOverrides } =
     useRoadmap(result);
   const [view, setView] = useState<RoadmapView>("list");
+  const [{ entryId }] = useAnalyzeStore();
+
+  // If the analyze session is bound to a saved library entry, mirror
+  // roadmap-overrides + PRD changes back onto that entry so the library
+  // reflects the latest state without requiring a manual save.
+  useEffect(() => {
+    if (!entryId) return;
+    const lib = libraryStore.get();
+    const e = lib.entries.find((x) => x.id === entryId);
+    if (!e?.saved) return;
+    libraryStore.updateBundle(entryId, {
+      roadmapOverrides: roadmapStore.get(),
+      prd: prdStore.get().prd,
+    });
+  });
 
   const buckets: Bucket[] = ["now", "next", "later"];
 
