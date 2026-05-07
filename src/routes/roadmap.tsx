@@ -125,11 +125,22 @@ function RoadmapBody({
     if (!entryId) return;
     const lib = libraryStore.get();
     const e = lib.entries.find((x) => x.id === entryId);
-    if (!e?.saved) return;
-    libraryStore.updateBundle(entryId, {
-      roadmapOverrides: roadmapStore.get(),
-      prd: prdStore.get().prd,
-    });
+    if (e?.saved) {
+      libraryStore.updateBundle(entryId, {
+        roadmapOverrides: roadmapStore.get(),
+        prd: prdStore.get().prd,
+      });
+    }
+    // Debounce cloud save (1s).
+    const t = setTimeout(() => {
+      void saveRoadmap({
+        sessionId: entryId,
+        productName,
+        prd: prdStore.get().prd,
+        overrides: roadmapStore.get(),
+      });
+    }, 1000);
+    return () => clearTimeout(t);
   });
 
   const buckets: Bucket[] = ["now", "next", "later"];
