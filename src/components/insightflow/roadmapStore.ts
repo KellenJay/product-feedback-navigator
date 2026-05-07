@@ -22,15 +22,52 @@ interface Override {
 }
 type Overrides = Record<string, Override>;
 
-const STORAGE_KEY = "insightflow.roadmap.v4";
+const STORAGE_KEY = "insightflow.roadmap.v5";
+const LEGACY_KEY = "insightflow.roadmap.v4";
+
+function migrateEffort(o: Override): Override {
+  // Old scale: S/M/L (Small/Medium/Large) → New scale: L/M/H (Low/Medium/High)
+  // S→L, M→M, L→H. New values pass through unchanged.
+  if (!o.effort) return o;
+  const e = o.effort as unknown as string;
+  if (e === "L" || e === "M" || e === "H") return o;
+  if (e === "S") return { ...o, effort: "L" };
+  if (e === "L") return { ...o, effort: "H" }; // unreachable; kept for clarity
+  return o;
+}
 
 function load(): Overrides {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
+    let raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const legacy = window.localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        const legacyParsed = JSON.parse(legacy) as Overrides;
+        const migrated: Overrides = {};
+        for (const [id, ov] of Object.entries(legacyParsed)) {
+          // Old "L"=Large maps to new "H"=High
+          let next: Override = { ...ov };
+          const e = ov.effort as unknown as string | undefined;
+          if (e === "S") next.effort = "L";
+          else if (e === "M") next.effort = "M";
+          else if (e === "L") next.effort = "H";
+          migrated[id] = next;
+        }
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        } catch { /* ignore */ }
+        return migrated;
+      }
+      return {};
+    }
     const parsed = JSON.parse(raw);
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
+    if (typeof parsed !== "object" || parsed === null) return {};
+    const out: Overrides = {};
+    for (const [id, ov] of Object.entries(parsed as Overrides)) {
+      out[id] = migrateEffort(ov);
+    }
+    return out;
   } catch {
     return {};
   }
