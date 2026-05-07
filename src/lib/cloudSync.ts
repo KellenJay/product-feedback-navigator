@@ -52,7 +52,7 @@ export async function saveAnalysis(
         business_goal: input.businessGoal,
         raw_feedback: input.rawFeedback,
         feedback_source: feedbackSource,
-        analysis_output: input.result as unknown as Record<string, unknown>,
+        analysis_output: input.result as never,
         title: input.productName.trim() || "Untitled analysis",
       })
       .select("id")
@@ -73,7 +73,7 @@ export async function patchMarketContext(
   try {
     const { error } = await supabase
       .from("analysis_sessions")
-      .update({ market_context_output: context as unknown as Record<string, unknown> })
+      .update({ market_context_output: context as never })
       .eq("id", sessionId);
     if (error) throw error;
   } catch (err) {
@@ -111,8 +111,8 @@ export async function saveRoadmap(input: {
       project_id: session?.project_id ?? null,
       analysis_session_id: input.sessionId,
       product_name: input.productName,
-      prd_output: (input.prd as unknown as Record<string, unknown>) ?? null,
-      roadmap_overrides: input.overrides as unknown as Record<string, unknown>,
+      prd_output: (input.prd as never) ?? null,
+      roadmap_overrides: input.overrides as never,
     };
 
     if (existing?.id) {
