@@ -255,6 +255,7 @@ function LibraryPage() {
                       }}
                       onDelete={() => {
                         libraryStore.deleteFolder(f.id);
+                        void import("@/lib/cloudSync").then((m) => m.deleteFolder(f.id));
                         if (folderSel === f.id) setFolderSel("all");
                         toast("Folder deleted", {
                           description: "Items moved to Unfiled Items.",
@@ -372,9 +373,11 @@ function LibraryPage() {
                         key={e.id}
                         entry={e}
                         onOpen={() => setDetail(e)}
-                        onSave={() => {
+                        onSave={async () => {
                           libraryStore.save(e.id);
-                          toast.success("Saved to library");
+                          const ok = await import("@/lib/cloudSync").then((m) => m.pinEntry(e.id));
+                          if (ok) toast.success("Saved to library");
+                          else toast.error("Save failed — please try again");
                         }}
                       />
                     ))}
