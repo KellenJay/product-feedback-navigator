@@ -5,6 +5,37 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function tryParseJson(s: string): unknown | null {
+  try {
+    return JSON.parse(s);
+  } catch {
+    // Strip markdown fences and find first {...} block.
+    const cleaned = s.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) return null;
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+}
+
+function extractContext(data: any): any | null {
+  const msg = data?.choices?.[0]?.message;
+  const toolCall = msg?.tool_calls?.[0];
+  if (toolCall?.function?.arguments) {
+    const parsed = tryParseJson(toolCall.function.arguments);
+    if (parsed) return parsed;
+  }
+  if (typeof msg?.content === "string" && msg.content.trim()) {
+    const parsed = tryParseJson(msg.content);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -223,8 +254,23 @@ Hard rules:
     }
 
     const data = await response.json();
-    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
+    const context = extractContext(data);
+    if (!context) {
+      // One retry — Gemini sometimes skips the tool call on first try.
+      const retry = await callGateway();
+      if (retry.ok) {
+        const retryData = await retry.json();
+        const retryCtx = extractContext(retryData);
+        if (retryCtx) {
+          return new Response(JSON.stringify(retryCtx), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+      console.error(
+        "No structured context. Raw:",
+        JSON.stringify(data).slice(0, 800),
+      );
       return new Response(
         JSON.stringify({ error: "AI did not return structured context." }),
         {
@@ -233,8 +279,6 @@ Hard rules:
         },
       );
     }
-
-    const context = JSON.parse(toolCall.function.arguments);
     return new Response(JSON.stringify(context), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
