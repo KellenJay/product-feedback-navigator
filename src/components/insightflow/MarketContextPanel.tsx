@@ -17,7 +17,7 @@ interface Props {
   topPainPoints: { title: string; impactScore: number }[];
 }
 
-async function fetchContext(
+export async function fetchContext(
   productName: string,
   businessGoal: string,
   topPainPoints: { title: string; impactScore: number }[],
