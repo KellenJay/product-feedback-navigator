@@ -11,9 +11,9 @@ export function RoadmapSummary({ items }: Props) {
     P3: items.filter((i) => i.priority === "P3").length,
   };
   const effort = {
-    S: items.filter((i) => i.effort === "S").length,
-    M: items.filter((i) => i.effort === "M").length,
     L: items.filter((i) => i.effort === "L").length,
+    M: items.filter((i) => i.effort === "M").length,
+    H: items.filter((i) => i.effort === "H").length,
   };
 
   return (
@@ -26,8 +26,8 @@ export function RoadmapSummary({ items }: Props) {
       />
       <Stat
         label="Effort mix"
-        value={`${effort.S} · ${effort.M} · ${effort.L}`}
-        hint="S · M · L"
+        value={`${effort.L} · ${effort.M} · ${effort.H}`}
+        hint="L · M · H"
       />
       <Stat
         label="Now bucket"

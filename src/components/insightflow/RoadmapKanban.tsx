@@ -198,8 +198,11 @@ function KanbanCard({
         <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
           {formatQuarter(item.quarter)}
         </span>
-        <span className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-foreground">
-          {EFFORT_META[item.effort].label}
+        <span
+          className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-foreground"
+          title={`Effort ${EFFORT_META[item.effort].label}`}
+        >
+          {item.effort}
         </span>
         <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground-muted">
           {item.mentions} mentions
