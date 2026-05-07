@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut, Settings, Database } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -147,10 +147,6 @@ export function TabBar({ active }: { active: Tab }) {
                 <DropdownMenuItem onSelect={() => navigate({ to: "/account" })}>
                   <Settings className="mr-2 h-4 w-4" />
                   Account settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => navigate({ to: "/library" })}>
-                  <Database className="mr-2 h-4 w-4" />
-                  My data
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={handleSignOut}>
