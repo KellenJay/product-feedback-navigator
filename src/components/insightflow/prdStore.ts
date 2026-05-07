@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { PRD, PRDResponse } from "./prd";
+import { normalizeEffort, type PRD, type PRDResponse } from "./prd";
 import type { RoadmapItem } from "./roadmap";
 
 type Status = "idle" | "loading" | "ready" | "error";
@@ -93,7 +93,17 @@ async function generate(
     if (error) throw new Error(error.message || "PRD generation failed");
     const resp = data as PRDResponse;
     if (!resp?.prd) throw new Error("Malformed PRD response");
-    set({ prd: resp.prd, status: "ready", error: null, key });
+    const normalized: PRD = {
+      ...resp.prd,
+      epics: resp.prd.epics.map((ep) => ({
+        ...ep,
+        userStories: ep.userStories.map((s) => ({
+          ...s,
+          estimatedEffort: normalizeEffort(s.estimatedEffort),
+        })),
+      })),
+    };
+    set({ prd: normalized, status: "ready", error: null, key });
   } catch (e) {
     set({
       status: "error",
