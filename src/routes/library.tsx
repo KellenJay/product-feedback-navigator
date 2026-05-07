@@ -36,7 +36,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+import { requireAuth } from "@/lib/authGuard";
+import { useEffect } from "react";
+import { loadLibrary } from "@/lib/cloudSync";
+
 export const Route = createFileRoute("/library")({
+  beforeLoad: requireAuth,
   component: LibraryPage,
   head: () => ({
     meta: [
