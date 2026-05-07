@@ -22,9 +22,22 @@ function load(): State {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return { prd: null, status: "idle", error: null, key: null };
     const parsed = JSON.parse(raw);
+    let prd: PRD | null = parsed.prd ?? null;
+    if (prd) {
+      prd = {
+        ...prd,
+        epics: prd.epics.map((ep) => ({
+          ...ep,
+          userStories: ep.userStories.map((s) => ({
+            ...s,
+            estimatedEffort: normalizeEffort(s.estimatedEffort),
+          })),
+        })),
+      };
+    }
     return {
-      prd: parsed.prd ?? null,
-      status: parsed.prd ? "ready" : "idle",
+      prd,
+      status: prd ? "ready" : "idle",
       error: null,
       key: parsed.key ?? null,
     };
