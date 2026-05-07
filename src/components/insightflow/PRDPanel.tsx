@@ -310,8 +310,9 @@ function StoryRow({ story }: { story: PRDUserStory }) {
               className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${effortClasses(
                 story.estimatedEffort,
               )}`}
+              title={`Effort ${story.estimatedEffort}`}
             >
-              Effort {story.estimatedEffort}
+              {story.estimatedEffort}
             </span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${priorityClasses(

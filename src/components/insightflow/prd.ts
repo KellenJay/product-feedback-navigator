@@ -1,4 +1,4 @@
-export type PRDEffort = "S" | "M" | "L" | "XL";
+export type PRDEffort = "L" | "M" | "H";
 export type PRDPriority = "P1" | "P2" | "P3";
 
 export interface PRDUserStory {
@@ -50,15 +50,23 @@ export interface PRDResponse {
 
 export function effortClasses(e: PRDEffort): string {
   switch (e) {
-    case "S":
+    case "L":
       return "bg-success/15 text-success";
     case "M":
       return "bg-primary/15 text-primary";
-    case "L":
-      return "bg-warning/15 text-warning";
-    case "XL":
+    case "H":
       return "bg-destructive/15 text-destructive";
   }
+}
+
+// Map any legacy effort values (S/L/XL meanings, etc.) to new L/M/H scale.
+export function normalizeEffort(raw: unknown): PRDEffort {
+  const s = String(raw ?? "").toUpperCase();
+  if (s === "L" || s === "LOW") return "L";
+  if (s === "H" || s === "HIGH" || s === "XL") return "H";
+  if (s === "S" || s === "SMALL") return "L";
+  if (s === "LARGE") return "H";
+  return "M";
 }
 
 export function buildPRDText(prd: PRD): string {

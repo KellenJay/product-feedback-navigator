@@ -35,7 +35,7 @@ Return JSON only, no markdown, no preamble.
             ],
             "designNotes": "",
             "devNotes": "",
-            "estimatedEffort": "S|M|L|XL",
+            "estimatedEffort": "L|M|H",
             "priority": "P1|P2|P3"
           }
         ]
@@ -101,7 +101,7 @@ const tools = [
                           devNotes: { type: "string" },
                           estimatedEffort: {
                             type: "string",
-                            enum: ["S", "M", "L", "XL"],
+                            enum: ["L", "M", "H"],
                           },
                           priority: {
                             type: "string",
