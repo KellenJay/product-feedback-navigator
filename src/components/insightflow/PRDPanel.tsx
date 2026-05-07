@@ -104,14 +104,15 @@ export function PRDPanel({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {status === "error" && (
+          {(status === "error" || prd) && (
             <button
               type="button"
               onClick={regenerate}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface"
+              disabled={status === "loading"}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Retry
+              {status === "error" ? "Retry" : "Regenerate"}
             </button>
           )}
           <button
