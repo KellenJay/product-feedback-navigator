@@ -5,6 +5,37 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function tryParseJson(s: string): unknown | null {
+  try {
+    return JSON.parse(s);
+  } catch {
+    // Strip markdown fences and find first {...} block.
+    const cleaned = s.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) return null;
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+}
+
+function extractContext(data: any): any | null {
+  const msg = data?.choices?.[0]?.message;
+  const toolCall = msg?.tool_calls?.[0];
+  if (toolCall?.function?.arguments) {
+    const parsed = tryParseJson(toolCall.function.arguments);
+    if (parsed) return parsed;
+  }
+  if (typeof msg?.content === "string" && msg.content.trim()) {
+    const parsed = tryParseJson(msg.content);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
