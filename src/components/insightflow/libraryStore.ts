@@ -2,6 +2,9 @@ import { useSyncExternalStore } from "react";
 import type { AnalysisResult, MarketContext } from "./types";
 import type { PRD } from "./prd";
 import type { Overrides as RoadmapOverrides } from "./roadmapStore";
+import { roadmapStore } from "./roadmapStore";
+import { prdStore } from "./prdStore";
+import { marketContextStore } from "./marketContextStore";
 
 export interface LibraryEntry {
   id: string;
