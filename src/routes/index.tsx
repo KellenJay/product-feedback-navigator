@@ -15,6 +15,7 @@ import { libraryStore } from "@/components/insightflow/libraryStore";
 import { roadmapStore } from "@/components/insightflow/roadmapStore";
 import { prdStore } from "@/components/insightflow/prdStore";
 import { marketContextStore } from "@/components/insightflow/marketContextStore";
+import { fetchContext as fetchMarketContext } from "@/components/insightflow/MarketContextPanel";
 import type { AnalysisResult } from "@/components/insightflow/types";
 
 export const Route = createFileRoute("/")({
@@ -162,6 +163,7 @@ function AnalyzePage() {
       roadmapStore.hydrate({});
       prdStore.reset();
       marketContextStore.hydrate(null, newEntry.id);
+      const analysisResult = data as AnalysisResult;
       // Persist to cloud (background; non-blocking).
       void saveAnalysis({
         productName,
@@ -169,7 +171,7 @@ function AnalyzePage() {
         mode,
         source: sourceLabel,
         rawFeedback: feedback,
-        result: data as AnalysisResult,
+        result: analysisResult,
       }).then((res) => {
         if (res?.sessionId) {
           // Replace the local-only entry id with the cloud session id so
@@ -177,6 +179,17 @@ function AnalyzePage() {
           // correct row.
           setState({ entryId: res.sessionId });
           marketContextStore.hydrate(null, res.sessionId);
+          // Auto-run market context once for this fresh analysis, bound
+          // to the cloud session id so it persists.
+          void fetchMarketContext(
+            productName,
+            businessGoal,
+            analysisResult.issues.slice(0, 3).map((i) => ({
+              title: i.title,
+              impactScore: i.impactScore,
+            })),
+            res.sessionId,
+          );
         }
       });
       toast.success("Analysis complete");
