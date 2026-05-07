@@ -95,11 +95,11 @@ export function RoadmapItemCard({
                 ariaLabel="Change effort"
                 title="Effort: L=Low, M=Medium, H=High"
                 options={[
-                  { value: "L", label: "L" },
-                  { value: "M", label: "M" },
-                  { value: "H", label: "H" },
+                  { value: "L", label: "Effort L (Low)" },
+                  { value: "M", label: "Effort M (Medium)" },
+                  { value: "H", label: "Effort H (High)" },
                 ]}
-                display={item.effort}
+                display={`Effort ${item.effort}`}
               />
             </div>
 
