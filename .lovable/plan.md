@@ -1,89 +1,51 @@
-## Goal
 
-Move InsightFlow's persistence layer off `localStorage` and onto Lovable Cloud (the backend already attached to this project), behind real authentication. Library entries become user-scoped rows in Postgres so they survive across devices. No UI redesign — just an Auth gate, plus background save/load wiring.
+## Why this is happening
 
-## What changes for the user
+Your auth logs show Google is actually issuing tokens every time you click — the backend is fine. The problem is on the client: after Google redirects back, the session sometimes doesn't get picked up before the `/login` page's guard checks for it, so you stay stuck on `/login?redirect=%2F`.
 
-1. **Sign-in required.** First visit shows a Login page (Email + Password and "Continue with Google"). After signing in, the existing Analyze / Roadmap / Library tabs work exactly as today.
-2. **Library is now cloud-backed.** Every analysis auto-saves to your account. The "Save to library" button pins it (so it doesn't expire after 7 days) and shows a real success/failure toast. Roadmap edits and PRD changes auto-sync to the same row.
-3. **Cross-device.** Sign in on another browser → your library is there.
+Note: OAuth in the Preview environment is also known to be flakier than the published site. Worth a quick test on the published URL too — but the changes below make the flow robust either way.
 
-## What does NOT change
+## Plan
 
-- No visual redesign, no tab restructuring, no changes to Claude/AI calls, no changes to the Roadmap/PRD/Market Context generation logic.
-- The existing `localStorage` cache is kept as an offline mirror so the app stays snappy and works briefly if the network blips.
+### 1. New route: `/auth/callback`
 
-## Database (Lovable Cloud)
+Create `src/routes/auth.callback.tsx`. This is where Google will redirect back to.
 
-Four tables, all with RLS scoped to `user_id = auth.uid()`:
+Behavior:
+- Public route (no `requireAuth`), shows a small "Signing you in…" spinner.
+- On mount, subscribe to `supabase.auth.onAuthStateChange`.
+- Also call `supabase.auth.getSession()` immediately in case the session is already hydrated.
+- As soon as a session exists, read the `redirect` search param (default `/`) and `navigate({ to: redirect, replace: true })`.
+- If no session arrives within ~5s, show an error + a "Back to sign in" link.
 
-- **profiles** — `user_id` (FK auth.users, cascade), `display_name`, `created_at`. Auto-created via `handle_new_user()` trigger on signup.
-- **projects** — `user_id`, `product_name`, `business_goal`.
-- **analysis_sessions** — `user_id`, `project_id` (FK), `product_name`, `business_goal`, `raw_feedback`, `feedback_source` (`paste`|`upload`|`research`), `analysis_output` jsonb, `market_context_output` jsonb, `model_version`.
-- **roadmaps** — `user_id`, `project_id` (FK), `analysis_session_id` (FK, set null), `product_name`, `roadmap_output` jsonb, `prd_output` jsonb, `roadmap_overrides` jsonb.
-- **eval_runs** — `user_id`, `analysis_session_id` (FK cascade), score columns, `grader_output` jsonb. (Schema only — no UI yet.)
+### 2. Update `handleGoogle` in `src/routes/login.tsx`
 
-RLS: per-table policies — `select/insert/update/delete using (auth.uid() = user_id)`. No `using (true)` open policies.
+Change the `redirect_uri` to point at the new callback route, and pass the original target through as a query param so we can return the user there:
 
-Indexes on `(user_id, created_at desc)` for each table.
-
-## Auth
-
-Use Lovable Cloud's managed auth (no third-party Supabase project, no `sb_publishable_...` key — that key belongs to a different project I can't manage migrations on).
-
-- Enable **Email + Password** with email verification (no auto-confirm).
-- Enable **Google** via the Lovable Cloud managed flow (`lovable.auth.signInWithOAuth("google", ...)`).
-- Add Password HIBP check.
-
-## Routes & guards
-
-```text
-src/routes/
-  __root.tsx            (unchanged shell)
-  login.tsx             (NEW — email/password form + Google button)
-  reset-password.tsx    (NEW — required for password recovery)
-  _authenticated.tsx    (NEW — beforeLoad redirects to /login if no session)
-  _authenticated/
-    index.tsx           (move current src/routes/index.tsx here — Analyze)
-    roadmap.tsx         (moved)
-    library.tsx         (moved)
+```
+redirect_uri: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(target)}`
 ```
 
-Header gets a small "user email · Sign out" affordance (no redesign — same TabBar styling).
+### 3. Harden the `/login` guard against the same race
 
-## Persistence wiring
+In `src/routes/login.tsx`, add an `onAuthStateChange` listener inside `LoginPage` that navigates to `target` the moment a session appears. This way, even if a user lands back on `/login` with a session that's still hydrating, they get bounced automatically instead of getting stuck.
 
-New module `src/lib/cloudSync.ts` exposes:
-- `saveAnalysis(input) → { projectId, sessionId }`
-- `saveRoadmap({ projectId, sessionId, roadmap, prd, overrides })`
-- `loadLibrary() → LibraryEntry[]` (joins projects + latest analysis_session + latest roadmap, mapped into the existing `LibraryEntry` shape so the Library UI doesn't change)
-- `pinEntry(sessionId)` / `unpinEntry(sessionId)` (sets a `saved` boolean column)
-- `deleteEntry(sessionId)`, `renameEntry`, `moveToFolder`, `createFolder`
+### 4. No changes to
 
-Hook points (no UI changes):
-- `src/routes/index.tsx` — after analyze succeeds, call `saveAnalysis`, store `entryId` in `analyzeStore` (already exists).
-- `src/routes/roadmap.tsx` — the existing `useEffect` that mirrors to `libraryStore` also calls `saveRoadmap` (debounced 1s).
-- `src/components/insightflow/MarketContextPanel.tsx` — on success, patch `analysis_sessions.market_context_output`.
-- `src/components/insightflow/AnalysisFooter.tsx` — replace the "Coming soon" toast with: pinned → "Already saved", else `pinEntry()` → "Saved to library ✓" / "Save failed".
-- `src/routes/library.tsx` — on mount, hydrate `libraryStore` from `loadLibrary()` (keeps localStorage as fallback).
+- Supabase / Google OAuth configuration (not needed — tokens are issuing fine).
+- `src/integrations/lovable/index.ts` (auto-generated, don't touch).
+- `requireAuth` or any protected route.
+- Any UI copy on the login page.
 
-All cloud calls are wrapped in try/catch; failures log to console + show a toast but never block the UI.
+## Technical notes
 
-## Files to add / edit
+- The callback page must be public (no `beforeLoad: requireAuth`) — otherwise the guard would bounce the user to `/login` before the session lands, recreating the exact bug.
+- Use `replace: true` on the post-callback navigation so the back button doesn't return to `/auth/callback`.
+- Always unsubscribe from `onAuthStateChange` on unmount to avoid leaks.
+- File name uses TanStack's flat dot convention: `auth.callback.tsx` → `/auth/callback`.
 
-**New:** `src/routes/login.tsx`, `src/routes/reset-password.tsx`, `src/routes/_authenticated.tsx`, `src/lib/cloudSync.ts`, `src/integrations/lovable/*` (generated by the Configure Social Auth tool).
+## Out of scope
 
-**Move:** `src/routes/{index,roadmap,library}.tsx` → `src/routes/_authenticated/`.
-
-**Edit:** `analyzeStore.ts`, `libraryStore.ts` (add cloud hydration), `AnalysisFooter.tsx`, `MarketContextPanel.tsx`, `TabBar.tsx` (add sign-out button).
-
-## Out of scope (for this pass)
-
-- Eval runner UI (table created, but no page).
-- Migrating existing localStorage entries to the cloud (one-time best-effort import on first login can be added later if you want).
-- Sharing library entries between users.
-
-## Confirm before I implement
-
-- Email verification ON (users must click a link before they can sign in)?
-- Display name on signup, or skip and just use email?
+- Changing email/password flow.
+- Touching the Supabase client or the Lovable auth wrapper.
+- Any visual redesign of the login page.
