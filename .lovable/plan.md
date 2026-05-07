@@ -1,48 +1,48 @@
-## Replace email + logout icon with an account menu
+## Goal
 
-Right now the top-right of every tab shows the raw email and a small logout icon. Replace that with a proper account button that opens a dropdown — the standard pattern users expect.
+Turn `/account` into a real preferences page (editable avatar, first name, last name, username) and remove the redundant "My Data" entry from the avatar dropdown.
 
-### What the new button looks like
+## Changes
 
-A circular avatar button in the top-right corner of `TabBar`:
-- If the user has a Google profile picture, show it.
-- Otherwise show initials (from display name, or first letter of email) on a colored circle.
+### 1. `TabBar.tsx` — dropdown cleanup
+- Remove the "My Data" `DropdownMenuItem` and the now-unused `Database` icon import.
+- Keep: header (avatar + name + email), Account settings, Sign out.
 
-Clicking it opens a dropdown menu.
+### 2. Database — extend `profiles` + add avatars storage
+Migration:
+- `ALTER TABLE public.profiles ADD COLUMN first_name text, ADD COLUMN last_name text, ADD COLUMN avatar_url text;`
+- Create public storage bucket `avatars` with RLS:
+  - Public SELECT.
+  - Authenticated users can INSERT/UPDATE/DELETE only objects whose first path segment equals their `auth.uid()` (files stored as `{user_id}/avatar.{ext}`).
 
-### What's inside the dropdown
+### 3. `/account` page rewrite — `src/routes/account.tsx`
+Layout modeled on the uploaded screenshot: "Preferences" heading + subtitle, then a "Profile information" card with rows.
 
-```text
-┌─────────────────────────────┐
-│  [avatar] Display name      │
-│           email@domain.com  │
-├─────────────────────────────┤
-│  ⚙  Account settings        │
-│  🗄  My data                │
-├─────────────────────────────┤
-│  ↪  Sign out                │
-└─────────────────────────────┘
-```
+Card rows:
+- **Avatar** (top, clickable) — shows current avatar or initials. Clicking opens a hidden file input; on select, upload to `avatars/{user_id}/avatar-{timestamp}.{ext}`, get public URL, save to `profiles.avatar_url`, and also call `supabase.auth.updateUser({ data: { avatar_url } })` so the dropdown stays in sync. Show a small "Change photo" hint and a "Remove" link when an avatar exists. Image-only, ≤2MB, validated client-side.
+- **First name** — text input, bound to `profiles.first_name`.
+- **Last name** — text input, bound to `profiles.last_name`.
+- **Primary email** — read-only display of `auth.user.email` with helper text "Used for account notifications". No edit (out of scope; would require Supabase email-change flow).
+- **Username** — text input, bound to `profiles.display_name` with helper text "Display name used across dashboard". Trimmed, 2–32 chars, validated with zod.
 
-- **Header**: avatar + name (from Google `full_name` / `name`, fall back to email prefix) + email.
-- **Account settings** → navigates to a new `/account` route (simple page showing name, email, "signed in with Google", and a placeholder for future settings — keeps the menu link from being a dead end).
-- **My data** → navigates to `/library` (that's where their saved analyses, folders, and roadmaps live — the in-app equivalent of "my database"). We are not exposing the raw Lovable Cloud dashboard, since that's not user-facing.
-- **Sign out** → same `supabase.auth.signOut()` flow as today, then redirect to `/login`.
+Footer of card:
+- **Save** button (right-aligned, disabled until dirty, shows loading state). On submit: upsert into `profiles` for the current user, toast success, refresh local state. Avatar uploads save immediately on file pick (separate from the Save button) so users get instant feedback.
 
-### Where the data comes from
+Below the card:
+- Small "Account" section with "Signed in with {provider}" line and the existing **Sign out** button.
 
-- `supabase.auth.getSession()` already gives us `session.user.email` and `session.user.user_metadata` — Google populates `user_metadata.avatar_url`, `user_metadata.full_name`, and `user_metadata.name` on OAuth sign-in. No extra API calls or schema changes needed.
-- The existing `profiles` table stores `display_name`. If a profile row exists, prefer `profiles.display_name` over Google's name. (Profile row is auto-created by the existing trigger.)
+Data flow:
+- On mount: `getSession()` → fetch `profiles` row for `user_id`, prefill form. Fall back to Google `user_metadata` (`given_name`, `family_name`, `name`, `avatar_url`) when profile fields are empty.
+- After save: re-read the profile so `TabBar` (which already listens to its own session/profile) reflects changes on next mount; also broadcast via `supabase.auth.refreshSession()` to nudge the auth listener.
 
-### Files
+### 4. Out of scope (not doing)
+- Changing the primary email (needs Supabase email-change verification flow).
+- Password change (user signs in with Google).
+- Deleting the account.
 
-- **Edit** `src/components/insightflow/TabBar.tsx`: replace the email span + logout button with a `DropdownMenu` (shadcn) triggered by an `Avatar`. Read user metadata from session; optionally fetch `display_name` from `profiles` once on mount.
-- **New** `src/routes/account.tsx`: minimal account page — avatar, name, email, "Connected with Google", and a Sign out button. Protected by `requireAuth`.
-- **No changes** to auth, RLS, the login/callback flow, or any other tab.
+## Technical notes
 
-### Out of scope
-
-- Editing display name / uploading a custom avatar (the Account page is read-only for now; we can add editing later if you want).
-- Exposing the Lovable Cloud admin dashboard inside the app.
-
-After this lands, you'll be ready to publish.
+- Avatar upload uses the browser supabase client; RLS on `storage.objects` enforces per-user folder isolation via `(storage.foldername(name))[1] = auth.uid()::text`.
+- `profiles` already has `profiles_update_own` / `profiles_insert_own` policies, so the new columns are covered automatically.
+- All form validation client-side with zod; trim inputs; toast on error.
+- Use existing shadcn `Input`, `Button`, `Avatar`, `Label`, `Separator`.
