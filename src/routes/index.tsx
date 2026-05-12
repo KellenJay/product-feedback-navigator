@@ -120,7 +120,7 @@ function LandingPage() {
               to="/login"
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover btn-glow sm:w-auto"
             >
-              Get started free <ArrowRight className="h-4 w-4" />
+              Start Now <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#how-it-works"
