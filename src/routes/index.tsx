@@ -500,10 +500,11 @@ function LandingPage() {
             </ul>
           </div>
           <div className="text-sm sm:text-right">
-            <div className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">
-              Built with
-            </div>
-            <p className="mt-3 text-foreground-muted">Claude · Lovable</p>
+            <p className="text-foreground-muted leading-relaxed">
+              InsightFlow turns your customer feedback, reviews, and competitor signals into
+              prioritized product decisions with roadmaps and PRDs your team can act on
+              immediately.
+            </p>
           </div>
         </div>
       </footer>
