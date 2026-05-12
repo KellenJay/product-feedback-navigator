@@ -111,7 +111,7 @@ function LandingPage() {
 
           <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-7 text-foreground-muted">
             InsightFlow turns your customer feedback, reviews, and competitor signals into
-            prioritized product decisions — with roadmaps and PRDs your team can act on
+            prioritized product decisions with roadmaps and PRDs your team can act on
             immediately.
           </p>
 
