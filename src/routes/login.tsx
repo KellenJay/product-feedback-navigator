@@ -16,7 +16,7 @@ export const Route = createFileRoute("/login")({
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      throw redirect({ to: search.redirect ?? "/" });
+      throw redirect({ to: search.redirect ?? "/app" });
     }
   },
   component: LoginPage,
@@ -36,7 +36,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const target = search.redirect ?? "/";
+  const target = search.redirect ?? "/app";
 
   // Bounce as soon as a session appears (handles OAuth callback race).
   useEffect(() => {

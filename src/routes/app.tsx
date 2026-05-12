@@ -18,7 +18,7 @@ import { marketContextStore } from "@/components/insightflow/marketContextStore"
 import { fetchContext as fetchMarketContext } from "@/components/insightflow/MarketContextPanel";
 import type { AnalysisResult } from "@/components/insightflow/types";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/app")({
   beforeLoad: requireAuth,
   component: AnalyzePage,
   head: () => ({
