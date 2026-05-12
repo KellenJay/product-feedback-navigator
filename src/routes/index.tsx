@@ -84,7 +84,7 @@ function LandingPage() {
               to="/login"
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover btn-glow"
             >
-              Get started free
+              Start Now
             </Link>
           </div>
         </div>
