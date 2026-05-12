@@ -460,7 +460,7 @@ function LandingPage() {
               to="/login"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-7 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover btn-glow"
             >
-              Start for free — no credit card required <ArrowRight className="h-4 w-4" />
+              Start Now <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <p className="mt-4 text-xs text-foreground-muted">
