@@ -85,7 +85,7 @@ export function LibraryEntryDialog({ entry, open, onOpenChange }: Props) {
     prdStore.hydrate(live.prd ?? null);
     marketContextStore.hydrate(live.marketContext ?? null, live.id);
     onOpenChange(false);
-    navigate({ to: "/" });
+    navigate({ to: "/app" });
     toast.success("Opened in Analyze");
   };
 

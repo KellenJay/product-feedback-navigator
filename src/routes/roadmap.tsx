@@ -51,7 +51,7 @@ function RoadmapPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-[780px] items-center justify-between px-6 py-4">
           <Link
-            to="/"
+            to="/app"
             className="text-base font-semibold text-foreground hover:opacity-80"
           >
             InsightFlow
@@ -95,7 +95,7 @@ function EmptyState() {
         timelines, Kanban and Gantt views.
       </p>
       <Link
-        to="/"
+        to="/app"
         className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
       >
         Go to Analyze

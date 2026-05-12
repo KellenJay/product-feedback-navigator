@@ -87,7 +87,7 @@ export function TabBar({ active }: { active: Tab }) {
       <div className="mx-auto flex max-w-[780px] items-center justify-between px-6">
         <div className="flex items-center gap-7">
           <Link
-            to="/"
+            to="/app"
             className={`${baseTab} ${active === "analyze" ? activeCls : inactive}`}
           >
             Analyze
