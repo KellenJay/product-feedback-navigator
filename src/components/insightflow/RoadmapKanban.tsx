@@ -226,6 +226,11 @@ function KanbanCard({
           · Impact {item.impactScore}
         </span>
       </div>
+      {item.note && (
+        <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-foreground-muted">
+          📝 {item.note}
+        </p>
+      )}
     </article>
   );
 }

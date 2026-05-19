@@ -95,8 +95,9 @@ export function RoadmapGantt({ items, timeframe, onQuarter }: Props) {
               >
                 <div
                   className="line-clamp-2 pr-2 text-[12px] font-medium leading-tight text-foreground"
-                  title={it.title}
+                  title={it.note ? `${it.title}\n\nNote: ${it.note}` : it.title}
                 >
+                  {it.note && <span aria-hidden className="mr-1">📝</span>}
                   {it.title}
                 </div>
                 {cols.map((q, i) => {
