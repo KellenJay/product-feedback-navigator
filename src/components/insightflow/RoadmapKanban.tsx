@@ -103,8 +103,10 @@ export function RoadmapKanban({ items, timeframe, onMoveBucket, onReorder, onSta
                     )}
                     <KanbanCard
                       item={item}
+                      timeframe={timeframe}
                       isDragging={draggingId === item.id}
                       onOpenDetail={() => setDetail(item)}
+                      onStatus={(s) => onStatus(item.id, s)}
                       onDragStart={() => setDraggingId(item.id)}
                       onDragEnd={() => {
                         setDraggingId(null);
