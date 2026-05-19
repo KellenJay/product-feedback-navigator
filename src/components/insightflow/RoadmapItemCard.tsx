@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   formatQuarter,
@@ -15,6 +15,7 @@ import {
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
 import { StatusPill } from "./StatusPill";
+import { roadmapStore } from "./roadmapStore";
 
 interface Props {
   item: RoadmapItem;
@@ -132,47 +133,28 @@ export function RoadmapItemCard({
             )}
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              {item.quotes.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setOpen((o) => !o)}
-                  className="inline-flex items-center gap-1 text-[12px] font-medium text-accent hover:underline"
-                >
-                  {open ? (
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  )}
-                  {open
-                    ? "Hide evidence"
-                    : `Show evidence (${item.quotes.length})`}
-                </button>
-              ) : (
-                <span />
-              )}
+              <button
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                className="inline-flex items-center gap-1 text-[12px] font-medium text-accent hover:underline"
+              >
+                {open ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+                {open
+                  ? "Hide notes"
+                  : item.note
+                    ? "Note"
+                    : "Add note"}
+              </button>
 
               <MoveSelect value={item.bucket} onChange={onMove} />
             </div>
 
-            {open && item.quotes.length > 0 && (
-              <div className="mt-2 space-y-2 rounded-md border border-border bg-surface p-3">
-                {item.quotes.slice(0, 3).map((raw, qi) => {
-                  const q = typeof raw === "string" ? { text: raw } : raw;
-                  return (
-                    <p
-                      key={qi}
-                      className="text-[12px] italic leading-5 text-foreground"
-                    >
-                      “{q.text}”
-                      {"source" in q && q.source && (
-                        <span className="ml-2 not-italic text-foreground-muted">
-                          — {q.source}
-                        </span>
-                      )}
-                    </p>
-                  );
-                })}
-              </div>
+            {open && (
+              <NoteEditor itemId={item.id} initial={item.note ?? ""} />
             )}
           </div>
         </div>
