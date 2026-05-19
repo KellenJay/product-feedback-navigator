@@ -216,6 +216,7 @@ export const roadmapStore = {
     };
     persist(overrides);
     emit();
+  },
   reset: () => {
     overrides = {};
     persist(overrides);
