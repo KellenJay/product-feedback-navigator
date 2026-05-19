@@ -168,6 +168,45 @@ export function RoadmapItemCard({
   );
 }
 
+export function NoteEditor({
+  itemId,
+  initial,
+}: {
+  itemId: string;
+  initial: string;
+}) {
+  const [value, setValue] = useState(initial);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setValue(initial);
+  }, [initial, itemId]);
+
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      roadmapStore.setNote(itemId, value);
+    }, 300);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [value, itemId]);
+
+  return (
+    <div className="mt-2">
+      <textarea
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Add a comment or note for the team…"
+        rows={3}
+        className="w-full rounded-md border border-border bg-surface px-3 py-2 text-[12px] leading-5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-1 focus:ring-primary"
+      />
+    </div>
+  );
+}
+
+
+
 function quarterKey(q: Quarter): string {
   return `${q.year}-${q.q}`;
 }
