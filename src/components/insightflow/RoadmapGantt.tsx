@@ -64,10 +64,7 @@ export function RoadmapGantt({ items, timeframe, onQuarter }: Props) {
                   isToday ? "text-primary" : "text-foreground-muted"
                 }`}
               >
-                <div>Q{q.q}</div>
-                <div className="text-[10px] text-foreground-muted">
-                  {q.year}
-                </div>
+                <div>{formatTimeframeRange(q, timeframe)}</div>
                 {isToday && (
                   <div className="mx-auto mt-1 h-0.5 w-6 rounded-full bg-primary" />
                 )}
