@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { TabBar } from "@/components/insightflow/TabBar";
 import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
-import { roadmapStore, useRoadmap } from "@/components/insightflow/roadmapStore";
+import { roadmapStore, useRoadmap, useTimeframe } from "@/components/insightflow/roadmapStore";
 import { prdStore } from "@/components/insightflow/prdStore";
 import { libraryStore } from "@/components/insightflow/libraryStore";
 import { RoadmapColumn } from "@/components/insightflow/RoadmapColumn";
@@ -13,6 +13,7 @@ import { RoadmapKanban } from "@/components/insightflow/RoadmapKanban";
 import { RoadmapGantt } from "@/components/insightflow/RoadmapGantt";
 import {
   RoadmapViewTabs,
+  RoadmapTimeframeTabs,
   type RoadmapView,
 } from "@/components/insightflow/RoadmapViewTabs";
 import { PRDPanel } from "@/components/insightflow/PRDPanel";
