@@ -39,8 +39,8 @@ export const Route = createRootRoute({
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "InsightFlow" },
       { name: "twitter:description", content: "AI-powered product feedback intelligence for product leaders. Analyze user pain points, validate with market research, and generate roadmaps and PRDs in minutes" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/205bcc84-9e0c-4e3a-a1c5-6526b3c74981" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/205bcc84-9e0c-4e3a-a1c5-6526b3c74981" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/6958d0bc-cc7c-48b0-97c8-40230bbc26e6" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/6958d0bc-cc7c-48b0-97c8-40230bbc26e6" },
     ],
     links: [
       {
