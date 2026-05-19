@@ -25,7 +25,9 @@ import {
 import { priorityClasses } from "./roadmap";
 import { exportPRDPdf } from "./exportPrdPdf";
 import { usePRD } from "./prdStore";
+import { prdQuestionStore, usePRDQuestions } from "./prdQuestionStore";
 import type { RoadmapItem } from "./roadmap";
+import { useEffect, useRef } from "react";
 
 type Tab = "overview" | "epics" | "execution" | "metrics";
 
@@ -520,5 +522,63 @@ function Section({
       </h3>
       {children}
     </div>
+  );
+}
+
+function OpenQuestionRow({ question }: { question: string }) {
+  const map = usePRDQuestions();
+  const state = map[question] ?? { answer: "", resolved: false };
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+
+  const onAnswerChange = (v: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    // optimistic local: rely on store as source of truth, just debounce writes
+    timer.current = setTimeout(() => {
+      prdQuestionStore.setAnswer(question, v);
+    }, 300);
+    // write immediately too so UI stays in sync without debounce flicker
+    prdQuestionStore.setAnswer(question, v);
+  };
+
+  return (
+    <li
+      className={`rounded-lg border border-border bg-surface px-3 py-2 ${
+        state.resolved ? "opacity-60" : ""
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span
+          className={`text-[13px] leading-6 text-foreground ${
+            state.resolved ? "line-through" : ""
+          }`}
+        >
+          {question}
+        </span>
+        <button
+          type="button"
+          onClick={() => prdQuestionStore.setResolved(question, !state.resolved)}
+          className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+            state.resolved
+              ? "bg-success/15 text-success hover:bg-success/25"
+              : "bg-warning/15 text-warning hover:bg-warning/25"
+          }`}
+        >
+          {state.resolved ? "Resolved" : "Unresolved"}
+        </button>
+      </div>
+      <textarea
+        value={state.answer}
+        onChange={(e) => onAnswerChange(e.target.value)}
+        placeholder="Add your answer or comment…"
+        rows={2}
+        className="mt-2 w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-[12px] leading-5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-1 focus:ring-primary"
+      />
+    </li>
   );
 }
