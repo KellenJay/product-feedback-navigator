@@ -498,15 +498,7 @@ function Metrics({
       <Section title="Open questions">
         <ul className="space-y-2">
           {questions.map((q, i) => (
-            <li
-              key={i}
-              className="flex items-start justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2"
-            >
-              <span className="text-[13px] leading-6 text-foreground">{q}</span>
-              <span className="flex-shrink-0 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
-                Unresolved
-              </span>
-            </li>
+            <OpenQuestionRow key={i} question={q} />
           ))}
         </ul>
       </Section>
