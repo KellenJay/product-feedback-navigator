@@ -114,8 +114,9 @@ function RoadmapBody({
   productName: string;
   businessGoal: string;
 }) {
-  const { items, setBucket, setPriority, setEffort, setQuarter, reset, hasOverrides } =
+  const { items, setBucket, setPriority, setEffort, setQuarter, setStatus, reset, hasOverrides } =
     useRoadmap(result);
+  const [timeframe, setTimeframe] = useTimeframe();
   const [view, setView] = useState<RoadmapView>("list");
   const [{ entryId }] = useAnalyzeStore();
 
