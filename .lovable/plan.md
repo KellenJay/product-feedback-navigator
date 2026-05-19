@@ -1,93 +1,73 @@
-## Scope
+## 1. Fix overlapping text in Competitive landscape
 
-Two changes only. Everything else (Analyze layout, Library, auth, Supabase, landing page) stays as-is.
+File: `src/components/insightflow/MarketContextPanel.tsx`
 
----
+The competitor row uses a fixed `grid-cols-[110px_1fr_110px]` so long names like "LangChain / LangGraph" run into the approach column.
 
-## 1. Fix "Open in Analyze" not showing saved data
+- Widen and soften the name column: change to `grid-cols-[140px_1fr_120px]`.
+- Add `min-w-0 break-words` to the name span and `min-w-0` to the approach span so text wraps cleanly instead of overflowing.
+- No other styling changes.
 
-### What's broken
+## 2. Remove "Weeks" timeframe everywhere
 
-When you click **Open in Analyze** from a Library entry, you land on `/app` but the saved analysis doesn't appear. Today the dialog hydrates the stores then navigates, but:
+User feedback: weeks is confusing. Keep Months + Quarters; default stays Quarters.
 
-- `/app` shows results inside an `{result && ...}` block far below the hero/input. If `result` arrives but the page doesn't scroll, it looks empty.
-- The `result` field on older Library entries may be `null` (entries that synced before `analysis_output` was populated), so `ResultsView` silently renders nothing.
-- The Library entry's cached `marketContext` is hydrated, but `MarketContextPanel` is rendered fresh each visit — for old entries with no cached context it still looks blank with no clear way to refresh.
-- There is no explicit way for the user to choose "keep the saved snapshot" vs "re-run analysis + market/competitor scan".
+- `roadmap.ts` — change `Timeframe` to `"months" | "quarters"`. Update `formatTimeframeLabel` / `formatTimeframeRange` to drop the weeks branch; remove `isoWeek` (or leave unexported if still imported elsewhere — check and prune).
+- `roadmapStore.ts` — `loadTimeframe()` accepts only `"months" | "quarters"` (falls back to `"quarters"`); migrate any persisted `"weeks"` value to `"quarters"` on load.
+- `RoadmapViewTabs.tsx` — drop the Weeks entry from `TF_TABS` and the `CalendarDays` import.
+- No other files need changes; `RoadmapItemCard`, `RoadmapKanban`, `RoadmapGantt` already just call the formatters.
 
-### Fix
+## 3. Per-ticket notes/comments, shared across List / Kanban / Gantt / PRD
 
-In `src/components/insightflow/LibraryEntryDialog.tsx` → `handleOpenInAnalyze`:
-- Keep the existing store hydration (analyze + roadmap + PRD + market context).
-- After `navigate({ to: "/app" })`, scroll to `#results-anchor` so the restored analysis is immediately visible.
-- If `live.result` is missing/empty, show a toast ("This saved entry has no cached analysis — click Reanalyze") instead of silently navigating to a blank state.
+Goal: replace the "Show evidence" toggle on the List card with a "Notes" toggle so users can add a comment per ticket. The same note is visible (and editable) wherever the ticket appears, and it ends up in the PRD copy/export.
 
-In `src/routes/app.tsx`:
-- When `entryId` is set AND `result` is present (i.e. the session was restored from Library, not freshly analyzed), render a small banner above the results:
-  - Label: *"Restored from Library — last saved {relative date}"*
-  - Two buttons:
-    - **Reanalyze feedback** — re-runs `analyze-feedback` (same flow as Analyze button; requires raw feedback, so if the entry doesn't have it we prompt the user to paste/upload again).
-    - **Update market & competitor analysis** — calls `fetchMarketContext(...)` for the current `entryId`, replacing the cached context.
-- The default behavior on restore is **no AI calls** — saved data is shown as-is. AI only runs on explicit click.
+### Data model
+- `roadmap.ts` — add optional `note?: string` to `RoadmapItem`.
+- `roadmapStore.ts`:
+  - Add `note?: string` to `Override`.
+  - Add `setNote(id, note)` action; empty string clears the field.
+  - Merge `o.note` into the derived item in `useRoadmap`.
+  - Expose `setNote` from the `useRoadmap` return.
+- Persistence already piggybacks on `roadmap_overrides` jsonb in the `roadmaps` table — no schema change.
 
-In `src/components/insightflow/MarketContextPanel.tsx`:
-- No behavior change needed (it already has no auto-fetch). The new "Update market & competitor analysis" button in the banner calls the same `fetchContext` helper.
+### List view (`RoadmapItemCard.tsx`)
+- Replace the "Show evidence (n) / Hide evidence" expander with a "Notes" expander (same chevron pattern, same position). Label shows "Add note" when empty and "Note" when filled.
+- Expanded body: a small `<textarea>` (3 rows, `text-[12px]`, surface background, border) bound to `item.note`, with a debounced `onChange` calling `setNote(item.id, value)`. No save button — autosaves on change.
+- The verbatim quotes already live in the title-click dialog (`RoadmapItemDialog`), so removing them from the card body is intentional and matches the user request.
 
-### Scope guard
+### Kanban (`RoadmapKanban.tsx` / `KanbanCard`)
+- Add a single-line note preview under the metadata row: shows up to ~80 chars of `item.note` in muted text if present, else nothing. Clicking the card title still opens the dialog where the note is editable.
 
-No changes to: cloudSync schema, analyzeStore shape, Library list/dialog layout, auth, or the Analyze input/results UI itself beyond the new restore banner.
+### Gantt (`RoadmapGantt.tsx`)
+- Add a small note indicator (e.g. a dot or "📝" icon — match existing icon style) next to the title in the left column when `item.note` is set. Editing happens via the dialog.
 
----
+### Dialog (`RoadmapItemDialog.tsx`)
+- Add a "Notes" section above the Evidence section with the same `<textarea>` bound to the store via `setNote`. This is what makes the note editable from Kanban + Gantt.
+- Dialog needs the `setNote` callback; pass it down from `roadmap.tsx` via existing props on the three view components, OR have the dialog import `roadmapStore` directly and call `roadmapStore.setNote`. Use the direct-store approach to avoid prop-drilling through Gantt/Kanban — same pattern already used by `roadmapStore` mutators.
 
-## 2. Roadmap: switchable time granularity + completion status
+### PRD export
+- `prd.ts` `buildPRDText` — already iterates items via the roadmap, but the PRD is generated server-side. Notes are user-added metadata, so append them to the copyable text and PDF locally:
+  - In `PRDPanel.handleCopy` / `handlePdf`, before formatting, fold per-item notes into a new "Team notes" appendix section listing `- {item.title}: {item.note}` for items where `note` is set.
+  - Pass `items` (already in props) into the helper.
 
-### What you'll get
+## 4. PRD "Open questions" — answers + resolved/unresolved
 
-On the **Roadmap** tab, above the existing **List / Kanban / Gantt** view tabs, a new **Timeframe** segmented control:
+File: `src/components/insightflow/PRDPanel.tsx` (Metrics tab → Open questions section, lines ~498+).
 
-```text
-Timeframe:  [ Weeks ]  [ Months ]  [ Quarters ]   (default: Quarters)
-```
+- Introduce a tiny `prdQuestionStore` (new file `src/components/insightflow/prdQuestionStore.ts`) that maps `questionText → { answer: string; resolved: boolean }` in localStorage (key `insightflow.prd.questions.v1`). Same `useSyncExternalStore` pattern as `roadmapStore`.
+  - Keyed by question text rather than index so re-generations stay stable when ordering changes; collisions are acceptable given the small list.
+- Replace the bullet list with one row per question:
+  - The question text (existing styling).
+  - A small `<textarea>` (2 rows) for the answer/comment, autosaved.
+  - A pill toggle: "Unresolved" (warning style) ↔ "Resolved" (success style). Clicking toggles `resolved` and visually strikes through the question + dims the row when resolved.
+- Export: include answer + status in `buildPRDText`'s "Open questions" section — change `- (Unresolved) {q}` to `- ({Resolved|Unresolved}) {q}` + indented `Answer: {answer}` when present. Wire from `PRDPanel.handleCopy`/`handlePdf` (read store snapshot, pass into a small local formatter or extend the existing helper).
 
-- Switching timeframe re-buckets every item's date label (e.g. *"W23 2026"*, *"Jun 2026"*, *"Q2 2026"*) and re-renders the Gantt axis accordingly.
-- The Now / Next / Later columns stay; only the date label and Gantt axis change.
-- Each roadmap item gets a new **status** field with three values: `planned`, `in_progress`, `completed`. Default = `planned`.
-- On every roadmap card (List + Kanban) and in the item dialog:
-  - A small status pill ("Planned" / "In progress" / "Completed") that opens a dropdown to change status.
-  - When set to **Completed**, the card gets a strikethrough title + muted styling + a green check, and a "Completed {date}" caption.
-- The "Items by bucket" summary at the top gains a fourth count: *Completed: N*.
-- Completed items are excluded from the Gantt timeline (they don't need to be scheduled anymore) but remain visible in List and Kanban so users have a history.
+## Out of scope (untouched)
 
-### Where the changes go
+Landing page, Library, auth, Supabase schema/migrations, Analyze input/results, market-context generation logic, exports outside of the two additions above, view layouts/styling of Kanban/Gantt beyond the note indicator/preview described.
 
-- `src/components/insightflow/roadmap.ts`
-  - Add `type Status = "planned" | "in_progress" | "completed"`.
-  - Add `status: Status` and `completedAt?: number` to `RoadmapItem`.
-  - Add `type Timeframe = "weeks" | "months" | "quarters"`.
-  - Add helpers: `weekOfYear(date)`, `formatWeek(d)`, `formatMonth(d)`, plus a generic `formatTimeframeLabel(quarter, tf)` that maps a Quarter → a label in the chosen timeframe (weeks/months derived from quarter start).
-- `src/components/insightflow/roadmapStore.ts`
-  - Extend `Override` with `status?: Status`, `completedAt?: number`.
-  - Add `setStatus(id, status)` (also stamps/clears `completedAt`).
-  - Bump `STORAGE_KEY` to `v6` with a one-time migration that defaults missing items to `planned`.
-  - Persist `timeframe` preference under a separate key `insightflow.roadmap.timeframe`.
-- `src/components/insightflow/RoadmapViewTabs.tsx` *(reused)* — add a sibling component `RoadmapTimeframeTabs` (don't bolt it into the existing tabs, keep View vs Timeframe visually distinct).
-- `src/routes/roadmap.tsx`
-  - Read/write `timeframe` from the new store entry; render the Timeframe control next to the existing View tabs.
-  - Pass `timeframe` down to `RoadmapColumn`, `RoadmapKanban`, `RoadmapGantt`, `RoadmapItemCard` so they all label dates consistently.
-  - Filter Gantt items to `status !== "completed"`.
-- `src/components/insightflow/RoadmapItemCard.tsx` and `RoadmapItemDialog.tsx`
-  - Render the status pill + dropdown; apply completed styling.
-- `src/components/insightflow/RoadmapSummary.tsx` — add the Completed count.
-- `src/components/insightflow/RoadmapGantt.tsx` — switch axis ticks based on `timeframe`.
-- Cloud sync: `roadmap_overrides` is already a `jsonb` blob, so the new `status`/`completedAt` fields and timeframe ride along with the existing `saveRoadmap` call — no Supabase migration needed.
+## Technical notes
 
-### Scope guard
-
-No changes to: PRD panel, exports, analyze flow, the Now/Next/Later bucket semantics, drag-and-drop reordering, or the existing impact/effort/quarter controls. The Kanban/Gantt/List structure stays — only date labels, the new Timeframe selector, and the status pill are added.
-
----
-
-## Out of scope (explicit)
-
-- Landing page, Library list, auth, Supabase schema for sessions/projects/folders, Analyze input form, PRD generation, exports — all untouched.
-- No new tables. `roadmap_overrides` jsonb absorbs the new fields.
+- No DB migration: `roadmap_overrides` jsonb already absorbs the new `note` field; PRD question state lives in localStorage only (matches how PRD targets in the Metrics table already work — they're uncontrolled inputs).
+- `Timeframe` narrowing is a type change; verify no remaining `"weeks"` literal references with a project search before finishing.
+- Note autosave: simple `useState` mirror + 300ms debounced `setNote` call to avoid thrashing the store on every keystroke.
