@@ -193,6 +193,19 @@ export const roadmapStore = {
     persist(overrides);
     emit();
   },
+  setStatus: (id: string, status: Status) => {
+    const prev = overrides[id] ?? {};
+    overrides = {
+      ...overrides,
+      [id]: {
+        ...prev,
+        status,
+        completedAt: status === "completed" ? Date.now() : undefined,
+      },
+    };
+    persist(overrides);
+    emit();
+  },
   reset: () => {
     overrides = {};
     persist(overrides);
@@ -205,6 +218,37 @@ export const roadmapStore = {
   },
 };
 
+// ----- Timeframe preference (separate persisted singleton) -----
+
+let timeframe: Timeframe = loadTimeframe();
+const tfListeners = new Set<() => void>();
+
+function tfEmit() {
+  for (const l of tfListeners) l();
+}
+
+export const timeframeStore = {
+  get: () => timeframe,
+  set: (tf: Timeframe) => {
+    timeframe = tf;
+    persistTimeframe(tf);
+    tfEmit();
+  },
+  subscribe: (l: () => void) => {
+    tfListeners.add(l);
+    return () => { tfListeners.delete(l); };
+  },
+};
+
+export function useTimeframe(): [Timeframe, (tf: Timeframe) => void] {
+  const tf = useSyncExternalStore(
+    timeframeStore.subscribe,
+    timeframeStore.get,
+    () => "quarters" as Timeframe,
+  );
+  return [tf, timeframeStore.set];
+}
+
 export function useRoadmap(result: AnalysisResult): {
   items: RoadmapItem[];
   setBucket: (id: string, b: Bucket) => void;
@@ -212,6 +256,7 @@ export function useRoadmap(result: AnalysisResult): {
   setEffort: (id: string, e: Effort) => void;
   setQuarter: (id: string, q: Quarter) => void;
   setOrder: (id: string, n: number) => void;
+  setStatus: (id: string, s: Status) => void;
   reset: () => void;
   hasOverrides: boolean;
 } {
@@ -227,6 +272,8 @@ export function useRoadmap(result: AnalysisResult): {
       quarter: o.quarter ?? (o.bucket ? quarterFromBucket(o.bucket) : it.quarter),
       priority: o.priority ?? it.priority,
       order: o.order,
+      status: o.status ?? it.status,
+      completedAt: o.completedAt,
     };
   });
   return {
@@ -236,6 +283,7 @@ export function useRoadmap(result: AnalysisResult): {
     setEffort: roadmapStore.setEffort,
     setQuarter: roadmapStore.setQuarter,
     setOrder: roadmapStore.setOrder,
+    setStatus: roadmapStore.setStatus,
     reset: roadmapStore.reset,
     hasOverrides: Object.keys(ov).length > 0,
   };
