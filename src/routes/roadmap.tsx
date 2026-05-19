@@ -205,9 +205,11 @@ function RoadmapBody({
               key={b}
               bucket={b}
               items={sortedItems.filter((i) => i.bucket === b)}
+              timeframe={timeframe}
               onMove={setBucket}
               onEffort={setEffort}
               onQuarter={setQuarter}
+              onStatus={setStatus}
             />
           ))}
         </div>
@@ -216,13 +218,15 @@ function RoadmapBody({
       {view === "kanban" && (
         <RoadmapKanban
           items={sortedItems}
+          timeframe={timeframe}
           onMoveBucket={setBucket}
           onReorder={handleReorder}
+          onStatus={setStatus}
         />
       )}
 
       {view === "gantt" && (
-        <RoadmapGantt items={sortedItems} onQuarter={setQuarter} />
+        <RoadmapGantt items={sortedItems} timeframe={timeframe} onQuarter={setQuarter} />
       )}
 
       <div className="mx-auto max-w-[780px]">
