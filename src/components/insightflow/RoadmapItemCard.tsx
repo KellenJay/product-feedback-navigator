@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   formatQuarter,
+  formatTimeframeLabel,
   addQuarters,
   currentQuarter,
   priorityClasses,
@@ -9,23 +10,30 @@ import {
   type Effort,
   type Quarter,
   type RoadmapItem,
+  type Status,
+  type Timeframe,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
+import { StatusPill } from "./StatusPill";
 
 interface Props {
   item: RoadmapItem;
   rank: number;
+  timeframe: Timeframe;
   onMove: (b: Bucket) => void;
   onEffort: (e: Effort) => void;
   onQuarter: (q: Quarter) => void;
+  onStatus: (s: Status) => void;
 }
 
 export function RoadmapItemCard({
   item,
   rank,
+  timeframe,
   onMove,
   onEffort,
   onQuarter,
+  onStatus,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
