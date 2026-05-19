@@ -23,6 +23,7 @@ export interface Override {
   order?: number;
   status?: Status;
   completedAt?: number;
+  note?: string;
 }
 export type Overrides = Record<string, Override>;
 
