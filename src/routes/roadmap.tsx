@@ -114,8 +114,9 @@ function RoadmapBody({
   productName: string;
   businessGoal: string;
 }) {
-  const { items, setBucket, setPriority, setEffort, setQuarter, reset, hasOverrides } =
+  const { items, setBucket, setPriority, setEffort, setQuarter, setStatus, reset, hasOverrides } =
     useRoadmap(result);
+  const [timeframe, setTimeframe] = useTimeframe();
   const [view, setView] = useState<RoadmapView>("list");
   const [{ entryId }] = useAnalyzeStore();
 
@@ -189,8 +190,9 @@ function RoadmapBody({
       </section>
 
       {/* View tabs sit between hero and KPIs */}
-      <div className="mt-8 flex justify-center">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <RoadmapViewTabs value={view} onChange={setView} />
+        <RoadmapTimeframeTabs value={timeframe} onChange={setTimeframe} />
       </div>
 
       <div className="mx-auto mt-6 max-w-[780px]">
@@ -204,9 +206,11 @@ function RoadmapBody({
               key={b}
               bucket={b}
               items={sortedItems.filter((i) => i.bucket === b)}
+              timeframe={timeframe}
               onMove={setBucket}
               onEffort={setEffort}
               onQuarter={setQuarter}
+              onStatus={setStatus}
             />
           ))}
         </div>
@@ -215,13 +219,15 @@ function RoadmapBody({
       {view === "kanban" && (
         <RoadmapKanban
           items={sortedItems}
+          timeframe={timeframe}
           onMoveBucket={setBucket}
           onReorder={handleReorder}
+          onStatus={setStatus}
         />
       )}
 
       {view === "gantt" && (
-        <RoadmapGantt items={sortedItems} onQuarter={setQuarter} />
+        <RoadmapGantt items={sortedItems} timeframe={timeframe} onQuarter={setQuarter} />
       )}
 
       <div className="mx-auto max-w-[780px]">
