@@ -2,6 +2,8 @@ import type { AnalysisResult, Issue, Quote } from "./types";
 
 export type Bucket = "now" | "next" | "later";
 export type Effort = "L" | "M" | "H";
+export type Status = "planned" | "in_progress" | "completed";
+export type Timeframe = "weeks" | "months" | "quarters";
 
 export interface Quarter {
   q: 1 | 2 | 3 | 4;
@@ -16,6 +18,8 @@ export interface RoadmapItem {
   effort: Effort;
   quarter: Quarter;
   order?: number;
+  status: Status;
+  completedAt?: number;
   impactScore: number;
   priority: "P1" | "P2" | "P3";
   category: string;
@@ -23,6 +27,12 @@ export interface RoadmapItem {
   rationale: string;
   quotes: Quote[];
 }
+
+export const STATUS_META: Record<Status, { label: string; tone: string }> = {
+  planned: { label: "Planned", tone: "bg-muted text-foreground-muted" },
+  in_progress: { label: "In progress", tone: "bg-warning/15 text-warning" },
+  completed: { label: "Completed", tone: "bg-success/15 text-success" },
+};
 
 export const BUCKET_META: Record<
   Bucket,
