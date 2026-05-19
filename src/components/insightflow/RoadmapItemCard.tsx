@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   formatQuarter,
+  formatTimeframeLabel,
   addQuarters,
   currentQuarter,
   priorityClasses,
@@ -9,23 +10,30 @@ import {
   type Effort,
   type Quarter,
   type RoadmapItem,
+  type Status,
+  type Timeframe,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
+import { StatusPill } from "./StatusPill";
 
 interface Props {
   item: RoadmapItem;
   rank: number;
+  timeframe: Timeframe;
   onMove: (b: Bucket) => void;
   onEffort: (e: Effort) => void;
   onQuarter: (q: Quarter) => void;
+  onStatus: (s: Status) => void;
 }
 
 export function RoadmapItemCard({
   item,
   rank,
+  timeframe,
   onMove,
   onEffort,
   onQuarter,
+  onStatus,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -38,9 +46,15 @@ export function RoadmapItemCard({
 
   const quarterChoices = quarterOptions(item.quarter);
 
+  const isCompleted = item.status === "completed";
+
   return (
     <>
-      <article className="rounded-xl border border-border bg-card p-4">
+      <article
+        className={`rounded-xl border border-border bg-card p-4 ${
+          isCompleted ? "opacity-70" : ""
+        }`}
+      >
         <div className="flex items-start gap-3">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground">
             {rank}
@@ -50,7 +64,9 @@ export function RoadmapItemCard({
               <button
                 type="button"
                 onClick={() => setDetailOpen(true)}
-                className="text-left text-[15px] font-medium leading-snug text-foreground hover:text-primary hover:underline"
+                className={`text-left text-[15px] font-medium leading-snug hover:text-primary hover:underline ${
+                  isCompleted ? "text-foreground-muted line-through" : "text-foreground"
+                }`}
               >
                 {item.title}
               </button>
@@ -62,6 +78,7 @@ export function RoadmapItemCard({
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <StatusPill value={item.status} onChange={onStatus} />
               <span
                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${priorityClasses(item.priority)}`}
                 title="Priority is set by the bucket (Now/Next/Later)"
@@ -75,12 +92,12 @@ export function RoadmapItemCard({
                   onQuarter({ q: q as 1 | 2 | 3 | 4, year: y });
                 }}
                 className="bg-primary/15 text-primary"
-                ariaLabel="Change quarter"
+                ariaLabel="Change schedule"
                 options={quarterChoices.map((c) => ({
                   value: quarterKey(c),
-                  label: formatQuarter(c),
+                  label: formatTimeframeLabel(c, timeframe),
                 }))}
-                display={formatQuarter(item.quarter)}
+                display={formatTimeframeLabel(item.quarter, timeframe)}
               />
               <span className="rounded-full border border-border/60 bg-foreground/5 px-2 py-0.5 text-[11px] font-medium text-foreground">
                 {item.category}
@@ -101,6 +118,11 @@ export function RoadmapItemCard({
                 ]}
                 display={`Effort ${item.effort}`}
               />
+              {isCompleted && item.completedAt && (
+                <span className="text-[11px] text-foreground-muted">
+                  · Completed {new Date(item.completedAt).toLocaleDateString()}
+                </span>
+              )}
             </div>
 
             {item.rationale && (

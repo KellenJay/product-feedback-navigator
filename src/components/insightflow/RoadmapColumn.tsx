@@ -1,15 +1,17 @@
-import { BUCKET_META, type Bucket, type Effort, type Quarter, type RoadmapItem } from "./roadmap";
+import { BUCKET_META, type Bucket, type Effort, type Quarter, type RoadmapItem, type Status, type Timeframe } from "./roadmap";
 import { RoadmapItemCard } from "./RoadmapItemCard";
 
 interface Props {
   bucket: Bucket;
   items: RoadmapItem[];
+  timeframe: Timeframe;
   onMove: (id: string, b: Bucket) => void;
   onEffort: (id: string, e: Effort) => void;
   onQuarter: (id: string, q: Quarter) => void;
+  onStatus: (id: string, s: Status) => void;
 }
 
-export function RoadmapColumn({ bucket, items, onMove, onEffort, onQuarter }: Props) {
+export function RoadmapColumn({ bucket, items, timeframe, onMove, onEffort, onQuarter, onStatus }: Props) {
   const meta = BUCKET_META[bucket];
   return (
     <section className="mt-6">
@@ -38,9 +40,11 @@ export function RoadmapColumn({ bucket, items, onMove, onEffort, onQuarter }: Pr
               key={item.id}
               item={item}
               rank={i + 1}
+              timeframe={timeframe}
               onMove={(b) => onMove(item.id, b)}
               onEffort={(e) => onEffort(item.id, e)}
               onQuarter={(q) => onQuarter(item.id, q)}
+              onStatus={(s) => onStatus(item.id, s)}
             />
           ))}
         </div>

@@ -3,36 +3,42 @@ import {
   addQuarters,
   currentQuarter,
   EFFORT_META,
+  formatTimeframeRange,
   priorityClasses,
   quarterIndex,
   quartersEqual,
   type Quarter,
   type RoadmapItem,
+  type Timeframe,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
 
 interface Props {
   items: RoadmapItem[];
+  timeframe: Timeframe;
   onQuarter: (id: string, q: Quarter) => void;
 }
 
 const SPAN = 4; // quarters shown
 const DRAG_MIME = "application/x-roadmap-item";
 
-export function RoadmapGantt({ items, onQuarter }: Props) {
+export function RoadmapGantt({ items, timeframe, onQuarter }: Props) {
   const [active, setActive] = useState<RoadmapItem | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [hoverCell, setHoverCell] = useState<string | null>(null);
+
+  // Hide completed items from the schedule view.
+  const scheduleItems = items.filter((it) => it.status !== "completed");
 
   const start = currentQuarter();
   const cols = Array.from({ length: SPAN }, (_, i) => addQuarters(start, i));
   const startIdx = quarterIndex(start);
 
-  const visible = items.filter((it) => {
+  const visible = scheduleItems.filter((it) => {
     const idx = quarterIndex(it.quarter);
     return idx >= startIdx && idx < startIdx + SPAN;
   });
-  const offscreen = items.length - visible.length;
+  const offscreen = scheduleItems.length - visible.length;
 
   const cellKey = (itemId: string, qIdx: number) => `${itemId}:${qIdx}`;
 
@@ -58,10 +64,7 @@ export function RoadmapGantt({ items, onQuarter }: Props) {
                   isToday ? "text-primary" : "text-foreground-muted"
                 }`}
               >
-                <div>Q{q.q}</div>
-                <div className="text-[10px] text-foreground-muted">
-                  {q.year}
-                </div>
+                <div>{formatTimeframeRange(q, timeframe)}</div>
                 {isToday && (
                   <div className="mx-auto mt-1 h-0.5 w-6 rounded-full bg-primary" />
                 )}

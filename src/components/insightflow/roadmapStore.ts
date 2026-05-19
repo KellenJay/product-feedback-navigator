@@ -9,6 +9,8 @@ import {
   type Effort,
   type Quarter,
   type RoadmapItem,
+  type Status,
+  type Timeframe,
 } from "./roadmap";
 
 type Priority = "P1" | "P2" | "P3";
@@ -19,11 +21,15 @@ export interface Override {
   quarter?: Quarter;
   priority?: Priority;
   order?: number;
+  status?: Status;
+  completedAt?: number;
 }
 export type Overrides = Record<string, Override>;
 
-const STORAGE_KEY = "insightflow.roadmap.v5";
+const STORAGE_KEY = "insightflow.roadmap.v6";
 const LEGACY_KEY = "insightflow.roadmap.v4";
+const LEGACY_V5_KEY = "insightflow.roadmap.v5";
+const TIMEFRAME_KEY = "insightflow.roadmap.timeframe";
 
 function migrateEffort(o: Override): Override {
   // Old scale: S/M/L (Small/Medium/Large) → New scale: L/M/H (Low/Medium/High)
@@ -41,25 +47,28 @@ function load(): Overrides {
   try {
     let raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const legacy = window.localStorage.getItem(LEGACY_KEY);
-      if (legacy) {
-        const legacyParsed = JSON.parse(legacy) as Overrides;
-        const migrated: Overrides = {};
-        for (const [id, ov] of Object.entries(legacyParsed)) {
-          // Old "L"=Large maps to new "H"=High
-          let next: Override = { ...ov };
-          const e = ov.effort as unknown as string | undefined;
-          if (e === "S") next.effort = "L";
-          else if (e === "M") next.effort = "M";
-          else if (e === "L") next.effort = "H";
-          migrated[id] = next;
+      // Try v5 first, then v4
+      raw = window.localStorage.getItem(LEGACY_V5_KEY);
+      if (!raw) {
+        const legacy = window.localStorage.getItem(LEGACY_KEY);
+        if (legacy) {
+          const legacyParsed = JSON.parse(legacy) as Overrides;
+          const migrated: Overrides = {};
+          for (const [id, ov] of Object.entries(legacyParsed)) {
+            let next: Override = { ...ov };
+            const e = ov.effort as unknown as string | undefined;
+            if (e === "S") next.effort = "L";
+            else if (e === "M") next.effort = "M";
+            else if (e === "L") next.effort = "H";
+            migrated[id] = next;
+          }
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+          } catch { /* ignore */ }
+          return migrated;
         }
-        try {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-        } catch { /* ignore */ }
-        return migrated;
+        return {};
       }
-      return {};
     }
     const parsed = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null) return {};
@@ -71,6 +80,22 @@ function load(): Overrides {
   } catch {
     return {};
   }
+}
+
+function loadTimeframe(): Timeframe {
+  if (typeof window === "undefined") return "quarters";
+  try {
+    const raw = window.localStorage.getItem(TIMEFRAME_KEY);
+    if (raw === "weeks" || raw === "months" || raw === "quarters") return raw;
+  } catch { /* ignore */ }
+  return "quarters";
+}
+
+function persistTimeframe(tf: Timeframe) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(TIMEFRAME_KEY, tf);
+  } catch { /* ignore */ }
 }
 
 function persist(value: Overrides) {
@@ -168,6 +193,19 @@ export const roadmapStore = {
     persist(overrides);
     emit();
   },
+  setStatus: (id: string, status: Status) => {
+    const prev = overrides[id] ?? {};
+    overrides = {
+      ...overrides,
+      [id]: {
+        ...prev,
+        status,
+        completedAt: status === "completed" ? Date.now() : undefined,
+      },
+    };
+    persist(overrides);
+    emit();
+  },
   reset: () => {
     overrides = {};
     persist(overrides);
@@ -180,6 +218,37 @@ export const roadmapStore = {
   },
 };
 
+// ----- Timeframe preference (separate persisted singleton) -----
+
+let timeframe: Timeframe = loadTimeframe();
+const tfListeners = new Set<() => void>();
+
+function tfEmit() {
+  for (const l of tfListeners) l();
+}
+
+export const timeframeStore = {
+  get: () => timeframe,
+  set: (tf: Timeframe) => {
+    timeframe = tf;
+    persistTimeframe(tf);
+    tfEmit();
+  },
+  subscribe: (l: () => void) => {
+    tfListeners.add(l);
+    return () => { tfListeners.delete(l); };
+  },
+};
+
+export function useTimeframe(): [Timeframe, (tf: Timeframe) => void] {
+  const tf = useSyncExternalStore(
+    timeframeStore.subscribe,
+    timeframeStore.get,
+    () => "quarters" as Timeframe,
+  );
+  return [tf, timeframeStore.set];
+}
+
 export function useRoadmap(result: AnalysisResult): {
   items: RoadmapItem[];
   setBucket: (id: string, b: Bucket) => void;
@@ -187,6 +256,7 @@ export function useRoadmap(result: AnalysisResult): {
   setEffort: (id: string, e: Effort) => void;
   setQuarter: (id: string, q: Quarter) => void;
   setOrder: (id: string, n: number) => void;
+  setStatus: (id: string, s: Status) => void;
   reset: () => void;
   hasOverrides: boolean;
 } {
@@ -202,6 +272,8 @@ export function useRoadmap(result: AnalysisResult): {
       quarter: o.quarter ?? (o.bucket ? quarterFromBucket(o.bucket) : it.quarter),
       priority: o.priority ?? it.priority,
       order: o.order,
+      status: o.status ?? it.status,
+      completedAt: o.completedAt,
     };
   });
   return {
@@ -211,6 +283,7 @@ export function useRoadmap(result: AnalysisResult): {
     setEffort: roadmapStore.setEffort,
     setQuarter: roadmapStore.setQuarter,
     setOrder: roadmapStore.setOrder,
+    setStatus: roadmapStore.setStatus,
     reset: roadmapStore.reset,
     hasOverrides: Object.keys(ov).length > 0,
   };

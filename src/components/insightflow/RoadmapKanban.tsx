@@ -2,22 +2,27 @@ import { useState } from "react";
 import {
   BUCKET_META,
   EFFORT_META,
-  formatQuarter,
+  formatTimeframeLabel,
   priorityClasses,
   type Bucket,
   type RoadmapItem,
+  type Status,
+  type Timeframe,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
+import { StatusPill } from "./StatusPill";
 
 interface Props {
   items: RoadmapItem[];
+  timeframe: Timeframe;
   onMoveBucket: (id: string, bucket: Bucket) => void;
   onReorder: (id: string, beforeId: string | null, bucket: Bucket) => void;
+  onStatus: (id: string, s: Status) => void;
 }
 
 const BUCKETS: Bucket[] = ["now", "next", "later"];
 
-export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
+export function RoadmapKanban({ items, timeframe, onMoveBucket, onReorder, onStatus }: Props) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<{ bucket: Bucket; beforeId: string | null } | null>(
     null,
@@ -98,8 +103,10 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
                     )}
                     <KanbanCard
                       item={item}
+                      timeframe={timeframe}
                       isDragging={draggingId === item.id}
                       onOpenDetail={() => setDetail(item)}
+                      onStatus={(s) => onStatus(item.id, s)}
                       onDragStart={() => setDraggingId(item.id)}
                       onDragEnd={() => {
                         setDraggingId(null);
@@ -149,21 +156,26 @@ export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
 
 function KanbanCard({
   item,
+  timeframe,
   isDragging,
   onOpenDetail,
+  onStatus,
   onDragStart,
   onDragEnd,
   onDragOver,
   onDrop,
 }: {
   item: RoadmapItem;
+  timeframe: Timeframe;
   isDragging: boolean;
   onOpenDetail: () => void;
+  onStatus: (s: Status) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
 }) {
+  const isCompleted = item.status === "completed";
   return (
     <article
       draggable
@@ -176,7 +188,7 @@ function KanbanCard({
       onDrop={onDrop}
       className={`cursor-grab rounded-lg border border-border bg-card p-3 active:cursor-grabbing ${
         isDragging ? "opacity-40" : ""
-      }`}
+      } ${isCompleted ? "opacity-70" : ""}`}
     >
       <button
         type="button"
@@ -185,18 +197,21 @@ function KanbanCard({
           onOpenDetail();
         }}
         onMouseDown={(e) => e.stopPropagation()}
-        className="block w-full text-left text-[13px] font-medium leading-snug text-foreground hover:text-primary hover:underline"
+        className={`block w-full text-left text-[13px] font-medium leading-snug hover:text-primary hover:underline ${
+          isCompleted ? "text-foreground-muted line-through" : "text-foreground"
+        }`}
       >
         {item.title}
       </button>
       <div className="mt-2 flex flex-wrap items-center gap-1">
+        <StatusPill value={item.status} onChange={onStatus} size="xs" />
         <span
           className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${priorityClasses(item.priority)}`}
         >
           {item.priority}
         </span>
         <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-          {formatQuarter(item.quarter)}
+          {formatTimeframeLabel(item.quarter, timeframe)}
         </span>
         <span
           className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-foreground"

@@ -2,6 +2,8 @@ import type { AnalysisResult, Issue, Quote } from "./types";
 
 export type Bucket = "now" | "next" | "later";
 export type Effort = "L" | "M" | "H";
+export type Status = "planned" | "in_progress" | "completed";
+export type Timeframe = "weeks" | "months" | "quarters";
 
 export interface Quarter {
   q: 1 | 2 | 3 | 4;
@@ -16,6 +18,8 @@ export interface RoadmapItem {
   effort: Effort;
   quarter: Quarter;
   order?: number;
+  status: Status;
+  completedAt?: number;
   impactScore: number;
   priority: "P1" | "P2" | "P3";
   category: string;
@@ -23,6 +27,12 @@ export interface RoadmapItem {
   rationale: string;
   quotes: Quote[];
 }
+
+export const STATUS_META: Record<Status, { label: string; tone: string }> = {
+  planned: { label: "Planned", tone: "bg-muted text-foreground-muted" },
+  in_progress: { label: "In progress", tone: "bg-warning/15 text-warning" },
+  completed: { label: "Completed", tone: "bg-success/15 text-success" },
+};
 
 export const BUCKET_META: Record<
   Bucket,
@@ -137,6 +147,7 @@ export function deriveRoadmap(result: AnalysisResult, today: Date = new Date()):
       bucket,
       effort: deriveEffort(issue),
       quarter: quarterFromBucket(bucket, today),
+      status: "planned" as Status,
       impactScore: issue.impactScore,
       priority: issue.priority,
       category: issue.category,
@@ -145,6 +156,55 @@ export function deriveRoadmap(result: AnalysisResult, today: Date = new Date()):
       quotes: issue.quotes ?? [],
     };
   });
+}
+
+// ----- Timeframe label helpers -----
+
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function quarterStartMonth(q: Quarter["q"]): number {
+  return (q - 1) * 3; // 0, 3, 6, 9
+}
+
+export function quarterStartDate(q: Quarter): Date {
+  return new Date(q.year, quarterStartMonth(q.q), 1);
+}
+
+export function isoWeek(date: Date): { week: number; year: number } {
+  // ISO 8601 week number
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return { week, year: d.getUTCFullYear() };
+}
+
+export function formatTimeframeLabel(q: Quarter, tf: Timeframe): string {
+  if (tf === "quarters") return formatQuarter(q);
+  if (tf === "months") {
+    const start = quarterStartMonth(q.q);
+    return `${MONTH_NAMES[start]} ${q.year}`;
+  }
+  // weeks: show week of quarter-start date
+  const { week, year } = isoWeek(quarterStartDate(q));
+  return `W${week} ${year}`;
+}
+
+export function formatTimeframeRange(q: Quarter, tf: Timeframe): string {
+  if (tf === "quarters") return formatQuarter(q);
+  if (tf === "months") {
+    const start = quarterStartMonth(q.q);
+    return `${MONTH_NAMES[start]}–${MONTH_NAMES[start + 2]} ${q.year}`;
+  }
+  const startD = quarterStartDate(q);
+  const endD = new Date(q.year, quarterStartMonth(q.q) + 3, 0);
+  const s = isoWeek(startD);
+  const e = isoWeek(endD);
+  return `W${s.week}–W${e.week} ${s.year}`;
 }
 
 function quoteText(q: Quote): string {
