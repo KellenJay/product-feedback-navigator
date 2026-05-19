@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { EFFORT_META, formatQuarter, priorityClasses, type RoadmapItem } from "./roadmap";
 import { QuoteList } from "./QuoteList";
+import { NoteEditor } from "./RoadmapItemCard";
 
 interface Props {
   open: boolean;
@@ -78,6 +79,13 @@ function Body({ item }: { item: RoadmapItem }) {
           {item.rationale}
         </p>
       )}
+
+      <div>
+        <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-foreground-muted">
+          Notes
+        </h3>
+        <NoteEditor itemId={item.id} initial={item.note ?? ""} />
+      </div>
 
       <div>
         <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-foreground-muted">
