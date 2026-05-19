@@ -86,7 +86,7 @@ function loadTimeframe(): Timeframe {
   if (typeof window === "undefined") return "quarters";
   try {
     const raw = window.localStorage.getItem(TIMEFRAME_KEY);
-    if (raw === "weeks" || raw === "months" || raw === "quarters") return raw;
+    if (raw === "months" || raw === "quarters") return raw;
   } catch { /* ignore */ }
   return "quarters";
 }
