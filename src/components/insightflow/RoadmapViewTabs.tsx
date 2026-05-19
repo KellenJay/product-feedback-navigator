@@ -1,4 +1,4 @@
-import { List, Columns3, BarChart3, CalendarDays, CalendarRange, CalendarClock } from "lucide-react";
+import { List, Columns3, BarChart3, CalendarRange, CalendarClock } from "lucide-react";
 import type { Timeframe } from "./roadmap";
 
 export type RoadmapView = "list" | "kanban" | "gantt";
@@ -41,7 +41,6 @@ export function RoadmapViewTabs({ value, onChange }: Props) {
 }
 
 const TF_TABS: { value: Timeframe; label: string; icon: typeof List }[] = [
-  { value: "weeks", label: "Weeks", icon: CalendarDays },
   { value: "months", label: "Months", icon: CalendarRange },
   { value: "quarters", label: "Quarters", icon: CalendarClock },
 ];

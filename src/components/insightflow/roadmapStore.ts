@@ -23,6 +23,7 @@ export interface Override {
   order?: number;
   status?: Status;
   completedAt?: number;
+  note?: string;
 }
 export type Overrides = Record<string, Override>;
 
@@ -86,7 +87,7 @@ function loadTimeframe(): Timeframe {
   if (typeof window === "undefined") return "quarters";
   try {
     const raw = window.localStorage.getItem(TIMEFRAME_KEY);
-    if (raw === "weeks" || raw === "months" || raw === "quarters") return raw;
+    if (raw === "months" || raw === "quarters") return raw;
   } catch { /* ignore */ }
   return "quarters";
 }
@@ -206,6 +207,16 @@ export const roadmapStore = {
     persist(overrides);
     emit();
   },
+  setNote: (id: string, note: string) => {
+    const prev = overrides[id] ?? {};
+    const trimmed = note.trim();
+    overrides = {
+      ...overrides,
+      [id]: { ...prev, note: trimmed.length === 0 ? undefined : note },
+    };
+    persist(overrides);
+    emit();
+  },
   reset: () => {
     overrides = {};
     persist(overrides);
@@ -257,6 +268,7 @@ export function useRoadmap(result: AnalysisResult): {
   setQuarter: (id: string, q: Quarter) => void;
   setOrder: (id: string, n: number) => void;
   setStatus: (id: string, s: Status) => void;
+  setNote: (id: string, note: string) => void;
   reset: () => void;
   hasOverrides: boolean;
 } {
@@ -274,6 +286,7 @@ export function useRoadmap(result: AnalysisResult): {
       order: o.order,
       status: o.status ?? it.status,
       completedAt: o.completedAt,
+      note: o.note,
     };
   });
   return {
@@ -284,6 +297,7 @@ export function useRoadmap(result: AnalysisResult): {
     setQuarter: roadmapStore.setQuarter,
     setOrder: roadmapStore.setOrder,
     setStatus: roadmapStore.setStatus,
+    setNote: roadmapStore.setNote,
     reset: roadmapStore.reset,
     hasOverrides: Object.keys(ov).length > 0,
   };
