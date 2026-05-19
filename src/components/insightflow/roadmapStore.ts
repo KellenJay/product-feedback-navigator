@@ -9,6 +9,8 @@ import {
   type Effort,
   type Quarter,
   type RoadmapItem,
+  type Status,
+  type Timeframe,
 } from "./roadmap";
 
 type Priority = "P1" | "P2" | "P3";
@@ -19,11 +21,15 @@ export interface Override {
   quarter?: Quarter;
   priority?: Priority;
   order?: number;
+  status?: Status;
+  completedAt?: number;
 }
 export type Overrides = Record<string, Override>;
 
-const STORAGE_KEY = "insightflow.roadmap.v5";
+const STORAGE_KEY = "insightflow.roadmap.v6";
 const LEGACY_KEY = "insightflow.roadmap.v4";
+const LEGACY_V5_KEY = "insightflow.roadmap.v5";
+const TIMEFRAME_KEY = "insightflow.roadmap.timeframe";
 
 function migrateEffort(o: Override): Override {
   // Old scale: S/M/L (Small/Medium/Large) → New scale: L/M/H (Low/Medium/High)
