@@ -2,22 +2,27 @@ import { useState } from "react";
 import {
   BUCKET_META,
   EFFORT_META,
-  formatQuarter,
+  formatTimeframeLabel,
   priorityClasses,
   type Bucket,
   type RoadmapItem,
+  type Status,
+  type Timeframe,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
+import { StatusPill } from "./StatusPill";
 
 interface Props {
   items: RoadmapItem[];
+  timeframe: Timeframe;
   onMoveBucket: (id: string, bucket: Bucket) => void;
   onReorder: (id: string, beforeId: string | null, bucket: Bucket) => void;
+  onStatus: (id: string, s: Status) => void;
 }
 
 const BUCKETS: Bucket[] = ["now", "next", "later"];
 
-export function RoadmapKanban({ items, onMoveBucket, onReorder }: Props) {
+export function RoadmapKanban({ items, timeframe, onMoveBucket, onReorder, onStatus }: Props) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<{ bucket: Bucket; beforeId: string | null } | null>(
     null,
