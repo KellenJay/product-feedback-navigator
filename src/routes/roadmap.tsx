@@ -190,8 +190,9 @@ function RoadmapBody({
       </section>
 
       {/* View tabs sit between hero and KPIs */}
-      <div className="mt-8 flex justify-center">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <RoadmapViewTabs value={view} onChange={setView} />
+        <RoadmapTimeframeTabs value={timeframe} onChange={setTimeframe} />
       </div>
 
       <div className="mx-auto mt-6 max-w-[780px]">
