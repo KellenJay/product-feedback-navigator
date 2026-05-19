@@ -3,16 +3,19 @@ import {
   addQuarters,
   currentQuarter,
   EFFORT_META,
+  formatTimeframeRange,
   priorityClasses,
   quarterIndex,
   quartersEqual,
   type Quarter,
   type RoadmapItem,
+  type Timeframe,
 } from "./roadmap";
 import { RoadmapItemDialog } from "./RoadmapItemDialog";
 
 interface Props {
   items: RoadmapItem[];
+  timeframe: Timeframe;
   onQuarter: (id: string, q: Quarter) => void;
 }
 
