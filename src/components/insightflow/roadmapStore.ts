@@ -47,26 +47,56 @@ function load(): Overrides {
   try {
     let raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const legacy = window.localStorage.getItem(LEGACY_KEY);
-      if (legacy) {
-        const legacyParsed = JSON.parse(legacy) as Overrides;
-        const migrated: Overrides = {};
-        for (const [id, ov] of Object.entries(legacyParsed)) {
-          // Old "L"=Large maps to new "H"=High
-          let next: Override = { ...ov };
-          const e = ov.effort as unknown as string | undefined;
-          if (e === "S") next.effort = "L";
-          else if (e === "M") next.effort = "M";
-          else if (e === "L") next.effort = "H";
-          migrated[id] = next;
+      // Try v5 first, then v4
+      raw = window.localStorage.getItem(LEGACY_V5_KEY);
+      if (!raw) {
+        const legacy = window.localStorage.getItem(LEGACY_KEY);
+        if (legacy) {
+          const legacyParsed = JSON.parse(legacy) as Overrides;
+          const migrated: Overrides = {};
+          for (const [id, ov] of Object.entries(legacyParsed)) {
+            let next: Override = { ...ov };
+            const e = ov.effort as unknown as string | undefined;
+            if (e === "S") next.effort = "L";
+            else if (e === "M") next.effort = "M";
+            else if (e === "L") next.effort = "H";
+            migrated[id] = next;
+          }
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+          } catch { /* ignore */ }
+          return migrated;
         }
-        try {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-        } catch { /* ignore */ }
-        return migrated;
+        return {};
       }
-      return {};
     }
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return {};
+    const out: Overrides = {};
+    for (const [id, ov] of Object.entries(parsed as Overrides)) {
+      out[id] = migrateEffort(ov);
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function loadTimeframe(): Timeframe {
+  if (typeof window === "undefined") return "quarters";
+  try {
+    const raw = window.localStorage.getItem(TIMEFRAME_KEY);
+    if (raw === "weeks" || raw === "months" || raw === "quarters") return raw;
+  } catch { /* ignore */ }
+  return "quarters";
+}
+
+function persistTimeframe(tf: Timeframe) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(TIMEFRAME_KEY, tf);
+  } catch { /* ignore */ }
+}
     const parsed = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null) return {};
     const out: Overrides = {};
