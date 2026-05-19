@@ -97,17 +97,6 @@ function persistTimeframe(tf: Timeframe) {
     window.localStorage.setItem(TIMEFRAME_KEY, tf);
   } catch { /* ignore */ }
 }
-    const parsed = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) return {};
-    const out: Overrides = {};
-    for (const [id, ov] of Object.entries(parsed as Overrides)) {
-      out[id] = migrateEffort(ov);
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
 
 function persist(value: Overrides) {
   if (typeof window === "undefined") return;
