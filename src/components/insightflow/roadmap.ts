@@ -3,7 +3,7 @@ import type { AnalysisResult, Issue, Quote } from "./types";
 export type Bucket = "now" | "next" | "later";
 export type Effort = "L" | "M" | "H";
 export type Status = "planned" | "in_progress" | "completed";
-export type Timeframe = "weeks" | "months" | "quarters";
+export type Timeframe = "months" | "quarters";
 
 export interface Quarter {
   q: 1 | 2 | 3 | 4;
@@ -20,6 +20,7 @@ export interface RoadmapItem {
   order?: number;
   status: Status;
   completedAt?: number;
+  note?: string;
   impactScore: number;
   priority: "P1" | "P2" | "P3";
   category: string;
@@ -185,26 +186,14 @@ export function isoWeek(date: Date): { week: number; year: number } {
 
 export function formatTimeframeLabel(q: Quarter, tf: Timeframe): string {
   if (tf === "quarters") return formatQuarter(q);
-  if (tf === "months") {
-    const start = quarterStartMonth(q.q);
-    return `${MONTH_NAMES[start]} ${q.year}`;
-  }
-  // weeks: show week of quarter-start date
-  const { week, year } = isoWeek(quarterStartDate(q));
-  return `W${week} ${year}`;
+  const start = quarterStartMonth(q.q);
+  return `${MONTH_NAMES[start]} ${q.year}`;
 }
 
 export function formatTimeframeRange(q: Quarter, tf: Timeframe): string {
   if (tf === "quarters") return formatQuarter(q);
-  if (tf === "months") {
-    const start = quarterStartMonth(q.q);
-    return `${MONTH_NAMES[start]}–${MONTH_NAMES[start + 2]} ${q.year}`;
-  }
-  const startD = quarterStartDate(q);
-  const endD = new Date(q.year, quarterStartMonth(q.q) + 3, 0);
-  const s = isoWeek(startD);
-  const e = isoWeek(endD);
-  return `W${s.week}–W${e.week} ${s.year}`;
+  const start = quarterStartMonth(q.q);
+  return `${MONTH_NAMES[start]}–${MONTH_NAMES[start + 2]} ${q.year}`;
 }
 
 function quoteText(q: Quote): string {
