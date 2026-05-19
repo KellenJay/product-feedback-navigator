@@ -56,7 +56,9 @@ export function PRDPanel({
   const handleCopy = async () => {
     if (!prd) return;
     try {
-      await navigator.clipboard.writeText(buildPRDText(prd));
+      const base = buildPRDText(prd);
+      const extras = buildExtras(items, prd.openQuestions);
+      await navigator.clipboard.writeText(extras ? `${base}\n\n${extras}` : base);
       toast.success("PRD copied to clipboard");
     } catch {
       toast.error("Couldn't access clipboard");
@@ -175,6 +177,29 @@ export function PRDPanel({
       </CollapsibleContent>
     </Collapsible>
   );
+}
+
+function buildExtras(items: RoadmapItem[], openQuestions: string[]): string {
+  const out: string[] = [];
+  const noted = items.filter((i) => i.note && i.note.trim().length > 0);
+  if (noted.length > 0) {
+    out.push("## Team notes");
+    for (const it of noted) {
+      out.push(`- **${it.title}**: ${it.note}`);
+    }
+    out.push("");
+  }
+  const qmap = prdQuestionStore.get();
+  const annotated = openQuestions.filter((q) => qmap[q]);
+  if (annotated.length > 0) {
+    out.push("## Open questions — answers");
+    for (const q of annotated) {
+      const s = qmap[q];
+      out.push(`- (${s.resolved ? "Resolved" : "Unresolved"}) ${q}`);
+      if (s.answer.trim()) out.push(`  Answer: ${s.answer}`);
+    }
+  }
+  return out.join("\n").trim();
 }
 
 function PRDTabs({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
