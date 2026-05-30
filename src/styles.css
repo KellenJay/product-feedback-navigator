@@ -221,3 +221,8 @@
     0 0 80px -20px color-mix(in oklab, var(--color-primary) 25%, transparent);
 }
 
+/* Hide scrollbar but keep scrollability */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+
