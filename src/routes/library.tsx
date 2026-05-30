@@ -161,7 +161,7 @@ function LibraryPage() {
 
       <TabBar active="library" />
 
-      <main className="mx-auto max-w-[1100px] px-6 pb-24 pt-12">
+      <main className="mx-auto max-w-[1100px] px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         {/* Hero */}
         <section className="relative isolate text-center">
           <div className="hero-beam" aria-hidden />
