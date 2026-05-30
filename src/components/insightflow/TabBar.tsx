@@ -85,7 +85,7 @@ export function TabBar({ active }: { active: Tab }) {
   return (
     <nav className="border-b border-border">
       <div className="mx-auto flex max-w-[780px] items-center justify-between gap-3 px-4 sm:px-6">
-        <div className="-mx-1 flex items-center gap-5 overflow-x-auto px-1 sm:gap-7">
+        <div className="no-scrollbar -mx-1 flex items-center gap-5 overflow-x-auto px-1 sm:gap-7">
           <Link
             to="/app"
             className={`${baseTab} ${active === "analyze" ? activeCls : inactive}`}

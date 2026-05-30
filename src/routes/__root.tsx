@@ -1,6 +1,12 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { onboardingStore } from "@/components/onboarding/onboardingStore";
+import { OnboardingSurveyDialog } from "@/components/onboarding/OnboardingSurveyDialog";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 
 import appCss from "../styles.css?url";
+
 
 function NotFoundComponent() {
   return (
@@ -69,5 +75,23 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  useEffect(() => {
+    const apply = (uid: string | null) => {
+      if (uid) void onboardingStore.hydrateForUser(uid);
+      else onboardingStore.clear();
+    };
+    void supabase.auth.getSession().then(({ data }) => apply(data.session?.user.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      apply(session?.user.id ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+  return (
+    <>
+      <Outlet />
+      <OnboardingSurveyDialog />
+      <OnboardingChecklist />
+    </>
+  );
 }
+
