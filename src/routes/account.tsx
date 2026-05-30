@@ -8,8 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogOut, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
+import { CompanySection } from "@/components/profile/CompanySection";
+import { checklistStore } from "@/components/onboarding/checklistStore";
+
+const ROLES = ["Founder / Entrepreneur", "Product Manager", "SMB Owner", "Consultant / Freelancer", "Other"];
 
 export const Route = createFileRoute("/account")({
   beforeLoad: requireAuth,
@@ -38,7 +43,8 @@ function AccountPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
-  const [initial, setInitial] = useState({ firstName: "", lastName: "", username: "" });
+  const [role, setRole] = useState<string>("");
+  const [initial, setInitial] = useState({ firstName: "", lastName: "", username: "", role: "" });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,19 +69,21 @@ function AccountPage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("first_name, last_name, display_name, avatar_url")
+        .select("first_name, last_name, display_name, avatar_url, role")
         .maybeSingle();
 
       const f = profile?.first_name ?? metaFirst ?? "";
       const l = profile?.last_name ?? metaLast ?? "";
       const u = profile?.display_name ?? metaName ?? (session.user.email?.split("@")[0] ?? "");
       const a = profile?.avatar_url ?? metaAvatar ?? null;
+      const r = profile?.role ?? "";
 
       setFirstName(f);
       setLastName(l);
       setUsername(u);
+      setRole(r);
       setAvatarUrl(a);
-      setInitial({ firstName: f, lastName: l, username: u });
+      setInitial({ firstName: f, lastName: l, username: u, role: r });
       setLoading(false);
     })();
   }, []);
@@ -83,7 +91,8 @@ function AccountPage() {
   const dirty =
     firstName !== initial.firstName ||
     lastName !== initial.lastName ||
-    username !== initial.username;
+    username !== initial.username ||
+    role !== initial.role;
 
   const initials =
     ((firstName?.[0] ?? "") + (lastName?.[0] ?? "")).toUpperCase() ||
@@ -116,6 +125,7 @@ function AccountPage() {
             first_name: parsed.data.first_name || null,
             last_name: parsed.data.last_name || null,
             display_name: parsed.data.display_name,
+            role: role || null,
           },
           { onConflict: "user_id" },
         );
@@ -129,7 +139,8 @@ function AccountPage() {
         },
       });
 
-      setInitial({ firstName, lastName, username });
+      void checklistStore.mark("profile_completed");
+      setInitial({ firstName, lastName, username, role });
       toast.success("Saved");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
@@ -302,6 +313,16 @@ function AccountPage() {
             />
           </Row>
 
+          {/* Role */}
+          <Row label="Role">
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
+              <SelectContent>
+                {ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Row>
+
           <div className="flex justify-end px-5 py-4">
             <Button onClick={handleSave} disabled={!dirty || saving || loading}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -309,6 +330,8 @@ function AccountPage() {
             </Button>
           </div>
         </div>
+
+        <CompanySection userId={userId} />
 
         <h2 className="mt-10 text-base font-semibold text-foreground">Account</h2>
         <div className="mt-4 rounded-lg border border-border bg-surface px-5 py-5">
