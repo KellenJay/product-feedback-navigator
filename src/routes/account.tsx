@@ -69,19 +69,21 @@ function AccountPage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("first_name, last_name, display_name, avatar_url")
+        .select("first_name, last_name, display_name, avatar_url, role")
         .maybeSingle();
 
       const f = profile?.first_name ?? metaFirst ?? "";
       const l = profile?.last_name ?? metaLast ?? "";
       const u = profile?.display_name ?? metaName ?? (session.user.email?.split("@")[0] ?? "");
       const a = profile?.avatar_url ?? metaAvatar ?? null;
+      const r = profile?.role ?? "";
 
       setFirstName(f);
       setLastName(l);
       setUsername(u);
+      setRole(r);
       setAvatarUrl(a);
-      setInitial({ firstName: f, lastName: l, username: u });
+      setInitial({ firstName: f, lastName: l, username: u, role: r });
       setLoading(false);
     })();
   }, []);
@@ -89,7 +91,8 @@ function AccountPage() {
   const dirty =
     firstName !== initial.firstName ||
     lastName !== initial.lastName ||
-    username !== initial.username;
+    username !== initial.username ||
+    role !== initial.role;
 
   const initials =
     ((firstName?.[0] ?? "") + (lastName?.[0] ?? "")).toUpperCase() ||
