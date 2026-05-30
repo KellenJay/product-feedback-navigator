@@ -1,9 +1,9 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { onboardingStore } from "@/components/onboarding/onboardingStore";
-import { OnboardingSurveyDialog } from "@/components/onboarding/OnboardingSurveyDialog";
-import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { checklistStore } from "@/components/onboarding/checklistStore";
+import { companyStore } from "@/components/profile/companyStore";
+import { ChecklistLauncher } from "@/components/onboarding/ChecklistLauncher";
 
 import appCss from "../styles.css?url";
 
