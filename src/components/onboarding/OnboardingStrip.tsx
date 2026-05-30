@@ -144,8 +144,19 @@ export function OnboardingStrip() {
             );
           })}
         </div>
-        <div className="shrink-0 text-xs text-foreground-muted">
-          {cl.doneCount} / {cl.total}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="text-xs text-foreground-muted">
+            {cl.doneCount} / {cl.total}
+          </span>
+          <button
+            type="button"
+            aria-label="Hide onboarding"
+            title="Hide onboarding"
+            onClick={() => void checklistStore.dismiss()}
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
     </div>
