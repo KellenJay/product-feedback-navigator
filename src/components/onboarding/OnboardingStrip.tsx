@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { checklistStore, useChecklist, type ChecklistKey } from "./checklistStore";
