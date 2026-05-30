@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { checklistStore, useChecklist, type ChecklistKey } from "./checklistStore";
@@ -76,13 +76,13 @@ export function OnboardingStrip() {
     if (lib.entries.some((e) => e.saved)) void checklistStore.mark("first_library_save");
   }, [lib.entries, cl.loaded, cl.userId]);
 
-  if (!cl.loaded || !cl.userId || cl.allDone) return null;
+  if (!cl.loaded || !cl.userId || cl.allDone || cl.row.dismissed) return null;
 
   // Find the next undone step for subtle ring highlight
   const nextKey = STEPS.find((s) => !cl.row[s.key])?.key;
 
   return (
-    <div className="border-t border-border/60 bg-background/60">
+    <div className="border-y border-primary/20 bg-primary/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
       <div className="mx-auto flex max-w-[780px] items-center gap-3 px-4 py-2 sm:px-6">
         <div className="no-scrollbar -mx-1 flex flex-1 items-center gap-1.5 overflow-x-auto px-1">
           {STEPS.map((step) => {
@@ -96,7 +96,7 @@ export function OnboardingStrip() {
               >
                 <PopoverTrigger asChild>
                   <button
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition-colors ${
                       done
                         ? "border-emerald-500/30 bg-emerald-500/10 text-foreground-muted"
                         : isNext
@@ -144,8 +144,19 @@ export function OnboardingStrip() {
             );
           })}
         </div>
-        <div className="shrink-0 text-xs text-foreground-muted">
-          {cl.doneCount} / {cl.total}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="text-xs text-foreground-muted">
+            {cl.doneCount} / {cl.total}
+          </span>
+          <button
+            type="button"
+            aria-label="Hide onboarding"
+            title="Hide onboarding"
+            onClick={() => void checklistStore.dismiss()}
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
     </div>
