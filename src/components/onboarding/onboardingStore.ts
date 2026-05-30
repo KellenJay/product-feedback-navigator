@@ -43,9 +43,10 @@ function persistRemote() {
   const payload = { survey: state.survey, checklist: state.checklist };
   void supabase
     .from("profiles")
-    .update({ onboarding_state: payload })
+    .update({ onboarding_state: payload as unknown } as never)
     .eq("user_id", state.userId);
 }
+
 
 function merge(patch: Partial<OnboardingState>) {
   state = { ...state, ...patch };

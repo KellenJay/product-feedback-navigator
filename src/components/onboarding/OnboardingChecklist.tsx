@@ -2,8 +2,9 @@ import { useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { onboardingStore, useOnboarding } from "./onboardingStore";
-import { analyzeStore } from "@/components/insightflow/analyzeStore";
-import { libraryStore } from "@/components/insightflow/libraryStore";
+import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
+import { useLibrary } from "@/components/insightflow/libraryStore";
+
 
 const STEPS: Array<{
   key: "analyze" | "roadmap" | "library";
@@ -21,7 +22,9 @@ export function OnboardingChecklist() {
   const ob = useOnboarding();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
-  // Auto-complete steps by observing app state.
+  const [analyze] = useAnalyzeStore();
+  const lib = useLibrary();
+
   useEffect(() => {
     if (!ob.loaded || !ob.userId) return;
     if (path.startsWith("/roadmap")) onboardingStore.markStep("roadmap");
@@ -30,19 +33,14 @@ export function OnboardingChecklist() {
 
   useEffect(() => {
     if (!ob.loaded || !ob.userId) return;
-    // Analyze: any time result becomes non-null.
-    const checkAnalyze = () => {
-      if (analyzeStore.get().result) onboardingStore.markStep("analyze");
-    };
-    const checkLib = () => {
-      if (libraryStore.get().entries.length > 0) onboardingStore.markStep("library");
-    };
-    checkAnalyze();
-    checkLib();
-    const unsubA = analyzeStore.subscribe?.(checkAnalyze);
-    const unsubL = libraryStore.subscribe?.(checkLib);
-    return () => { unsubA?.(); unsubL?.(); };
-  }, [ob.loaded, ob.userId]);
+    if (analyze.result) onboardingStore.markStep("analyze");
+  }, [analyze.result, ob.loaded, ob.userId]);
+
+  useEffect(() => {
+    if (!ob.loaded || !ob.userId) return;
+    if (lib.entries.length > 0) onboardingStore.markStep("library");
+  }, [lib.entries.length, ob.loaded, ob.userId]);
+
 
   // Don't show until survey is dealt with, on auth pages, or if dismissed.
   const showSurveyFirst = ob.loaded && ob.userId && !ob.survey.completed && !ob.survey.skipped;
