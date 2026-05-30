@@ -56,16 +56,21 @@ function LoginPage() {
         toast.success("Signed in");
         navigate({ to: target });
       } else if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: `${window.location.origin}/onboarding` },
         });
         if (error) throw error;
-        toast.success("Check your email", {
-          description: "Click the verification link to finish signing up.",
-        });
-        setMode("signin");
+        if (data.session) {
+          toast.success("Welcome");
+          navigate({ to: "/onboarding" });
+        } else {
+          toast.success("Check your email", {
+            description: "Click the verification link to finish signing up.",
+          });
+          setMode("signin");
+        }
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
