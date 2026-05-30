@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { checklistStore } from "@/components/onboarding/checklistStore";
 import { companyStore } from "@/components/profile/companyStore";
-import { ChecklistLauncher } from "@/components/onboarding/ChecklistLauncher";
+
 
 import appCss from "../styles.css?url";
 
@@ -91,11 +91,6 @@ function RootComponent() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-  return (
-    <>
-      <Outlet />
-      <ChecklistLauncher />
-    </>
-  );
+  return <Outlet />;
 }
 
