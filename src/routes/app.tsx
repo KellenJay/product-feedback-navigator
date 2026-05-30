@@ -226,14 +226,14 @@ function AnalyzePage() {
 
       <TabBar active="analyze" />
 
-      <main className="mx-auto max-w-[780px] px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
+      <main className="mx-auto max-w-[780px] px-4 pb-24 sm:px-6">
         {/* Hero */}
         <section className="relative isolate text-center">
           <div className="hero-beam" aria-hidden />
           <div className="hero-grid absolute inset-0 -z-10" aria-hidden />
 
           {/* Eyebrow */}
-          <div className="relative inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-foreground-muted backdrop-blur">
+          <div className="relative mt-8 inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-foreground-muted backdrop-blur sm:mt-12">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
