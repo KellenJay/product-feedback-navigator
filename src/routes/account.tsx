@@ -313,6 +313,16 @@ function AccountPage() {
             />
           </Row>
 
+          {/* Role */}
+          <Row label="Role">
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
+              <SelectContent>
+                {ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Row>
+
           <div className="flex justify-end px-5 py-4">
             <Button onClick={handleSave} disabled={!dirty || saving || loading}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -320,6 +330,8 @@ function AccountPage() {
             </Button>
           </div>
         </div>
+
+        <CompanySection userId={userId} />
 
         <h2 className="mt-10 text-base font-semibold text-foreground">Account</h2>
         <div className="mt-4 rounded-lg border border-border bg-surface px-5 py-5">
