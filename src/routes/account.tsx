@@ -43,7 +43,8 @@ function AccountPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
-  const [initial, setInitial] = useState({ firstName: "", lastName: "", username: "" });
+  const [role, setRole] = useState<string>("");
+  const [initial, setInitial] = useState({ firstName: "", lastName: "", username: "", role: "" });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
