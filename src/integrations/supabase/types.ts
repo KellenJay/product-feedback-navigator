@@ -76,6 +76,45 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          industry: string | null
+          is_active: boolean
+          name: string
+          stage: string | null
+          updated_at: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean
+          name: string
+          stage?: string | null
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean
+          name?: string
+          stage?: string | null
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       eval_runs: {
         Row: {
           actionability_score: number | null
@@ -144,6 +183,45 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_checklist: {
+        Row: {
+          account_created: boolean
+          company_added: boolean
+          dismissed: boolean
+          first_analysis: boolean
+          first_library_save: boolean
+          first_roadmap: boolean
+          id: string
+          profile_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_created?: boolean
+          company_added?: boolean
+          dismissed?: boolean
+          first_analysis?: boolean
+          first_library_save?: boolean
+          first_roadmap?: boolean
+          id?: string
+          profile_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_created?: boolean
+          company_added?: boolean
+          dismissed?: boolean
+          first_analysis?: boolean
+          first_library_save?: boolean
+          first_roadmap?: boolean
+          id?: string
+          profile_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -153,6 +231,7 @@ export type Database = {
           id: string
           last_name: string | null
           onboarding_state: Json
+          role: string | null
           updated_at: string
           user_id: string
         }
@@ -164,6 +243,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           onboarding_state?: Json
+          role?: string | null
           updated_at?: string
           user_id: string
         }
@@ -175,6 +255,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           onboarding_state?: Json
+          role?: string | null
           updated_at?: string
           user_id?: string
         }
