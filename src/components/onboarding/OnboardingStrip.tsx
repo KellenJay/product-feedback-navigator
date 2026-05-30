@@ -96,7 +96,7 @@ export function OnboardingStrip() {
               >
                 <PopoverTrigger asChild>
                   <button
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition-colors ${
                       done
                         ? "border-emerald-500/30 bg-emerald-500/10 text-foreground-muted"
                         : isNext
