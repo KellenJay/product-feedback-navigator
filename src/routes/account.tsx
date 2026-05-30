@@ -125,6 +125,7 @@ function AccountPage() {
             first_name: parsed.data.first_name || null,
             last_name: parsed.data.last_name || null,
             display_name: parsed.data.display_name,
+            role: role || null,
           },
           { onConflict: "user_id" },
         );
@@ -138,7 +139,8 @@ function AccountPage() {
         },
       });
 
-      setInitial({ firstName, lastName, username });
+      void checklistStore.mark("profile_completed");
+      setInitial({ firstName, lastName, username, role });
       toast.success("Saved");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
