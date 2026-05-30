@@ -76,13 +76,13 @@ export function OnboardingStrip() {
     if (lib.entries.some((e) => e.saved)) void checklistStore.mark("first_library_save");
   }, [lib.entries, cl.loaded, cl.userId]);
 
-  if (!cl.loaded || !cl.userId || cl.allDone) return null;
+  if (!cl.loaded || !cl.userId || cl.allDone || cl.row.dismissed) return null;
 
   // Find the next undone step for subtle ring highlight
   const nextKey = STEPS.find((s) => !cl.row[s.key])?.key;
 
   return (
-    <div className="border-t border-border/60 bg-background/60">
+    <div className="border-y border-primary/20 bg-primary/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
       <div className="mx-auto flex max-w-[780px] items-center gap-3 px-4 py-2 sm:px-6">
         <div className="no-scrollbar -mx-1 flex flex-1 items-center gap-1.5 overflow-x-auto px-1">
           {STEPS.map((step) => {
