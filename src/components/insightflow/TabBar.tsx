@@ -161,6 +161,7 @@ export function TabBar({ active }: { active: Tab }) {
           </div>
         )}
       </div>
+      <OnboardingStrip />
     </nav>
   );
 }
