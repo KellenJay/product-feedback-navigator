@@ -209,7 +209,7 @@ function AccountPage() {
   return (
     <div className="min-h-screen bg-background">
       <TabBar active="analyze" />
-      <main className="mx-auto max-w-[780px] px-6 py-10">
+      <main className="mx-auto max-w-[780px] px-4 py-8 sm:px-6 sm:py-10">
         <h1 className="text-2xl font-semibold text-foreground">Preferences</h1>
         <p className="mt-1 text-sm text-foreground-muted">
           Manage your account profile, connections, and dashboard experience.
