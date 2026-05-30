@@ -44,7 +44,7 @@ export function RoadmapGantt({ items, timeframe, onQuarter }: Props) {
 
   return (
     <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-card p-4">
-      <div className="min-w-[640px]">
+      <div className="min-w-[560px] sm:min-w-[640px]">
         {/* Header row */}
         <div
           className="grid items-end gap-1 border-b border-border pb-2"

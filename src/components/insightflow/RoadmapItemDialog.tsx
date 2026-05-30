@@ -17,7 +17,7 @@ interface Props {
 export function RoadmapItemDialog({ open, onOpenChange, item }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[85vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto">
         {item && <Body item={item} />}
       </DialogContent>
     </Dialog>
