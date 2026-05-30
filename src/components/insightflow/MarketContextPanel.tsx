@@ -163,11 +163,17 @@ export function MarketContextPanel({
                 {data.competitors.map((c, i) => (
                   <div
                     key={i}
-                    className="grid grid-cols-[140px_1fr_120px] items-start gap-3 border-b border-border/50 py-2.5 text-[13px] last:border-b-0"
+                    className="flex flex-col gap-1 border-b border-border/50 py-2.5 text-[13px] last:border-b-0 sm:grid sm:grid-cols-[140px_1fr_120px] sm:items-start sm:gap-3"
                   >
-                    <span className="min-w-0 break-words font-medium text-foreground">{c.name}</span>
+                    <div className="flex items-center justify-between gap-2 sm:block">
+                      <span className="min-w-0 break-words font-medium text-foreground">{c.name}</span>
+                      <span className="inline-flex shrink-0 items-center gap-1.5 text-[12px] text-foreground sm:hidden">
+                        <SignalDot signal={c.signal} />
+                        {c.signal}
+                      </span>
+                    </div>
                     <span className="min-w-0 break-words text-foreground-muted">{c.approach}</span>
-                    <span className="inline-flex items-center gap-2 text-foreground">
+                    <span className="hidden items-center gap-2 text-foreground sm:inline-flex">
                       <SignalDot signal={c.signal} />
                       {c.signal}
                     </span>
