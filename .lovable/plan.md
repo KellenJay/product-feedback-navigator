@@ -1,73 +1,76 @@
-## 1. Fix overlapping text in Competitive landscape
+## Goals
 
-File: `src/components/insightflow/MarketContextPanel.tsx`
+1. Make every page, tab, panel, and icon usable on mobile and tablet (no horizontal overflow, no clipped text). Desktop layout stays the same.
+2. On the Roadmap page, add an optional "Build from a feature idea" entry — type or speak a feature, plus company name + URL — and generate a roadmap + PRD/user stories without going through Analyze. Nothing else about Roadmap changes.
 
-The competitor row uses a fixed `grid-cols-[110px_1fr_110px]` so long names like "LangChain / LangGraph" run into the approach column.
+## 1. Mobile + tablet responsiveness
 
-- Widen and soften the name column: change to `grid-cols-[140px_1fr_120px]`.
-- Add `min-w-0 break-words` to the name span and `min-w-0` to the approach span so text wraps cleanly instead of overflowing.
-- No other styling changes.
+Sweep the InsightFlow surfaces and fix overflow / cramped layouts. Pure CSS/Tailwind class changes — no logic touched.
 
-## 2. Remove "Weeks" timeframe everywhere
+Worst offenders (confirmed):
+- `MarketContextPanel.tsx` — Competitive landscape uses fixed `grid-cols-[140px_1fr_120px]`, which forces horizontal overflow on ~390px screens. Switch to a stacked layout under `sm:` (name + signal in one row, approach underneath) and keep the 3-column grid from `sm:` upward.
+- `roadmap.tsx` header — `max-w-[780px]` row plus tab pills can wrap awkwardly. Reduce horizontal padding to `px-4 sm:px-6`, allow `RoadmapViewTabs` / `RoadmapTimeframeTabs` to wrap with `gap-y-2`.
+- `RoadmapKanban.tsx` — 3-column board needs `overflow-x-auto` with `min-w-[260px]` columns on mobile so users can swipe sideways instead of squishing.
+- `RoadmapGantt.tsx` — already wide; wrap chart in a horizontally scrollable container; keep labels sticky-left on mobile.
+- `RoadmapItemCard.tsx`, `RoadmapItemDialog.tsx` — pill rows need `flex-wrap` + smaller gap on mobile, dialog gets `max-w-[calc(100vw-1.5rem)]`.
+- `PRDPanel.tsx` — section headers / tab bars wrap; tables in metrics/questions get `overflow-x-auto`.
+- `InputPanel.tsx` — mode pill row already wraps; verify CTA button and textarea heights feel right on small screens (textarea height 140 → `min-h-[140px]`).
+- `TabBar.tsx` — horizontal scrollable tab strip with `overflow-x-auto` + `snap-x` on mobile so all tabs reachable.
+- `app.tsx`, `library.tsx`, `account.tsx`, landing `index.tsx` headers — replace fixed `max-w-[780px] px-6` with `px-4 sm:px-6`, ensure header rows use `flex-wrap` where they currently overflow.
+- Global: audit any `grid-cols-[Npx_...]` patterns (only the Competitor grid found so far) and any `min-w-[XXXpx]` without an `overflow-x-auto` parent.
 
-User feedback: weeks is confusing. Keep Months + Quarters; default stays Quarters.
+Approach: add small responsive variants only (`sm:`, `md:`) — desktop layout is preserved verbatim. No copy or behavior changes.
 
-- `roadmap.ts` — change `Timeframe` to `"months" | "quarters"`. Update `formatTimeframeLabel` / `formatTimeframeRange` to drop the weeks branch; remove `isoWeek` (or leave unexported if still imported elsewhere — check and prune).
-- `roadmapStore.ts` — `loadTimeframe()` accepts only `"months" | "quarters"` (falls back to `"quarters"`); migrate any persisted `"weeks"` value to `"quarters"` on load.
-- `RoadmapViewTabs.tsx` — drop the Weeks entry from `TF_TABS` and the `CalendarDays` import.
-- No other files need changes; `RoadmapItemCard`, `RoadmapKanban`, `RoadmapGantt` already just call the formatters.
+Verification: visually check Analyze, Roadmap (all 3 views), Library, PRD panel, landing page at 375px, 768px, and 1280px.
 
-## 3. Per-ticket notes/comments, shared across List / Kanban / Gantt / PRD
+## 2. Roadmap "Build from a feature idea" panel
 
-Goal: replace the "Show evidence" toggle on the List card with a "Notes" toggle so users can add a comment per ticket. The same note is visible (and editable) wherever the ticket appears, and it ends up in the PRD copy/export.
+A new collapsible card at the top of `/roadmap` (above the hero), shown always. Users can:
+- Type a feature description, OR press a mic button to dictate (Web Speech API `SpeechRecognition`, with a fallback message if unsupported).
+- Enter Company name and Company URL (URL optional, validated as URL when present).
+- Click "Generate roadmap" → backend produces a synthetic analysis-shaped result, which feeds the existing roadmap + PRD flow unchanged.
 
-### Data model
-- `roadmap.ts` — add optional `note?: string` to `RoadmapItem`.
-- `roadmapStore.ts`:
-  - Add `note?: string` to `Override`.
-  - Add `setNote(id, note)` action; empty string clears the field.
-  - Merge `o.note` into the derived item in `useRoadmap`.
-  - Expose `setNote` from the `useRoadmap` return.
-- Persistence already piggybacks on `roadmap_overrides` jsonb in the `roadmaps` table — no schema change.
+Nothing about the existing Roadmap views, tabs, exports, notes, PRD, or persistence changes. The panel just provides another way to populate `analyzeStore` / `useRoadmap`.
 
-### List view (`RoadmapItemCard.tsx`)
-- Replace the "Show evidence (n) / Hide evidence" expander with a "Notes" expander (same chevron pattern, same position). Label shows "Add note" when empty and "Note" when filled.
-- Expanded body: a small `<textarea>` (3 rows, `text-[12px]`, surface background, border) bound to `item.note`, with a debounced `onChange` calling `setNote(item.id, value)`. No save button — autosaves on change.
-- The verbatim quotes already live in the title-click dialog (`RoadmapItemDialog`), so removing them from the card body is intentional and matches the user request.
+### UX
 
-### Kanban (`RoadmapKanban.tsx` / `KanbanCard`)
-- Add a single-line note preview under the metadata row: shows up to ~80 chars of `item.note` in muted text if present, else nothing. Clicking the card title still opens the dialog where the note is editable.
+- Card title: "Have a feature in mind? Skip the analysis."
+- Inputs: Feature description (textarea, mic toggle), Company name (input), Company URL (input).
+- CTA: "Generate roadmap" with loading state. On success: card collapses, hero/roadmap below renders with the new items; toast confirms.
+- If existing analysis is present, show a subtle warning: "This will replace your current roadmap." with Cancel/Confirm.
+- Voice: small mic button inside the textarea. While recording, show "Listening…" and live-append transcript. Stops on second click or silence.
 
-### Gantt (`RoadmapGantt.tsx`)
-- Add a small note indicator (e.g. a dot or "📝" icon — match existing icon style) next to the title in the left column when `item.note` is set. Editing happens via the dialog.
+### Backend (TanStack server function)
 
-### Dialog (`RoadmapItemDialog.tsx`)
-- Add a "Notes" section above the Evidence section with the same `<textarea>` bound to the store via `setNote`. This is what makes the note editable from Kanban + Gantt.
-- Dialog needs the `setNote` callback; pass it down from `roadmap.tsx` via existing props on the three view components, OR have the dialog import `roadmapStore` directly and call `roadmapStore.setNote`. Use the direct-store approach to avoid prop-drilling through Gantt/Kanban — same pattern already used by `roadmapStore` mutators.
+New `src/lib/featureRoadmap.functions.ts` exporting `generateFeatureRoadmap` (`createServerFn`):
+- Input (Zod): `{ feature: string (1–4000), companyName: string (1–200), companyUrl?: string (url, max 500) }`.
+- Reads `LOVABLE_API_KEY` from `process.env` inside `.handler()`.
+- Uses AI SDK `generateText` + `Output.object` via the Lovable AI Gateway helper (already used in classic stack pattern; will live in `src/lib/aiGateway.server.ts` — small helper). Model: `google/gemini-3-flash-preview`.
+- Prompts the model to: (a) infer 4–8 plausible pain-point-style issues that decompose the requested feature into shippable slices, (b) write rationale and 2–3 short illustrative quotes per issue, (c) produce a one-paragraph executive summary. The URL is included as light context (no network fetch — keeps the function reliable and cheap).
+- Returns an `AnalysisResult`-shaped payload compatible with `analyzeStore` and `deriveRoadmap`.
 
-### PRD export
-- `prd.ts` `buildPRDText` — already iterates items via the roadmap, but the PRD is generated server-side. Notes are user-added metadata, so append them to the copyable text and PDF locally:
-  - In `PRDPanel.handleCopy` / `handlePdf`, before formatting, fold per-item notes into a new "Team notes" appendix section listing `- {item.title}: {item.note}` for items where `note` is set.
-  - Pass `items` (already in props) into the helper.
+### Client wiring
 
-## 4. PRD "Open questions" — answers + resolved/unresolved
+- New component `src/components/insightflow/FeatureIdeaPanel.tsx` rendered above the hero in `roadmap.tsx` (inside `RoadmapPage`, before `main`'s body switch — so it shows even in the empty state, replacing the need to go to Analyze).
+- On submit: call the server fn via `useServerFn` → on success, call `analyzeStore.setResult(...)`, `analyzeStore.setProduct(companyName)`, clear `roadmapStore` overrides (`roadmapStore.hydrate({})`) and `prdStore` so we render the fresh roadmap.
+- Voice: small hook `useDictation` wrapping `webkitSpeechRecognition` / `SpeechRecognition`. Gracefully hidden when unsupported.
 
-File: `src/components/insightflow/PRDPanel.tsx` (Metrics tab → Open questions section, lines ~498+).
+### Out of scope (explicit)
 
-- Introduce a tiny `prdQuestionStore` (new file `src/components/insightflow/prdQuestionStore.ts`) that maps `questionText → { answer: string; resolved: boolean }` in localStorage (key `insightflow.prd.questions.v1`). Same `useSyncExternalStore` pattern as `roadmapStore`.
-  - Keyed by question text rather than index so re-generations stay stable when ordering changes; collisions are acceptable given the small list.
-- Replace the bullet list with one row per question:
-  - The question text (existing styling).
-  - A small `<textarea>` (2 rows) for the answer/comment, autosaved.
-  - A pill toggle: "Unresolved" (warning style) ↔ "Resolved" (success style). Clicking toggles `resolved` and visually strikes through the question + dims the row when resolved.
-- Export: include answer + status in `buildPRDText`'s "Open questions" section — change `- (Unresolved) {q}` to `- ({Resolved|Unresolved}) {q}` + indented `Answer: {answer}` when present. Wire from `PRDPanel.handleCopy`/`handlePdf` (read store snapshot, pass into a small local formatter or extend the existing helper).
+- No changes to Analyze page logic, PRDPanel structure, RoadmapColumn/Kanban/Gantt, exports, library, or auth.
+- No web scraping of the company URL (kept as prompt context only) — keeps the feature within the Worker runtime constraints.
+- No new database tables.
 
-## Out of scope (untouched)
+## Files
 
-Landing page, Library, auth, Supabase schema/migrations, Analyze input/results, market-context generation logic, exports outside of the two additions above, view layouts/styling of Kanban/Gantt beyond the note indicator/preview described.
+New:
+- `src/components/insightflow/FeatureIdeaPanel.tsx`
+- `src/components/insightflow/useDictation.ts`
+- `src/lib/featureRoadmap.functions.ts`
+- `src/lib/aiGateway.server.ts` (Lovable AI Gateway helper, if not already present)
 
-## Technical notes
+Edited (responsive sweep + roadmap entry):
+- `src/routes/roadmap.tsx`, `src/routes/app.tsx`, `src/routes/library.tsx`, `src/routes/account.tsx`, `src/routes/index.tsx`
+- `src/components/insightflow/MarketContextPanel.tsx`, `RoadmapKanban.tsx`, `RoadmapGantt.tsx`, `RoadmapItemCard.tsx`, `RoadmapItemDialog.tsx`, `PRDPanel.tsx`, `InputPanel.tsx`, `TabBar.tsx`, `RoadmapViewTabs.tsx`
 
-- No DB migration: `roadmap_overrides` jsonb already absorbs the new `note` field; PRD question state lives in localStorage only (matches how PRD targets in the Metrics table already work — they're uncontrolled inputs).
-- `Timeframe` narrowing is a type change; verify no remaining `"weeks"` literal references with a project search before finishing.
-- Note autosave: simple `useState` mirror + 300ms debounced `setNote` call to avoid thrashing the store on every keystroke.
+If `LOVABLE_API_KEY` is not yet present I'll request it before implementing the server function.

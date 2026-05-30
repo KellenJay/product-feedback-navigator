@@ -111,7 +111,7 @@ function LoginPage() {
     <div className="min-h-screen bg-background">
       <Toaster position="top-right" />
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-[780px] items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[780px] items-center justify-between px-4 py-4 sm:px-6">
           <Link to="/" className="text-base font-semibold text-foreground">
             InsightFlow
           </Link>

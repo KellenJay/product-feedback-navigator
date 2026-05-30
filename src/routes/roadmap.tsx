@@ -17,6 +17,7 @@ import {
   type RoadmapView,
 } from "@/components/insightflow/RoadmapViewTabs";
 import { PRDPanel } from "@/components/insightflow/PRDPanel";
+import { FeatureIdeaPanel } from "@/components/insightflow/FeatureIdeaPanel";
 import type { Bucket, RoadmapItem } from "@/components/insightflow/roadmap";
 import { requireAuth } from "@/lib/authGuard";
 import { saveRoadmap } from "@/lib/cloudSync";
@@ -50,20 +51,20 @@ function RoadmapPage() {
       <Toaster position="top-right" />
 
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-[780px] items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[780px] items-center justify-between px-4 py-4 sm:px-6">
           <Link
             to="/app"
             className="text-base font-semibold text-foreground hover:opacity-80"
           >
             InsightFlow
           </Link>
-          <span className="text-xs text-foreground-muted">{"\n"}</span>
         </div>
       </header>
 
       <TabBar active="roadmap" />
 
-      <main className="mx-auto max-w-[1100px] px-6 pb-24 pt-12">
+      <main className="mx-auto max-w-[1100px] px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
+        <FeatureIdeaPanel hasExisting={!!result} />
         {!result ? (
           <EmptyState />
         ) : (

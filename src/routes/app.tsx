@@ -214,7 +214,7 @@ function AnalyzePage() {
 
       {/* Top bar with brand */}
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-[780px] items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[780px] items-center justify-between px-4 py-4 sm:px-6">
           <span className="text-base font-semibold text-foreground">
             InsightFlow
           </span>
@@ -226,7 +226,7 @@ function AnalyzePage() {
 
       <TabBar active="analyze" />
 
-      <main className="mx-auto max-w-[780px] px-6 pb-24 pt-12">
+      <main className="mx-auto max-w-[780px] px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         {/* Hero */}
         <section className="relative isolate text-center">
           <div className="hero-beam" aria-hidden />
