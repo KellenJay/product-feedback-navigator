@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CompanySwitcher } from "@/components/profile/CompanySwitcher";
+import { OnboardingStrip } from "@/components/onboarding/OnboardingStrip";
 
 type Tab = "analyze" | "roadmap" | "library";
 
