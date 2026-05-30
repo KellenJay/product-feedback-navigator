@@ -1,164 +1,49 @@
-## Scope
+# Onboarding Checklist — Relocate & Make Interactive
 
-Three connected additions to InsightFlow. Nothing in Analyze, Roadmap, Library, landing, or auth changes. Existing `onboarding_state` on `profiles` (survey + 3-item checklist) and the current `OnboardingSurveyDialog` / `OnboardingChecklist` will be replaced by the new spec.
+Scope: only the onboarding checklist UI/behavior. No changes to data model, store logic, completion-tracking rules, or any other feature.
 
-Build order (sequential, confirm each before next):
-1. Profile (Part A)
-2. Companies (Part B + switcher)
-3. 5-step onboarding flow + confirmation
-4. 6-item checklist launcher
+## What changes
 
-## Feature 1 — Personal profile
+1. **Remove** the floating bottom-right launcher (`ChecklistLauncher`) from its current placement. Mount in `__root.tsx` is replaced by a new strip component rendered inside the app shell.
 
-New route `/account` profile section (or extend existing `account.tsx`):
-- Circular photo upload → `avatars` bucket at `{user_id}/avatar.{ext}`; initials fallback from first+last name.
-- Fields: first_name, last_name, email (read-only from auth), role (dropdown, pre-filled from onboarding Q1).
-- Save → updates `profiles` row.
+2. **New component** `OnboardingStrip.tsx` — a horizontal bar that sits **directly under the `TabBar`** on the three core app routes (`/app`, `/roadmap`, `/library`). Placed inside each route just below `<TabBar />` (or, simpler, rendered by `TabBar` itself as a second row so it stays glued to the nav).
 
-Schema additions to `profiles` (already has first_name, last_name, avatar_url, display_name):
-- add `role text` column.
+3. **Strip layout** (single row, scrolls horizontally on mobile, hidden scrollbar):
+   - 6 pill-style items in order: Account, Profile, Company, Analysis, Roadmap, Library.
+   - Each pill shows: small circle/check icon + short label + (if done) muted line-through.
+   - Done items get a filled check (emerald); current/next item gets a subtle highlighted ring.
+   - Progress text on the right: `2 / 6 complete`.
 
-Marks checklist `profile_completed = true` on save.
+4. **Click behavior** — each pill is a button that opens a small **Popover** (shadcn `popover`) anchored to the pill containing:
+   - One-sentence description of what that step is (e.g. "Analyze turns raw user feedback into themes, pains, and feature ideas.").
+   - A primary action button: **"Take me there"** (label varies per step: "Open Analyze", "Open Roadmap", "Open Library", "Edit profile", "Add a company"; Account step is already done so just shows "Done").
+   - Clicking the action navigates to the relevant route (`/app`, `/roadmap`, `/library`, `/account`) and closes the popover.
+   - **Does NOT mark the step complete on click.** Completion still only happens via the existing auto-detection in `checklistStore` (running an analysis, opening roadmap with results, saving to library, etc.). User confirmed: clicking should not force-complete.
 
-## Feature 2 — Companies
+5. **Auto-hide when complete** — when `allDone` is true, the strip unmounts entirely (no "you've completed" card, no dismiss button, no share button — user said it should just disappear). The dismissed-state machinery in the store stays in place but is no longer user-facing.
 
-New table `companies` per spec. Single `is_active` per user enforced by a partial unique index + transactional update on switch.
+6. **Visibility rules** — strip only renders on `/app`, `/roadmap`, `/library` (the routes that already render `TabBar`). It is not shown on `/login`, `/`, `/onboarding`, `/account`, `/auth/*`, `/reset-password`.
 
-UI:
-- `My Companies` section on `/account` below personal profile.
-- Add/Edit dialog: name (req), description (textarea ≤500), industry (dropdown — SaaS / E-commerce / Consumer App / Marketplace / Agency / Media & Content / Healthcare / Fintech / EdTech / Other), website_url (optional, URL-validated), stage (Pre-idea / Validating / Pre-launch / Launched / Scaling).
-- Company cards: name, industry, stage, description preview, Edit / Delete.
-- Active-company switcher dropdown in top nav (next to InsightFlow logo in `TabBar.tsx`).
+## Step copy (one sentence each)
 
-Cross-feature wiring (lightweight, no Analyze/Roadmap/Library logic changes):
-- Switching active company sets `companies.is_active`; a small `activeCompanyStore` exposes it.
-- Analyze tab product-name input reads `activeCompany?.name` as default value only if the field is empty (passive prefill — does NOT alter Analyze behavior).
-- Library filter: add a single client-side filter chip "Current company" that filters by `entry.productName === activeCompany.name`. No schema change to library entries.
+- **Account** — "Your account is set up — you're signed in and ready to go."
+- **Profile** — "Add your name, photo, and role so your workspace feels like yours." → Edit profile → `/account`
+- **Company** — "Add the product or company you're working on so analyses and roadmaps stay organized." → Add a company → `/account`
+- **Analysis** — "Paste reviews, transcripts, or notes and turn them into themes, pains, and feature ideas." → Open Analyze → `/app`
+- **Roadmap** — "Generate a prioritized roadmap with epics and user stories from your analysis." → Open Roadmap → `/roadmap`
+- **Library** — "Save analyses to your library so you can come back to them anytime." → Open Library → `/library`
 
-Marks checklist `company_added = true` after first save.
+## Files touched
 
-## Feature 3 — 5-step onboarding flow
+- **New**: `src/components/onboarding/OnboardingStrip.tsx` — the bar + popover UI, reads `useChecklist()`.
+- **Edit**: `src/components/insightflow/TabBar.tsx` — render `<OnboardingStrip />` as a second row directly below the existing tabs row (same `max-w-[780px]` container, thin top border separator) so it appears under Analyze/Roadmap/Library on every app route automatically.
+- **Edit**: `src/routes/__root.tsx` — remove `<ChecklistLauncher />` mount.
+- **Delete**: `src/components/onboarding/ChecklistLauncher.tsx` (no longer used).
 
-Replaces current `OnboardingSurveyDialog`. Full-screen route `/onboarding` (gated: redirects to `/app` if `profiles.onboarding_state.flow.completed`). After signup, root redirects new users to `/onboarding` instead of `/app`.
-
-- Progress bar "Step X of 5" at top.
-- One question per screen, card-style options (single select), Back/Next nav.
-- Screens 1–4: role / stage / process / primary_goal — exact copy from prompt.
-- Screen 5: text input for first product name.
-- Confirmation screen: "You're all set, {first_name}." + "We've set up your workspace for {product_name}." CTA → `/app?prefill={product_name}`.
-
-Persistence: `profiles.onboarding_state.flow = { role, stage, process, primary_goal, first_product, completed: true }`. Role also writes to new `profiles.role` column. First product auto-creates a `companies` row (marked is_active) so the flow naturally feeds Feature 2.
-
-Analyze tab reads `?prefill=` query param once and seeds the product-name input.
-
-## Feature 4 — In-app checklist launcher
-
-Replaces current `OnboardingChecklist`. Bottom-right floating launcher button showing "{done}/6"; click to expand panel.
-
-Items (in order, matching new `onboarding_checklist` table):
-1. Create your account — auto true on signup
-2. Complete your profile — on profile save
-3. Add your first company — on first company insert
-4. Run your first analysis — on first successful analysis (hook into `analyzeStore` as today)
-5. Generate your first roadmap — on first roadmap generation (hook into `roadmapStore`)
-6. Save a project to your library — on first `libraryStore` entry with `saved: true`
-
-Completed state UI: all 6 → replace body with "You've completed the InsightFlow basics. You know how to go from raw feedback to a team-ready roadmap." + Dismiss / Share buttons (Share copies `window.location.origin` to clipboard).
-
-Dark theme, matches existing tokens. Hidden on `/login`, `/`, `/onboarding`, `/auth/*`.
-
-## Database
-
-One migration:
-
-```sql
--- profiles: add role
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role text;
-
--- companies
-CREATE TABLE public.companies (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  name text NOT NULL,
-  description text,
-  industry text,
-  website_url text,
-  stage text,
-  is_active boolean NOT NULL DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.companies TO authenticated;
-GRANT ALL ON public.companies TO service_role;
-ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
-CREATE POLICY companies_all_own ON public.companies
-  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE UNIQUE INDEX companies_one_active_per_user
-  ON public.companies(user_id) WHERE is_active;
-CREATE TRIGGER companies_set_updated_at BEFORE UPDATE ON public.companies
-  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-
--- onboarding_checklist
-CREATE TABLE public.onboarding_checklist (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL UNIQUE,
-  account_created boolean NOT NULL DEFAULT true,
-  profile_completed boolean NOT NULL DEFAULT false,
-  company_added boolean NOT NULL DEFAULT false,
-  first_analysis boolean NOT NULL DEFAULT false,
-  first_roadmap boolean NOT NULL DEFAULT false,
-  first_library_save boolean NOT NULL DEFAULT false,
-  dismissed boolean NOT NULL DEFAULT false,
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.onboarding_checklist TO authenticated;
-GRANT ALL ON public.onboarding_checklist TO service_role;
-ALTER TABLE public.onboarding_checklist ENABLE ROW LEVEL SECURITY;
-CREATE POLICY checklist_all_own ON public.onboarding_checklist
-  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
--- auto-create checklist row + profile role on signup (extend handle_new_user)
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  INSERT INTO public.profiles (user_id, display_name)
-  VALUES (new.id, coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email,'@',1)))
-  ON CONFLICT (user_id) DO NOTHING;
-  INSERT INTO public.onboarding_checklist (user_id) VALUES (new.id)
-  ON CONFLICT (user_id) DO NOTHING;
-  RETURN new;
-END; $$;
-```
-
-Existing `onboarding_state` jsonb column on `profiles` is kept and reused to store the 5-step flow answers (`flow.*`). The previous 3-item `checklist` subkey is abandoned in favor of the new table.
-
-## Files
-
-New:
-- `src/routes/onboarding.tsx` — 5-step flow + confirmation
-- `src/components/profile/PersonalProfileCard.tsx`
-- `src/components/profile/CompanySection.tsx`
-- `src/components/profile/CompanyDialog.tsx`
-- `src/components/profile/CompanySwitcher.tsx` (mounted in `TabBar.tsx`)
-- `src/components/profile/companyStore.ts` (active company + list, syncs Supabase)
-- `src/components/onboarding/checklistStore.ts` (new 6-item store, replaces old)
-- `src/components/onboarding/ChecklistLauncher.tsx` (replaces `OnboardingChecklist.tsx`)
-
-Edited:
-- `src/routes/account.tsx` — mount profile + companies sections
-- `src/routes/app.tsx` — read `?prefill=` and active company for product-name default
-- `src/routes/library.tsx` — add "Current company" filter chip
-- `src/components/insightflow/TabBar.tsx` — mount `<CompanySwitcher />`
-- `src/routes/__root.tsx` — swap old dialog/checklist for launcher; route new signups to `/onboarding`
-- `src/integrations/supabase/types.ts` — regenerated by migration
-
-Deleted (after build verification):
-- `src/components/onboarding/OnboardingSurveyDialog.tsx`
-- `src/components/onboarding/OnboardingChecklist.tsx`
-- `src/components/onboarding/onboardingStore.ts` (replaced)
+`checklistStore.ts`, the migration, the auto-mark effects, and `onboarding.tsx` are **not touched**. The auto-mark logic that lives in `ChecklistLauncher` (analysis/roadmap/library detection effects) is moved verbatim into `OnboardingStrip` so completion still gets recorded.
 
 ## Out of scope
 
-- No changes to Analyze, Roadmap, Library internals beyond the two passive hooks above (product-name prefill, library company filter chip).
-- No paywall.
-- No association of historical library entries to companies (filter is name-based only).
+- No changes to which actions count as "completed".
+- No changes to the 5-step onboarding flow at `/onboarding`.
+- No changes to company switcher, account page, or any data.
