@@ -64,16 +64,19 @@ export const checklistStore = {
     emit();
   },
   async mark(key: ChecklistKey) {
-    if (!state.userId || state.row[key]) return;
+    const uid = state.userId;
+    if (!uid || state.row[key]) return;
     state = { ...state, row: { ...state.row, [key]: true } };
     emit();
-    await supabase.from("onboarding_checklist").update({ [key]: true }).eq("user_id", state.userId);
+    const patch = { [key]: true } as Partial<ChecklistRow>;
+    await supabase.from("onboarding_checklist").update(patch).eq("user_id", uid);
   },
   async dismiss() {
-    if (!state.userId) return;
+    const uid = state.userId;
+    if (!uid) return;
     state = { ...state, row: { ...state.row, dismissed: true }, open: false };
     emit();
-    await supabase.from("onboarding_checklist").update({ dismissed: true }).eq("user_id", state.userId);
+    await supabase.from("onboarding_checklist").update({ dismissed: true }).eq("user_id", uid);
   },
   toggleOpen() {
     state = { ...state, open: !state.open };
