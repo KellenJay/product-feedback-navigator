@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CompanySwitcher } from "@/components/profile/CompanySwitcher";
 
 type Tab = "analyze" | "roadmap" | "library";
 
