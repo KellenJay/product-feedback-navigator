@@ -110,25 +110,25 @@ export function DocumentUploader({
           toast.error(`Upload failed: ${file.name}`, { description: upErr.message });
           continue;
         }
-        const row =
+        const common = {
+          user_id: scope.userId,
+          storage_path: storagePath,
+          file_name: file.name,
+          mime_type: file.type || null,
+          size_bytes: file.size,
+        };
+        const insErr =
           scope.kind === "company"
-            ? {
-                company_id: scope.companyId,
-                user_id: scope.userId,
-                storage_path: storagePath,
-                file_name: file.name,
-                mime_type: file.type || null,
-                size_bytes: file.size,
-              }
-            : {
-                request_id: scope.requestId,
-                user_id: scope.userId,
-                storage_path: storagePath,
-                file_name: file.name,
-                mime_type: file.type || null,
-                size_bytes: file.size,
-              };
-        const { error: insErr } = await supabase.from(table(scope)).insert(row);
+            ? (
+                await supabase
+                  .from("company_documents")
+                  .insert({ ...common, company_id: scope.companyId })
+              ).error
+            : (
+                await supabase
+                  .from("feature_idea_documents")
+                  .insert({ ...common, request_id: scope.requestId })
+              ).error;
         if (insErr) {
           await supabase.storage.from(BUCKET).remove([storagePath]);
           toast.error(`Couldn't save ${file.name}`, { description: insErr.message });
