@@ -218,6 +218,21 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
             </Field>
           </div>
 
+          {userId && (
+            <div className="mt-4">
+              <DocumentUploader
+                scope={{ kind: "feature", requestId, userId }}
+                label="Supporting documents (optional)"
+                maxFiles={10}
+                onChange={setDocs}
+              />
+              <p className="mt-1 text-[11px] text-foreground-muted">
+                Specs, screenshots, before/after images, or notes from the team — we'll include them as context for the roadmap and PRD.
+              </p>
+            </div>
+          )}
+
+
           <button
             type="button"
             onClick={handleGenerate}
