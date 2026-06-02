@@ -204,7 +204,7 @@ export function DocumentUploader({
           <p className="text-[11px] text-foreground-muted">Loading…</p>
         ) : docs.length === 0 ? (
           <p className="text-[11px] text-foreground-muted">
-            No documents yet. PDFs, images, Word docs, text — up to {maxSizeMb} MB each.
+            No documents yet. PDFs, images, Word docs, text up to {maxSizeMb} MB each.
           </p>
         ) : (
           docs.map((d) => (

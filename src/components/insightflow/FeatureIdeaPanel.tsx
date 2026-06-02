@@ -227,7 +227,7 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
                 onChange={setDocs}
               />
               <p className="mt-1 text-[11px] text-foreground-muted">
-                Specs, screenshots, before/after images, or notes from the team — we'll include them as context for the roadmap and PRD.
+                {"\n"}
               </p>
             </div>
           )}
@@ -252,7 +252,7 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
             )}
           </button>
           <p className="mt-2 text-[11px] leading-5 text-foreground-muted">
-            Builds the same roadmap, PRD, and user stories as the Analyze flow — just from your idea instead of feedback.
+            {"\n"}
           </p>
         </div>
       )}
