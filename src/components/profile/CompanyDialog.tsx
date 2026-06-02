@@ -77,7 +77,7 @@ export function CompanyDialog({ open, onOpenChange, company }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{company ? "Edit company" : "Add company"}</DialogTitle>
         </DialogHeader>
