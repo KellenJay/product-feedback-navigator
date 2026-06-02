@@ -9,6 +9,8 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { companyStore, INDUSTRIES, STAGES, type Company } from "./companyStore";
 import { checklistStore } from "@/components/onboarding/checklistStore";
+import { DocumentUploader } from "@/components/common/DocumentUploader";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   open: boolean;
