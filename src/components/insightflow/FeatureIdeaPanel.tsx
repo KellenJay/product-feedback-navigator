@@ -269,7 +269,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function buildResearchQuery(feature: string, companyName: string, companyUrl: string): string {
+function buildResearchQuery(
+  feature: string,
+  companyName: string,
+  companyUrl: string,
+  docs: Array<{ name: string; url: string; inlineText?: string }>,
+): string {
+  const docsBlock = docs.length
+    ? `\n\nSupporting documents the team provided (use as context when shaping the work items, PRD, and rationale):\n${docs
+        .map(
+          (d) =>
+            `- ${d.name}${d.url ? ` — ${d.url}` : ""}${d.inlineText ? `\n  Contents:\n  """\n  ${d.inlineText.replace(/\n/g, "\n  ")}\n  """` : ""}`,
+        )
+        .join("\n")}`
+    : "";
   return `The product team at ${companyName}${companyUrl ? ` (${companyUrl})` : ""} has already decided to build the following. They do NOT need market validation — they need a defensible delivery plan.
 
 Feature / bug / upgrade to ship:
