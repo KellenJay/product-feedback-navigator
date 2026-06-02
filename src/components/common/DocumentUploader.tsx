@@ -60,13 +60,14 @@ export function DocumentUploader({
 
   const load = useCallback(async () => {
     setLoading(true);
-    const filterCol = scope.kind === "company" ? "company_id" : "request_id";
-    const filterVal = scope.kind === "company" ? scope.companyId : scope.requestId;
-    const { data, error } = await supabase
-      .from(table(scope))
-      .select("*")
-      .eq(filterCol, filterVal)
-      .order("created_at", { ascending: true });
+    const query =
+      scope.kind === "company"
+        ? supabase.from("company_documents").select("*").eq("company_id", scope.companyId)
+        : supabase
+            .from("feature_idea_documents")
+            .select("*")
+            .eq("request_id", scope.requestId);
+    const { data, error } = await query.order("created_at", { ascending: true });
     if (error) {
       toast.error("Couldn't load documents", { description: error.message });
     } else {
