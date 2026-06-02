@@ -22,6 +22,13 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
   const [companyName, setCompanyName] = useState("");
   const [companyUrl, setCompanyUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const requestId = useMemo(() => crypto.randomUUID(), []);
+  const [docs, setDocs] = useState<UploadedDoc[]>([]);
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   const { supported: voiceSupported, listening, start, stop } = useDictation((chunk) => {
     setFeature((prev) => (prev ? prev.trim() + " " + chunk.trim() : chunk.trim()));
