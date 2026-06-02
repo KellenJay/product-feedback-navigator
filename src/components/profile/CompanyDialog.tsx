@@ -24,7 +24,12 @@ export function CompanyDialog({ open, onOpenChange, company }: Props) {
   const [industry, setIndustry] = useState<string>("");
   const [website, setWebsite] = useState("");
   const [stage, setStage] = useState<string>("");
+  const [userId, setUserId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   useEffect(() => {
     if (open) {
