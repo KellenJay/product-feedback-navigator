@@ -123,6 +123,20 @@ export function CompanyDialog({ open, onOpenChange, company }: Props) {
               </SelectContent>
             </Select>
           </div>
+          <div className="border-t border-border pt-4">
+            <Label className="mb-2 block">Knowledge documents</Label>
+            {company && userId ? (
+              <DocumentUploader
+                scope={{ kind: "company", companyId: company.id, userId }}
+                label="Files attached to this company"
+                maxFiles={10}
+              />
+            ) : (
+              <p className="text-[12px] text-foreground-muted">
+                Save the company first, then reopen this dialog to upload documents (logos, PRDs, brand guides, etc.).
+              </p>
+            )}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
