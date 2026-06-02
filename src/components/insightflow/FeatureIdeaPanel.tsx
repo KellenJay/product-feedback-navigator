@@ -63,7 +63,8 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
 
     setLoading(true);
     try {
-      const researchQuery = buildResearchQuery(f, name, companyUrl.trim());
+      const docRefs = await buildDocRefs(docs);
+      const researchQuery = buildResearchQuery(f, name, companyUrl.trim(), docRefs);
       const { data, error } = await supabase.functions.invoke(
         "analyze-feedback",
         {
