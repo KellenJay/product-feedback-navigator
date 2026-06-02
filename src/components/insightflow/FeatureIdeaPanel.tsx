@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Mic, Sparkles, Square, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { prdStore } from "./prdStore";
 import { marketContextStore } from "./marketContextStore";
 import { saveAnalysis } from "@/lib/cloudSync";
 import { useDictation } from "./useDictation";
+import { DocumentUploader, type UploadedDoc } from "@/components/common/DocumentUploader";
 import type { AnalysisResult } from "./types";
 
 interface Props {
@@ -21,6 +22,13 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
   const [companyName, setCompanyName] = useState("");
   const [companyUrl, setCompanyUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const requestId = useMemo(() => crypto.randomUUID(), []);
+  const [docs, setDocs] = useState<UploadedDoc[]>([]);
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   const { supported: voiceSupported, listening, start, stop } = useDictation((chunk) => {
     setFeature((prev) => (prev ? prev.trim() + " " + chunk.trim() : chunk.trim()));
@@ -55,7 +63,8 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
 
     setLoading(true);
     try {
-      const researchQuery = buildResearchQuery(f, name, companyUrl.trim());
+      const docRefs = await buildDocRefs(docs);
+      const researchQuery = buildResearchQuery(f, name, companyUrl.trim(), docRefs);
       const { data, error } = await supabase.functions.invoke(
         "analyze-feedback",
         {
@@ -209,6 +218,21 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
             </Field>
           </div>
 
+          {userId && (
+            <div className="mt-4">
+              <DocumentUploader
+                scope={{ kind: "feature", requestId, userId }}
+                label="Supporting documents (optional)"
+                maxFiles={10}
+                onChange={setDocs}
+              />
+              <p className="mt-1 text-[11px] text-foreground-muted">
+                Specs, screenshots, before/after images, or notes from the team — we'll include them as context for the roadmap and PRD.
+              </p>
+            </div>
+          )}
+
+
           <button
             type="button"
             onClick={handleGenerate}
@@ -245,7 +269,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function buildResearchQuery(feature: string, companyName: string, companyUrl: string): string {
+function buildResearchQuery(
+  feature: string,
+  companyName: string,
+  companyUrl: string,
+  docs: Array<{ name: string; url: string; inlineText?: string }>,
+): string {
+  const docsBlock = docs.length
+    ? `\n\nSupporting documents the team provided (use as context when shaping the work items, PRD, and rationale):\n${docs
+        .map(
+          (d) =>
+            `- ${d.name}${d.url ? ` — ${d.url}` : ""}${d.inlineText ? `\n  Contents:\n  """\n  ${d.inlineText.replace(/\n/g, "\n  ")}\n  """` : ""}`,
+        )
+        .join("\n")}`
+    : "";
   return `The product team at ${companyName}${companyUrl ? ` (${companyUrl})` : ""} has already decided to build the following. They do NOT need market validation — they need a defensible delivery plan.
 
 Feature / bug / upgrade to ship:
@@ -267,5 +304,27 @@ Also produce:
 - topPainArea: the most critical slice's category.
 - recommendations: 2–4 tactical next steps for the team.
 
-Return strictly via the analyze_feedback tool.`;
+Return strictly via the analyze_feedback tool.${docsBlock}`;
+}
+
+const BUCKET = "company-docs";
+const INLINE_TEXT_MIMES = /^(text\/|application\/(json|xml|x-yaml|yaml))/i;
+
+async function buildDocRefs(
+  docs: UploadedDoc[],
+): Promise<Array<{ name: string; url: string; inlineText?: string }>> {
+  const out: Array<{ name: string; url: string; inlineText?: string }> = [];
+  for (const d of docs) {
+    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(d.storage_path, 60 * 60 * 24);
+    let inlineText: string | undefined;
+    if (d.mime_type && INLINE_TEXT_MIMES.test(d.mime_type)) {
+      const blob = await supabase.storage.from(BUCKET).download(d.storage_path);
+      if (blob.data) {
+        const text = await blob.data.text();
+        inlineText = text.slice(0, 8000);
+      }
+    }
+    out.push({ name: d.file_name, url: data?.signedUrl ?? "", inlineText });
+  }
+  return out;
 }

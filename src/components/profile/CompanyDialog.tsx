@@ -9,6 +9,8 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { companyStore, INDUSTRIES, STAGES, type Company } from "./companyStore";
 import { checklistStore } from "@/components/onboarding/checklistStore";
+import { DocumentUploader } from "@/components/common/DocumentUploader";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   open: boolean;
@@ -22,7 +24,12 @@ export function CompanyDialog({ open, onOpenChange, company }: Props) {
   const [industry, setIndustry] = useState<string>("");
   const [website, setWebsite] = useState("");
   const [stage, setStage] = useState<string>("");
+  const [userId, setUserId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -70,7 +77,7 @@ export function CompanyDialog({ open, onOpenChange, company }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{company ? "Edit company" : "Add company"}</DialogTitle>
         </DialogHeader>
@@ -115,6 +122,20 @@ export function CompanyDialog({ open, onOpenChange, company }: Props) {
                 {STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="border-t border-border pt-4">
+            <Label className="mb-2 block">Knowledge documents</Label>
+            {company && userId ? (
+              <DocumentUploader
+                scope={{ kind: "company", companyId: company.id, userId }}
+                label="Files attached to this company"
+                maxFiles={10}
+              />
+            ) : (
+              <p className="text-[12px] text-foreground-muted">
+                Save the company first, then reopen this dialog to upload documents (logos, PRDs, brand guides, etc.).
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>
