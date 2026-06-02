@@ -35,9 +35,6 @@ function pathFor(scope: DocScope, filename: string): string {
   return `${scope.userId}/feature-ideas/${scope.requestId}/${uid}-${safe}`;
 }
 
-function table(scope: DocScope): "company_documents" | "feature_idea_documents" {
-  return scope.kind === "company" ? "company_documents" : "feature_idea_documents";
-}
 
 function formatSize(bytes: number | null): string {
   if (!bytes) return "";
