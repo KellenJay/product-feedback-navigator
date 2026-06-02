@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Mic, Sparkles, Square, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { prdStore } from "./prdStore";
 import { marketContextStore } from "./marketContextStore";
 import { saveAnalysis } from "@/lib/cloudSync";
 import { useDictation } from "./useDictation";
+import { DocumentUploader, type UploadedDoc } from "@/components/common/DocumentUploader";
 import type { AnalysisResult } from "./types";
 
 interface Props {
