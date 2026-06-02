@@ -304,5 +304,27 @@ Also produce:
 - topPainArea: the most critical slice's category.
 - recommendations: 2–4 tactical next steps for the team.
 
-Return strictly via the analyze_feedback tool.`;
+Return strictly via the analyze_feedback tool.${docsBlock}`;
+}
+
+const BUCKET = "company-docs";
+const INLINE_TEXT_MIMES = /^(text\/|application\/(json|xml|x-yaml|yaml))/i;
+
+async function buildDocRefs(
+  docs: UploadedDoc[],
+): Promise<Array<{ name: string; url: string; inlineText?: string }>> {
+  const out: Array<{ name: string; url: string; inlineText?: string }> = [];
+  for (const d of docs) {
+    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(d.storage_path, 60 * 60 * 24);
+    let inlineText: string | undefined;
+    if (d.mime_type && INLINE_TEXT_MIMES.test(d.mime_type)) {
+      const blob = await supabase.storage.from(BUCKET).download(d.storage_path);
+      if (blob.data) {
+        const text = await blob.data.text();
+        inlineText = text.slice(0, 8000);
+      }
+    }
+    out.push({ name: d.file_name, url: data?.signedUrl ?? "", inlineText });
+  }
+  return out;
 }
