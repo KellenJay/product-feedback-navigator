@@ -145,7 +145,10 @@ export function DocumentUploader({
     const ok = window.confirm(`Delete ${doc.file_name}?`);
     if (!ok) return;
     await supabase.storage.from(BUCKET).remove([doc.storage_path]);
-    const { error } = await supabase.from(table(scope)).delete().eq("id", doc.id);
+    const { error } =
+      scope.kind === "company"
+        ? await supabase.from("company_documents").delete().eq("id", doc.id)
+        : await supabase.from("feature_idea_documents").delete().eq("id", doc.id);
     if (error) {
       toast.error("Couldn't delete", { description: error.message });
       return;
