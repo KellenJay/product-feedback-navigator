@@ -181,19 +181,19 @@ export function InputPanel(props: Props) {
     <div className="card-halo rounded-2xl border border-border bg-surface p-6">
       {/* Row 1 */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Product name">
+        <Field label={copy.nameLabel}>
           <input
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            placeholder="e.g. Notion"
+            placeholder={copy.namePlaceholder}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </Field>
-        <Field label="Business goal (optional)">
+        <Field label={copy.goalLabel}>
           <input
             value={businessGoal}
             onChange={(e) => setBusinessGoal(e.target.value)}
-            placeholder="e.g. reduce churn, improve onboarding"
+            placeholder={copy.goalPlaceholder}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </Field>
@@ -201,9 +201,7 @@ export function InputPanel(props: Props) {
 
       {/* Row 2 — selector */}
       <div className="mt-5">
-        <p className="mb-2 text-sm text-foreground">
-          How would you like to provide feedback?
-        </p>
+        <p className="mb-2 text-sm text-foreground">{copy.sourceQuestion}</p>
         <div className="inline-flex flex-wrap gap-1 rounded-full border border-border bg-background p-1">
           {modes.map(({ id, label, icon: Icon }) => {
             const isActive = mode === id;
