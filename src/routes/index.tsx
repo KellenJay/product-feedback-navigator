@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Analyze real user feedback or pressure-test a new idea. InsightFlow tells you what to prioritize next — the bug to fix, the upgrade to ship, or the feature to build.",
+          "Analyze real user feedback or pressure-test a new idea. InsightFlow tells you what to prioritize next; the bug to fix, the upgrade to ship, or the feature to build.",
       },
       { property: "og:title", content: "InsightFlow — Decide what to fix, upgrade, or build next" },
       {
@@ -111,7 +111,7 @@ function LandingPage() {
 
           <p className="mx-auto mt-6 max-w-[680px] text-[16px] leading-7 text-foreground-muted">
             Analyze real user feedback or pressure-test a new idea. InsightFlow tells you
-            what to prioritize next — the bug to fix, the upgrade to ship, or the feature
+            what to prioritize next; the bug to fix, the upgrade to ship, or the feature
             to build.
           </p>
 
@@ -191,7 +191,7 @@ function LandingPage() {
             Built for teams that are close to their customers and ready to move fast
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            {["Startup founders", "Product managers", "Indie hackers", "SMB owners"].map(
+            {["Startup founders", "SaaS Product teams", "Indie hackers", "SMB owners"].map(
               (p) => (
                 <span
                   key={p}
@@ -217,12 +217,12 @@ function LandingPage() {
             </h2>
             <div className="mt-5 space-y-4 text-[15px] leading-7 text-foreground-muted">
               <p>
-                Feedback lives everywhere — reviews, Reddit threads, support tickets,
+                Feedback lives everywhere; reviews, Reddit threads, support tickets,
                 competitor comparisons. By the time you've read it all and built a case for
                 what to prioritize, another quarter has passed.
               </p>
               <p>
-                And when you're validating a brand-new idea, it's even worse — most teams
+                And when you're validating a brand-new idea, it's even worse; most teams
                 build from a hunch instead of from evidence already sitting in the problem
                 space. Loudest voice wins. Not the most validated insight.
               </p>
@@ -244,15 +244,15 @@ function LandingPage() {
                 },
                 {
                   t: "Validate new ideas before you build",
-                  d: "Describe your idea and who it's for — InsightFlow surfaces the real, recurring pain points in that space so you know if it's worth shipping.",
+                  d: "Describe your idea and who it's for. InsightFlow surfaces the real, recurring pain points in that space so you know if it's worth shipping.",
                 },
                 {
                   t: "Cross-check with market context",
-                  d: "Pulls competitor signals, industry trends, and recent news to support — or challenge — what your users (or the market) are saying.",
+                  d: "Pulls competitor signals, industry trends, and recent news to support; or challenge, what your users (or the market) are saying.",
                 },
                 {
                   t: "Prioritize bugs, upgrades, and new features",
-                  d: "Get a clear verdict on what to fix, what to upgrade, and what to build next — packaged into a quarterly roadmap and team-ready PRD.",
+                  d: "Get a clear verdict on what to fix, what to upgrade, and what to build next packaged into a quarterly roadmap and team-ready PRD.",
                 },
               ].map((f) => (
                 <div
@@ -282,7 +282,7 @@ function LandingPage() {
             {[
               {
                 n: "01",
-                t: "Feed it feedback — or an idea",
+                t: "Feed it feedback or an idea",
                 d: "Paste reviews, upload a document, or research the web. Or switch to Idea Validation and describe an unbuilt idea with its target audience.",
               },
               {
@@ -345,7 +345,7 @@ function LandingPage() {
             {
               tag: "Market context",
               title: "Know if the market agrees with your users.",
-              body: "Your users might be right — or they might be outliers. InsightFlow researches your competitive landscape, pulls recent news, and delivers a verdict.",
+              body: "Your users might be right; or they might be outliers. InsightFlow researches your competitive landscape, pulls recent news, and delivers a verdict.",
               icon: <Map className="h-5 w-5 text-primary" />,
               mock: (
                 <div className="rounded-md border border-border border-l-4 border-l-success bg-background p-4">
@@ -361,8 +361,8 @@ function LandingPage() {
             },
             {
               tag: "Prioritization & roadmap",
-              title: "Decide what to fix, upgrade, or build — then ship it.",
-              body: "InsightFlow tells you which bugs are worth fixing now, which upgrades will move the needle, and which new features are validated by real demand — then packages it into a full quarterly roadmap with epics, user stories, acceptance criteria, and effort estimates.",
+              title: "Decide what to fix, upgrade, or build, then ship it.",
+              body: "InsightFlow tells you which bugs are worth fixing now, which upgrades will move the needle, and which new features are validated by real demand; then packages it into a full quarterly roadmap with epics, user stories, acceptance criteria, and effort estimates.",
               icon: <FileText className="h-5 w-5 text-primary" />,
               mock: (
                 <div className="space-y-2">
@@ -419,8 +419,8 @@ function LandingPage() {
                 d: "Validate the idea before you write a line of code, then keep prioritizing with real evidence as customers start showing up.",
               },
               {
-                t: "Product managers",
-                d: "Stop spending 8 hours synthesizing feedback manually. Walk into every roadmap review with evidence on what to fix, upgrade, or build — not opinions.",
+                t: "SaaS Product teams",
+                d: "Stop spending 8 hours synthesizing feedback manually. Walk into every roadmap review with evidence on what to fix, upgrade, or build not opinions.",
               },
               {
                 t: "Indie hackers & solo builders",
@@ -450,7 +450,7 @@ function LandingPage() {
           <h2 className="font-display text-foreground" style={{ fontSize: "clamp(28px, 5vw, 44px)", lineHeight: 1.15 }}>
             Your next great product decision
             <br />
-            <span className="text-gradient-brand">is already in your users' voice — or the market's.</span>
+            <span className="text-gradient-brand">is already in your users' voice or the market's.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-[15px] leading-7 text-foreground-muted">
             InsightFlow finds it, scores it, and tells you whether to fix, upgrade, or build.
@@ -501,9 +501,7 @@ function LandingPage() {
           </div>
           <div className="text-sm sm:text-right">
             <p className="text-foreground-muted leading-relaxed">
-              Analyze real user feedback or pressure-test a new idea — InsightFlow tells you
-              what to prioritize next: the bug to fix, the upgrade to ship, or the feature
-              to build.
+              {"\n"}
             </p>
           </div>
         </div>
@@ -511,3 +509,5 @@ function LandingPage() {
     </div>
   );
 }
+
+export default LandingPage;
