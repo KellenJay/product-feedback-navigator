@@ -230,7 +230,7 @@ export function InputPanel(props: Props) {
           <textarea
             value={pastedFeedback}
             onChange={(e) => setPastedFeedback(e.target.value)}
-            placeholder="Paste user reviews, Reddit posts, Capterra reviews, support tickets, forum threads…"
+            placeholder={copy.pastePlaceholder}
             className="block w-full resize-y rounded-md border border-border bg-background p-3 text-sm leading-relaxed text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             style={{ height: 140 }}
           />
@@ -310,17 +310,16 @@ export function InputPanel(props: Props) {
 
         {mode === "deep-research" && (
           <div>
-            <Field label="What should we research?">
+            <Field label={copy.researchLabel}>
               <input
                 value={researchQuery}
                 onChange={(e) => setResearchQuery(e.target.value)}
-                placeholder="e.g. Notion reviews on Reddit, G2, Capterra"
+                placeholder={copy.researchPlaceholder}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </Field>
             <p className="mt-2 text-xs text-foreground-muted">
-              InsightFlow will use AI to gather and synthesize known feedback
-              themes for this product.
+              {copy.researchHint}
             </p>
           </div>
         )}
