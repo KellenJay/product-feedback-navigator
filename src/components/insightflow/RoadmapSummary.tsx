@@ -48,9 +48,13 @@ function Stat({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3">
+    <div className="min-w-0 rounded-xl border border-border bg-card px-4 py-3">
       <p className="text-[12px] text-foreground-muted">{label}</p>
-      <p className="mt-1 text-[20px] font-medium leading-tight text-foreground">
+      <p
+        title={value}
+        className="mt-1 font-medium leading-snug text-foreground break-words line-clamp-2"
+        style={{ fontSize: "clamp(14px, 2.2vw, 20px)" }}
+      >
         {value}
       </p>
       {hint && (

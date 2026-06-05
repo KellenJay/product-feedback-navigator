@@ -112,9 +112,9 @@ export function ResultsView({ result }: Props) {
                     >
                       {rank}
                     </div>
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
-                        <h3 className="text-[15px] font-medium text-foreground">
+                        <h3 className="min-w-0 break-words text-[15px] font-medium text-foreground">
                           {issue.title}
                         </h3>
                         <span
@@ -158,7 +158,7 @@ export function ResultsView({ result }: Props) {
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-medium text-background">
                     {i + 1}
                   </span>
-                  <div>
+                  <div className="min-w-0 break-words">
                     <span className="font-medium text-foreground">{rec.title}.</span>{" "}
                     <span className="text-foreground-muted">{rec.detail}</span>
                   </div>
@@ -183,12 +183,14 @@ function Metric({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3">
+    <div className="min-w-0 rounded-xl border border-border bg-card px-4 py-3">
       <p className="text-[12px] text-foreground-muted">{label}</p>
       <p
-        className={`mt-1 text-[22px] font-medium leading-tight ${
+        title={value}
+        className={`mt-1 font-medium leading-snug break-words line-clamp-2 ${
           valueClassName ?? "text-foreground"
         }`}
+        style={{ fontSize: "clamp(15px, 2.4vw, 22px)" }}
       >
         {value}
       </p>
