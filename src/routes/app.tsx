@@ -75,9 +75,15 @@ function AnalyzePage() {
 
   const handleAnalyze = async () => {
     if (!productName.trim()) {
-      toast.error("Add a product name", {
-        description: "Tell us which product the feedback is about.",
-      });
+      toast.error(
+        intent === "idea" ? "Add an idea name" : "Add a product name",
+        {
+          description:
+            intent === "idea"
+              ? "Give your idea a short name so we know what to validate."
+              : "Tell us which product the feedback is about.",
+        },
+      );
       return;
     }
 
@@ -111,6 +117,7 @@ function AnalyzePage() {
         "analyze-feedback",
         {
           body: {
+            intent,
             productName,
             businessGoal,
             mode,
