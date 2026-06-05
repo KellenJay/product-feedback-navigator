@@ -16,7 +16,6 @@ import {
   FileText,
 } from "lucide-react";
 import { TabBar } from "@/components/insightflow/TabBar";
-import { HeroBeam } from "@/components/insightflow/HeroBeam";
 import {
   libraryStore,
   useLibrary,
@@ -161,7 +160,6 @@ function LibraryPage() {
       </header>
 
       <TabBar active="library" />
-      <HeroBeam />
 
       <main className="mx-auto max-w-[1100px] px-4 pb-24 sm:px-6">
         {isEmpty ? (

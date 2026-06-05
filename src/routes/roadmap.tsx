@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { TabBar } from "@/components/insightflow/TabBar";
-import { HeroBeam } from "@/components/insightflow/HeroBeam";
 import { useAnalyzeStore } from "@/components/insightflow/analyzeStore";
 import { roadmapStore, useRoadmap, useTimeframe } from "@/components/insightflow/roadmapStore";
 import { prdStore } from "@/components/insightflow/prdStore";
@@ -63,7 +62,6 @@ function RoadmapPage() {
       </header>
 
       <TabBar active="roadmap" />
-      <HeroBeam />
 
       <main className="mx-auto max-w-[1100px] px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <FeatureIdeaPanel hasExisting={!!result} />
