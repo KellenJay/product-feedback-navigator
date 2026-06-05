@@ -49,15 +49,15 @@ export function InputPanel(props: Props) {
   const copy = intent === "idea"
     ? {
         nameLabel: "Idea name",
-        namePlaceholder: "e.g. Fitness app for overweight teenagers",
+        namePlaceholder: "e.g. Budgeting app for freelancers",
         goalLabel: "Who is it for / why (optional)",
-        goalPlaceholder: "e.g. help overweight teens build sustainable habits",
+        goalPlaceholder: "e.g. help independent workers manage irregular income",
         sourceQuestion: "Where should we pull signal from?",
         pastePlaceholder:
           "Paste forum threads, Reddit discussions, comments, or notes about this problem space…",
         researchLabel: "What should we research?",
         researchPlaceholder:
-          "e.g. what teens say about fitness apps on Reddit, TikTok, App Store reviews",
+          "e.g. what freelancers say about budgeting tools on Reddit, TikTok, App Store reviews",
         researchHint:
           "InsightFlow will synthesize what people are already saying about this problem space.",
         cta: "Validate idea",
