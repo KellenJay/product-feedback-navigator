@@ -240,7 +240,9 @@ function AnalyzePage() {
       <main className="mx-auto max-w-[780px] px-4 pb-24 sm:px-6">
         {/* Input */}
         <div className="relative mt-8 sm:mt-12">
+          <IntentTabs intent={intent} setIntent={setIntent} />
           <InputPanel
+            intent={intent}
             productName={productName}
             setProductName={setProductName}
             businessGoal={businessGoal}
@@ -257,6 +259,7 @@ function AnalyzePage() {
             onAnalyze={handleAnalyze}
           />
         </div>
+
 
         <div id="results-anchor" />
         {result && <ResultsView result={result} productName={productName} />}
