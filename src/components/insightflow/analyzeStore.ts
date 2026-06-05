@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
-import type { AnalysisResult, SourceMode } from "./types";
+import type { AnalysisResult, Intent, SourceMode } from "./types";
 
 export interface AnalyzeState {
+  intent: Intent;
   productName: string;
   businessGoal: string;
   mode: SourceMode;
@@ -15,6 +16,7 @@ export interface AnalyzeState {
 }
 
 const initialState: AnalyzeState = {
+  intent: "feedback",
   productName: "",
   businessGoal: "",
   mode: "paste",
