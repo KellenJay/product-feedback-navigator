@@ -227,36 +227,14 @@ function AnalyzePage() {
       <TabBar active="analyze" />
 
       <main className="mx-auto max-w-[780px] px-4 pb-24 sm:px-6">
-        {/* Hero */}
-        <section className="relative isolate text-center">
+        {/* Hero backdrop (beam only) */}
+        <section className="relative isolate">
           <div className="hero-beam" aria-hidden />
           <div className="hero-grid absolute inset-0 -z-10" aria-hidden />
-
-          {/* Eyebrow */}
-          <div className="relative mt-8 inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-foreground-muted backdrop-blur sm:mt-12">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-            </span>
-            AI feedback intelligence
-          </div>
-
-          <h1 className="font-display relative mt-6 text-foreground"
-              style={{ fontSize: "clamp(38px, 6vw, 64px)", lineHeight: 1.05 }}>
-            Stop drowning in feedback.
-            <br />
-            <span className="text-gradient-brand">Start shipping what matters</span>
-          </h1>
-          <p className="relative mx-auto mt-5 max-w-[620px] text-[15px] leading-7 text-foreground-muted">
-            InsightFlow turns scattered user signals into decisions you can
-            defend. In seconds, you get a structured breakdown of your biggest
-            user pain points and market context, then a generated structured
-            summary ready for roadmapping.
-          </p>
         </section>
 
         {/* Input */}
-        <div className="mt-8">
+        <div className="relative mt-8 sm:mt-12">
           <InputPanel
             productName={productName}
             setProductName={setProductName}
