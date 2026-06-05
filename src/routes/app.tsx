@@ -6,6 +6,7 @@ import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TabBar } from "@/components/insightflow/TabBar";
+import { IntentTabs } from "@/components/insightflow/IntentTabs";
 import { InputPanel } from "@/components/insightflow/InputPanel";
 import { ResultsView } from "@/components/insightflow/ResultsView";
 import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel";
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/app")({
 function AnalyzePage() {
   const [state, setState] = useAnalyzeStore();
   const {
+    intent,
     productName,
     businessGoal,
     mode,
@@ -56,6 +58,8 @@ function AnalyzePage() {
     researchQuery,
     result,
   } = state;
+
+  const setIntent = (i: typeof intent) => setState({ intent: i });
 
   const setProductName = (v: string) => setState({ productName: v });
   const setBusinessGoal = (v: string) => setState({ businessGoal: v });
@@ -71,9 +75,15 @@ function AnalyzePage() {
 
   const handleAnalyze = async () => {
     if (!productName.trim()) {
-      toast.error("Add a product name", {
-        description: "Tell us which product the feedback is about.",
-      });
+      toast.error(
+        intent === "idea" ? "Add an idea name" : "Add a product name",
+        {
+          description:
+            intent === "idea"
+              ? "Give your idea a short name so we know what to validate."
+              : "Tell us which product the feedback is about.",
+        },
+      );
       return;
     }
 
@@ -107,6 +117,7 @@ function AnalyzePage() {
         "analyze-feedback",
         {
           body: {
+            intent,
             productName,
             businessGoal,
             mode,
@@ -229,7 +240,9 @@ function AnalyzePage() {
       <main className="mx-auto max-w-[780px] px-4 pb-24 sm:px-6">
         {/* Input */}
         <div className="relative mt-8 sm:mt-12">
+          <IntentTabs intent={intent} setIntent={setIntent} />
           <InputPanel
+            intent={intent}
             productName={productName}
             setProductName={setProductName}
             businessGoal={businessGoal}
@@ -246,6 +259,7 @@ function AnalyzePage() {
             onAnalyze={handleAnalyze}
           />
         </div>
+
 
         <div id="results-anchor" />
         {result && <ResultsView result={result} productName={productName} />}

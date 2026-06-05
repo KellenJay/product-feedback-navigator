@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { FileText, Upload, Search, X, Sparkles, Loader2 } from "lucide-react";
-import type { SourceMode } from "./types";
+import type { Intent, SourceMode } from "./types";
 
 interface Props {
+  intent?: Intent;
   productName: string;
   setProductName: (v: string) => void;
   businessGoal: string;
@@ -28,6 +29,7 @@ const modes: { id: SourceMode; label: string; icon: typeof FileText }[] = [
 
 export function InputPanel(props: Props) {
   const {
+    intent = "feedback",
     productName,
     setProductName,
     businessGoal,
@@ -43,6 +45,39 @@ export function InputPanel(props: Props) {
     loading,
     onAnalyze,
   } = props;
+
+  const copy = intent === "idea"
+    ? {
+        nameLabel: "Idea name",
+        namePlaceholder: "e.g. Fitness app for overweight teenagers",
+        goalLabel: "Who is it for / why (optional)",
+        goalPlaceholder: "e.g. help overweight teens build sustainable habits",
+        sourceQuestion: "Where should we pull signal from?",
+        pastePlaceholder:
+          "Paste forum threads, Reddit discussions, comments, or notes about this problem space…",
+        researchLabel: "What should we research?",
+        researchPlaceholder:
+          "e.g. what teens say about fitness apps on Reddit, TikTok, App Store reviews",
+        researchHint:
+          "InsightFlow will synthesize what people are already saying about this problem space.",
+        cta: "Validate idea",
+        ctaLoading: "Validating with AI…",
+      }
+    : {
+        nameLabel: "Product name",
+        namePlaceholder: "e.g. Notion",
+        goalLabel: "Business goal (optional)",
+        goalPlaceholder: "e.g. reduce churn, improve onboarding",
+        sourceQuestion: "How would you like to provide feedback?",
+        pastePlaceholder:
+          "Paste user reviews, Reddit posts, Capterra reviews, support tickets, forum threads…",
+        researchLabel: "What should we research?",
+        researchPlaceholder: "e.g. Notion reviews on Reddit, G2, Capterra",
+        researchHint:
+          "InsightFlow will use AI to gather and synthesize known feedback themes for this product.",
+        cta: "Analyze feedback",
+        ctaLoading: "Analyzing with AI…",
+      };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -146,19 +181,19 @@ export function InputPanel(props: Props) {
     <div className="card-halo rounded-2xl border border-border bg-surface p-6">
       {/* Row 1 */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Product name">
+        <Field label={copy.nameLabel}>
           <input
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            placeholder="e.g. Notion"
+            placeholder={copy.namePlaceholder}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </Field>
-        <Field label="Business goal (optional)">
+        <Field label={copy.goalLabel}>
           <input
             value={businessGoal}
             onChange={(e) => setBusinessGoal(e.target.value)}
-            placeholder="e.g. reduce churn, improve onboarding"
+            placeholder={copy.goalPlaceholder}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </Field>
@@ -166,9 +201,7 @@ export function InputPanel(props: Props) {
 
       {/* Row 2 — selector */}
       <div className="mt-5">
-        <p className="mb-2 text-sm text-foreground">
-          How would you like to provide feedback?
-        </p>
+        <p className="mb-2 text-sm text-foreground">{copy.sourceQuestion}</p>
         <div className="inline-flex flex-wrap gap-1 rounded-full border border-border bg-background p-1">
           {modes.map(({ id, label, icon: Icon }) => {
             const isActive = mode === id;
@@ -197,7 +230,7 @@ export function InputPanel(props: Props) {
           <textarea
             value={pastedFeedback}
             onChange={(e) => setPastedFeedback(e.target.value)}
-            placeholder="Paste user reviews, Reddit posts, Capterra reviews, support tickets, forum threads…"
+            placeholder={copy.pastePlaceholder}
             className="block w-full resize-y rounded-md border border-border bg-background p-3 text-sm leading-relaxed text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             style={{ height: 140 }}
           />
@@ -277,17 +310,16 @@ export function InputPanel(props: Props) {
 
         {mode === "deep-research" && (
           <div>
-            <Field label="What should we research?">
+            <Field label={copy.researchLabel}>
               <input
                 value={researchQuery}
                 onChange={(e) => setResearchQuery(e.target.value)}
-                placeholder="e.g. Notion reviews on Reddit, G2, Capterra"
+                placeholder={copy.researchPlaceholder}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-foreground-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </Field>
             <p className="mt-2 text-xs text-foreground-muted">
-              InsightFlow will use AI to gather and synthesize known feedback
-              themes for this product.
+              {copy.researchHint}
             </p>
           </div>
         )}
@@ -303,12 +335,12 @@ export function InputPanel(props: Props) {
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Analyzing with AI…
+            {copy.ctaLoading}
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            Analyze feedback
+            {copy.cta}
           </>
         )}
       </button>

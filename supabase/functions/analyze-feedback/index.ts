@@ -11,8 +11,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { productName, businessGoal, mode, feedback, researchQuery } =
+    const { productName, businessGoal, mode, feedback, researchQuery, intent } =
       await req.json();
+    const isIdea = intent === "idea";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -27,34 +28,57 @@ Deno.serve(async (req) => {
       );
     }
 
+    const nameLabel = isIdea ? "Idea" : "Product";
+    const goalLabel = isIdea ? "Who it's for / why" : "Business goal";
+
     let userContent = "";
     if (mode === "deep-research") {
-      userContent = `Product: ${productName}
-Business goal: ${businessGoal || "(not specified)"}
+      userContent = `${nameLabel}: ${productName}
+${goalLabel}: ${businessGoal || "(not specified)"}
 Research request: ${researchQuery || productName}
 
 You don't have live web access in this call. Synthesize a realistic,
-representative analysis of common publicly-known feedback themes for this
-product based on your training data. Be honest about themes; do not invent
+representative analysis of common publicly-known ${
+        isIdea ? "pain points in this problem space" : "feedback themes for this product"
+      } based on your training data. Be honest about themes; do not invent
 specific quotes that you can't reasonably attribute. Use plausible
 paraphrased quotes and label sentiment carefully.`;
     } else {
       if (!feedback || typeof feedback !== "string" || feedback.trim().length < 20) {
         return new Response(
-          JSON.stringify({ error: "Please provide more feedback content to analyze." }),
+          JSON.stringify({ error: "Please provide more content to analyze." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      userContent = `Product: ${productName}
-Business goal: ${businessGoal || "(not specified)"}
+      userContent = `${nameLabel}: ${productName}
+${goalLabel}: ${businessGoal || "(not specified)"}
 
-Feedback to analyze:
+${isIdea ? "Signal to analyze (forum posts, comments, notes about the problem space)" : "Feedback to analyze"}:
 """
 ${feedback.slice(0, 50000)}
 """`;
     }
 
-    const systemPrompt = `You are a senior product manager analyzing user feedback.
+    const systemPrompt = isIdea
+      ? `You are a senior product strategist helping a founder validate a new, unbuilt idea.
+Analyze the provided signal to surface the most painful, recurring problems
+people already have in this space. Treat each pain point as evidence for or
+against the idea. Score impact (0-100), assign categories (e.g. Onboarding,
+Motivation, Cost, Trust, UX, Support, Features, Habit), priority (P1/P2/P3),
+and extract representative quotes.
+
+Priority guidance:
+- P1 = Strongly validates the idea: deep, recurring pain worth solving first.
+- P2 = Supports the idea: meaningful pain for a clear segment.
+- P3 = Weaker signal: nice-to-have or niche.
+
+Recommendations should be next steps for validating or shaping the idea
+(e.g. "Interview 5 users about X", "Prototype Y first"), not bug fixes.
+
+For each quote, attempt to attribute the source when the input gives signal.
+Use these fields: source, context, date, url. Never fabricate URLs. If you
+cannot reasonably infer a field, set it to null.`
+      : `You are a senior product manager analyzing user feedback.
 Identify distinct pain points, score them by impact (0-100), assign categories
 (e.g. Onboarding, Performance, Pricing, Reliability, UX, Support, Features),
 priority (P1/P2/P3), and extract representative quotes.
@@ -75,6 +99,8 @@ For each quote, attempt to attribute the source when the input gives signal
     quote. Otherwise leave it null. Do NOT fabricate URLs.
 
 If you cannot reasonably infer a field, set it to null. Never invent sources.`;
+
+
 
     const tools = [
       {

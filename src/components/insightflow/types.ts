@@ -38,6 +38,8 @@ export interface AnalysisResult {
 
 export type SourceMode = "paste" | "upload" | "deep-research";
 
+export type Intent = "feedback" | "idea";
+
 // ----- Market context -----
 
 export interface TrendSignal {
