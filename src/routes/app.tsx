@@ -6,6 +6,7 @@ import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TabBar } from "@/components/insightflow/TabBar";
+import { HeroBeam } from "@/components/insightflow/HeroBeam";
 import { InputPanel } from "@/components/insightflow/InputPanel";
 import { ResultsView } from "@/components/insightflow/ResultsView";
 import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel";
@@ -225,14 +226,9 @@ function AnalyzePage() {
       </header>
 
       <TabBar active="analyze" />
+      <HeroBeam />
 
       <main className="mx-auto max-w-[780px] px-4 pb-24 sm:px-6">
-        {/* Hero backdrop (beam only) */}
-        <section className="relative isolate">
-          <div className="hero-beam" aria-hidden />
-          <div className="hero-grid absolute inset-0 -z-10" aria-hidden />
-        </section>
-
         {/* Input */}
         <div className="relative mt-8 sm:mt-12">
           <InputPanel
