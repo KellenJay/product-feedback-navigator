@@ -335,12 +335,12 @@ export function InputPanel(props: Props) {
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Analyzing with AI…
+            {copy.ctaLoading}
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            Analyze feedback
+            {copy.cta}
           </>
         )}
       </button>
