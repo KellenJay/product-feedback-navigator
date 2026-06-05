@@ -13,17 +13,17 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "InsightFlow — Turn customer feedback into prioritized roadmaps" },
+      { title: "InsightFlow — Validate ideas, analyze feedback, prioritize what to build" },
       {
         name: "description",
         content:
-          "AI-powered feedback intelligence. Turn scattered reviews, support tickets, and competitor signals into a prioritized roadmap and team-ready PRD in minutes.",
+          "Analyze real user feedback or pressure-test a new idea. InsightFlow tells you what to prioritize next — the bug to fix, the upgrade to ship, or the feature to build.",
       },
-      { property: "og:title", content: "InsightFlow — Turn feedback into decisions" },
+      { property: "og:title", content: "InsightFlow — Decide what to fix, upgrade, or build next" },
       {
         property: "og:description",
         content:
-          "Stop guessing what to build next. InsightFlow scores every pain point, validates with market context, and ships a roadmap your team can act on.",
+          "From scattered reviews to unbuilt ideas — InsightFlow scores every pain point, validates with market context, and turns it into a prioritized roadmap.",
       },
     ],
     links: [
@@ -109,10 +109,10 @@ function LandingPage() {
             <span className="text-gradient-brand">Start deciding with evidence.</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-[640px] text-[16px] leading-7 text-foreground-muted">
-            InsightFlow turns your customer feedback, reviews, and competitor signals into
-            prioritized product decisions with roadmaps and PRDs your team can act on
-            immediately.
+          <p className="mx-auto mt-6 max-w-[680px] text-[16px] leading-7 text-foreground-muted">
+            Analyze real user feedback or pressure-test a new idea. InsightFlow tells you
+            what to prioritize next — the bug to fix, the upgrade to ship, or the feature
+            to build.
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -191,7 +191,7 @@ function LandingPage() {
             Built for teams that are close to their customers and ready to move fast
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            {["Startup founders", "Product managers", "SMB owners", "Growth & marketing"].map(
+            {["Startup founders", "Product managers", "Indie hackers", "SMB owners"].map(
               (p) => (
                 <span
                   key={p}
@@ -213,7 +213,7 @@ function LandingPage() {
               The problem
             </div>
             <h2 className="font-display mt-3 text-3xl text-foreground" style={{ lineHeight: 1.15 }}>
-              Your customers tell you exactly what to fix. You just can't hear them.
+              Your users and the market keep telling you what to build. You just can't hear them.
             </h2>
             <div className="mt-5 space-y-4 text-[15px] leading-7 text-foreground-muted">
               <p>
@@ -222,9 +222,9 @@ function LandingPage() {
                 what to prioritize, another quarter has passed.
               </p>
               <p>
-                Most teams end up going with whoever spoke loudest in the last meeting. Not
-                the most validated insight. Not the highest-impact fix. Just the loudest
-                voice.
+                And when you're validating a brand-new idea, it's even worse — most teams
+                build from a hunch instead of from evidence already sitting in the problem
+                space. Loudest voice wins. Not the most validated insight.
               </p>
             </div>
           </div>
@@ -239,20 +239,20 @@ function LandingPage() {
             <div className="mt-5 space-y-4">
               {[
                 {
-                  t: "Analyze feedback at scale",
+                  t: "Analyze user feedback at scale",
                   d: "Paste reviews, upload a doc, or let InsightFlow research the web. Every pain point scored by frequency, severity, and business impact.",
                 },
                 {
-                  t: "Validate with market context",
-                  d: "Pulls competitor signals, industry trends, and recent news to support — or challenge — what your users are saying.",
+                  t: "Validate new ideas before you build",
+                  d: "Describe your idea and who it's for — InsightFlow surfaces the real, recurring pain points in that space so you know if it's worth shipping.",
                 },
                 {
-                  t: "Generate a prioritized roadmap",
-                  d: "Get a full quarterly roadmap with epics, sprints, and trade-offs — ready for your team in minutes.",
+                  t: "Cross-check with market context",
+                  d: "Pulls competitor signals, industry trends, and recent news to support — or challenge — what your users (or the market) are saying.",
                 },
                 {
-                  t: "Export team-ready PRDs",
-                  d: "User stories, acceptance criteria, design notes, dev notes. Hand it to engineering and start building.",
+                  t: "Prioritize bugs, upgrades, and new features",
+                  d: "Get a clear verdict on what to fix, what to upgrade, and what to build next — packaged into a quarterly roadmap and team-ready PRD.",
                 },
               ].map((f) => (
                 <div
@@ -275,25 +275,25 @@ function LandingPage() {
             How it works
           </div>
           <h2 className="font-display mt-3 text-3xl text-foreground sm:text-4xl">
-            From feedback to roadmap in three steps.
+            From signal to shipped in three steps.
           </h2>
 
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             {[
               {
                 n: "01",
-                t: "Feed it your feedback",
-                d: "Paste reviews from Capterra, G2, Reddit, or support tickets. Upload a document. Or type a product name and let InsightFlow search the web.",
+                t: "Feed it feedback — or an idea",
+                d: "Paste reviews, upload a document, or research the web. Or switch to Idea Validation and describe an unbuilt idea with its target audience.",
               },
               {
                 n: "02",
                 t: "Get instant intelligence",
-                d: "Every pain point scored by impact, validated against live market data. The insights that actually matter — not just what's loudest.",
+                d: "Every pain point scored by impact and validated against live market data — so you see what's actually worth solving, not just what's loudest.",
               },
               {
                 n: "03",
-                t: "Ship with confidence",
-                d: "Generate a full roadmap, PRD, epics, and user stories in one click. Export, share, start the sprint.",
+                t: "Prioritize and ship",
+                d: "Decide what to fix, upgrade, or build next. Generate a full roadmap, PRD, epics, and user stories in one click. Export and start the sprint.",
               },
             ].map((s) => (
               <div
@@ -320,9 +320,9 @@ function LandingPage() {
         <div className="space-y-24">
           {[
             {
-              tag: "Feedback analysis",
+              tag: "Feedback & idea analysis",
               title: "Every customer signal, scored and ranked.",
-              body: "Stop reading hundreds of reviews to find the signal. InsightFlow categorizes feedback by theme, then scores it by frequency, severity, and impact on your business goals.",
+              body: "Whether you're analyzing reviews for an existing product or pressure-testing a new idea against public signal, InsightFlow categorizes the pain points and scores each by frequency, severity, and impact on your goals.",
               icon: <Target className="h-5 w-5 text-primary" />,
               mock: (
                 <div className="space-y-2">
@@ -360,9 +360,9 @@ function LandingPage() {
               ),
             },
             {
-              tag: "Roadmap & PRD",
-              title: "From insight to sprint-ready in minutes.",
-              body: "Select any saved analysis and generate a full quarterly roadmap with epics, user stories, acceptance criteria, and effort estimates. The kind of output that used to take a senior PM a full week.",
+              tag: "Prioritization & roadmap",
+              title: "Decide what to fix, upgrade, or build — then ship it.",
+              body: "InsightFlow tells you which bugs are worth fixing now, which upgrades will move the needle, and which new features are validated by real demand — then packages it into a full quarterly roadmap with epics, user stories, acceptance criteria, and effort estimates.",
               icon: <FileText className="h-5 w-5 text-primary" />,
               mock: (
                 <div className="space-y-2">
@@ -416,19 +416,19 @@ function LandingPage() {
             {[
               {
                 t: "Startup founders",
-                d: "You're moving fast and every build decision matters. Get customer-validated priorities before committing engineering time to the wrong thing.",
+                d: "Validate the idea before you write a line of code, then keep prioritizing with real evidence as customers start showing up.",
               },
               {
                 t: "Product managers",
-                d: "Stop spending 8 hours synthesizing feedback manually. Walk into every roadmap review with evidence, not opinions.",
+                d: "Stop spending 8 hours synthesizing feedback manually. Walk into every roadmap review with evidence on what to fix, upgrade, or build — not opinions.",
+              },
+              {
+                t: "Indie hackers & solo builders",
+                d: "Pressure-test your next idea against what people are actually complaining about online. Skip months building something nobody asked for.",
               },
               {
                 t: "SMB owners",
-                d: "Your customers leave signals in reviews and forums every day. InsightFlow reads them so you can fix what actually drives retention.",
-              },
-              {
-                t: "Growth & marketing teams",
-                d: "Understand exactly what pain points your competitors' customers complain about. Build messaging that hits where it hurts.",
+                d: "Your customers leave signals in reviews and forums every day. InsightFlow reads them and tells you exactly what to fix, upgrade, or build next.",
               },
             ].map((p) => (
               <div
@@ -450,10 +450,10 @@ function LandingPage() {
           <h2 className="font-display text-foreground" style={{ fontSize: "clamp(28px, 5vw, 44px)", lineHeight: 1.15 }}>
             Your next great product decision
             <br />
-            <span className="text-gradient-brand">is already in your customer feedback.</span>
+            <span className="text-gradient-brand">is already in your users' voice — or the market's.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-[15px] leading-7 text-foreground-muted">
-            InsightFlow finds it, scores it, and turns it into a roadmap your team can ship.
+            InsightFlow finds it, scores it, and tells you whether to fix, upgrade, or build.
           </p>
           <div className="mt-8">
             <Link
@@ -474,7 +474,7 @@ function LandingPage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 sm:grid-cols-3">
           <div>
             <div className="text-base font-semibold text-foreground">InsightFlow</div>
-            <p className="mt-2 text-sm text-foreground-muted">Turn feedback into decisions.</p>
+            <p className="mt-2 text-sm text-foreground-muted">Turn feedback and ideas into decisions.</p>
             <p className="mt-4 text-xs text-foreground-muted">© 2026 InsightFlow</p>
           </div>
           <div className="text-sm">
@@ -501,9 +501,9 @@ function LandingPage() {
           </div>
           <div className="text-sm sm:text-right">
             <p className="text-foreground-muted leading-relaxed">
-              InsightFlow turns your customer feedback, reviews, and competitor signals into
-              prioritized product decisions with roadmaps and PRDs your team can act on
-              immediately.
+              Analyze real user feedback or pressure-test a new idea — InsightFlow tells you
+              what to prioritize next: the bug to fix, the upgrade to ship, or the feature
+              to build.
             </p>
           </div>
         </div>
