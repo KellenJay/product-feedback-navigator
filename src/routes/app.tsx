@@ -6,6 +6,7 @@ import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TabBar } from "@/components/insightflow/TabBar";
+import { IntentTabs } from "@/components/insightflow/IntentTabs";
 import { InputPanel } from "@/components/insightflow/InputPanel";
 import { ResultsView } from "@/components/insightflow/ResultsView";
 import { MarketContextPanel } from "@/components/insightflow/MarketContextPanel";
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/app")({
 function AnalyzePage() {
   const [state, setState] = useAnalyzeStore();
   const {
+    intent,
     productName,
     businessGoal,
     mode,
@@ -56,6 +58,8 @@ function AnalyzePage() {
     researchQuery,
     result,
   } = state;
+
+  const setIntent = (i: typeof intent) => setState({ intent: i });
 
   const setProductName = (v: string) => setState({ productName: v });
   const setBusinessGoal = (v: string) => setState({ businessGoal: v });
