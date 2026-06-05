@@ -162,28 +162,10 @@ function LibraryPage() {
       <TabBar active="library" />
 
       <main className="mx-auto max-w-[1100px] px-4 pb-24 sm:px-6">
-        {/* Hero */}
-        <section className="relative isolate text-center">
+        {/* Hero backdrop (beam only) */}
+        <section className="relative isolate">
           <div className="hero-beam" aria-hidden />
           <div className="hero-grid absolute inset-0 -z-10" aria-hidden />
-
-          <div className="relative mt-8 inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-foreground-muted backdrop-blur sm:mt-12">
-            <LibraryIcon className="h-3 w-3" />
-            Your research library
-          </div>
-
-          <h1
-            className="font-display relative mt-6 text-foreground"
-            style={{ fontSize: "clamp(34px, 5vw, 52px)", lineHeight: 1.05 }}
-          >
-            Every insight,{" "}
-            <span className="text-gradient-brand">on tap</span>
-          </h1>
-          <p className="relative mx-auto mt-4 max-w-[560px] text-[14px] leading-7 text-foreground-muted">
-            Save the analyses worth keeping, organize them in folders and
-            revisit recent searches for up to 7 days even if you forgot to
-            save them.
-          </p>
         </section>
 
         {isEmpty ? (
