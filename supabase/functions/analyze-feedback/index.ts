@@ -100,27 +100,7 @@ For each quote, attempt to attribute the source when the input gives signal
 
 If you cannot reasonably infer a field, set it to null. Never invent sources.`;
 
-    const systemPrompt = `You are a senior product manager analyzing user feedback.
-Identify distinct pain points, score them by impact (0-100), assign categories
-(e.g. Onboarding, Performance, Pricing, Reliability, UX, Support, Features),
-priority (P1/P2/P3), and extract representative quotes.
 
-Priority guidance:
-- P1 = Critical: blocks core use or causes churn. Fix this sprint.
-- P2 = High: significant friction for many users. Address in next 1-2 sprints.
-- P3 = Medium: quality-of-life improvement. Backlog candidate.
-
-For each quote, attempt to attribute the source when the input gives signal
-(e.g. "from Reddit", a CSV column "source", a URL, a date). Use these fields:
-  - source: short platform name like "Reddit", "Capterra", "G2", "App Store",
-    "Support ticket", "Survey", "Twitter/X", or "Internal".
-  - context: optional sub-context like "r/godaddy", "review #482", or a
-    customer segment.
-  - date: human-readable, e.g. "2 weeks ago" or "2025-03-14".
-  - url: only include if the input explicitly contains a real URL for the
-    quote. Otherwise leave it null. Do NOT fabricate URLs.
-
-If you cannot reasonably infer a field, set it to null. Never invent sources.`;
 
     const tools = [
       {
