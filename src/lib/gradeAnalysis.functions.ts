@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const gradeAnalysis = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: { analysisOutput: unknown; sessionId?: string | null }) => input)
+  .middleware([attachSupabaseAuth, requireSupabaseAuth])
+  .validator((input: { analysisOutput: unknown; sessionId?: string | null }) => input)
   .handler(async ({ data, context }) => {
     try {
       const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
