@@ -32,6 +32,16 @@ export const gradeAnalysis = createServerFn({ method: "POST" })
       userId: context.userId,
     });
 
+    const analysisRecord = data.analysisOutput as Record<string, unknown>;
+    const issues = Array.isArray(analysisRecord.issues) ? analysisRecord.issues : [];
+    if (issues.length === 0) {
+      console.error("gradeAnalysis: refusing to grade an analysis with no issues", {
+        sessionId: data.sessionId,
+        outputKeys: Object.keys(analysisRecord),
+      });
+      return { ok: false as const, reason: "empty_analysis" };
+    }
+
     const { data: savedSession, error: sessionError } = await context.supabase
       .from("analysis_sessions")
       .select("id")
