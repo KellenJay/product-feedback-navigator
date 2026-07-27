@@ -193,6 +193,10 @@ function AnalyzePage() {
           // correct row.
           setState({ entryId: res.sessionId });
           marketContextStore.hydrate(null, res.sessionId);
+          // Fire-and-forget grading; writes to eval_runs on completion.
+          void gradeAnalysisFn({
+            data: { analysisOutput: analysisResult, sessionId: res.sessionId },
+          }).catch((err) => console.error("gradeAnalysis failed:", err));
           // Auto-run market context once for this fresh analysis, bound
           // to the cloud session id so it persists.
           void fetchMarketContext(
