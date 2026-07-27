@@ -5,8 +5,12 @@ export const gradeAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { analysisOutput: unknown; sessionId?: string | null }) => input)
   .handler(async ({ data, context }) => {
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    try {
+      const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+      if (!LOVABLE_API_KEY) {
+        console.error("gradeAnalysis: LOVABLE_API_KEY not configured");
+        return { ok: false as const, reason: "missing_key" };
+      }
 
     const systemPrompt = `You are an expert evaluator of AI-generated product analyses.
 Score the analysis on four dimensions, each 0–100:
@@ -69,12 +73,12 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
     if (!response.ok) {
       const errText = await response.text();
       console.error("grade-analysis error:", response.status, errText);
-      throw new Error("Grading failed.");
+      return { ok: false as const, reason: "gateway_error", status: response.status };
     }
 
     const payload = await response.json();
     const toolCall = payload?.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("No grades returned.");
+    if (!toolCall) return { ok: false as const, reason: "no_tool_call" };
 
     const grades = JSON.parse(toolCall.function.arguments) as {
       prioritization_score: number;
@@ -97,5 +101,9 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
     });
     if (insertError) console.error("eval_runs insert failed:", insertError);
 
-    return grades;
+      return { ok: true as const, grades };
+    } catch (err) {
+      console.error("gradeAnalysis unexpected error:", err);
+      return { ok: false as const, reason: "exception" };
+    }
   });
