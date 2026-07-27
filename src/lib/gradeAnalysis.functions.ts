@@ -120,7 +120,13 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
       return { ok: false as const, reason: "gateway_error", status: response.status };
     }
 
-    let payload: unknown;
+    let payload: {
+      choices?: Array<{
+        message?: {
+          tool_calls?: Array<{ function?: { arguments?: string } }>;
+        };
+      }>;
+    };
     try {
       payload = JSON.parse(rawResponse);
     } catch (parseError) {
