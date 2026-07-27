@@ -73,12 +73,12 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
     if (!response.ok) {
       const errText = await response.text();
       console.error("grade-analysis error:", response.status, errText);
-      throw new Error("Grading failed.");
+      return { ok: false as const, reason: "gateway_error", status: response.status };
     }
 
     const payload = await response.json();
     const toolCall = payload?.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("No grades returned.");
+    if (!toolCall) return { ok: false as const, reason: "no_tool_call" };
 
     const grades = JSON.parse(toolCall.function.arguments) as {
       prioritization_score: number;
@@ -101,5 +101,9 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
     });
     if (insertError) console.error("eval_runs insert failed:", insertError);
 
-    return grades;
+      return { ok: true as const, grades };
+    } catch (err) {
+      console.error("gradeAnalysis unexpected error:", err);
+      return { ok: false as const, reason: "exception" };
+    }
   });
