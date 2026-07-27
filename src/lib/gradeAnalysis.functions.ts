@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const gradeAnalysis = createServerFn({ method: "POST" })
-  .inputValidator((input: { analysisOutput: unknown }) => input)
-  .handler(async ({ data }) => {
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { analysisOutput: unknown; sessionId?: string | null }) => input)
+  .handler(async ({ data, context }) => {
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -74,7 +76,7 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
     const toolCall = payload?.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) throw new Error("No grades returned.");
 
-    return JSON.parse(toolCall.function.arguments) as {
+    const grades = JSON.parse(toolCall.function.arguments) as {
       prioritization_score: number;
       categorization_score: number;
       actionability_score: number;
@@ -82,4 +84,18 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
       total_score: number;
       reasoning: string;
     };
+
+    const { error: insertError } = await context.supabase.from("eval_runs").insert({
+      user_id: context.userId,
+      analysis_session_id: data.sessionId ?? null,
+      prioritization_score: Math.round(grades.prioritization_score),
+      categorization_score: Math.round(grades.categorization_score),
+      actionability_score: Math.round(grades.actionability_score),
+      prd_completeness_score: Math.round(grades.prd_completeness_score),
+      total_score: Math.round(grades.total_score),
+      grader_output: grades,
+    });
+    if (insertError) console.error("eval_runs insert failed:", insertError);
+
+    return grades;
   });

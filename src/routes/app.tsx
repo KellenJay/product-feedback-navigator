@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { requireAuth } from "@/lib/authGuard";
 import { saveAnalysis } from "@/lib/cloudSync";
+import { gradeAnalysis } from "@/lib/gradeAnalysis.functions";
 import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,6 +74,7 @@ function AnalyzePage() {
   const setResult = (r: AnalysisResult | null) => setState({ result: r });
 
   const [loading, setLoading] = useState(false);
+  const gradeAnalysisFn = useServerFn(gradeAnalysis);
 
   const handleAnalyze = async () => {
     if (!productName.trim()) {
@@ -190,6 +193,10 @@ function AnalyzePage() {
           // correct row.
           setState({ entryId: res.sessionId });
           marketContextStore.hydrate(null, res.sessionId);
+          // Fire-and-forget grading; writes to eval_runs on completion.
+          void gradeAnalysisFn({
+            data: { analysisOutput: analysisResult, sessionId: res.sessionId },
+          }).catch((err) => console.error("gradeAnalysis failed:", err));
           // Auto-run market context once for this fresh analysis, bound
           // to the cloud session id so it persists.
           void fetchMarketContext(
