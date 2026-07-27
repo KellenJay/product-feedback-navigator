@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { requireAuth } from "@/lib/authGuard";
 import { saveAnalysis } from "@/lib/cloudSync";
+import { gradeAnalysis } from "@/lib/gradeAnalysis.functions";
 import { ArrowUp } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
