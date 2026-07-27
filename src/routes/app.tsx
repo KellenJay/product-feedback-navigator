@@ -74,6 +74,7 @@ function AnalyzePage() {
   const setResult = (r: AnalysisResult | null) => setState({ result: r });
 
   const [loading, setLoading] = useState(false);
+  const gradeAnalysisFn = useServerFn(gradeAnalysis);
 
   const handleAnalyze = async () => {
     if (!productName.trim()) {
