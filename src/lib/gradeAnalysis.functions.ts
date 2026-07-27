@@ -5,8 +5,12 @@ export const gradeAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { analysisOutput: unknown; sessionId?: string | null }) => input)
   .handler(async ({ data, context }) => {
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    try {
+      const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+      if (!LOVABLE_API_KEY) {
+        console.error("gradeAnalysis: LOVABLE_API_KEY not configured");
+        return { ok: false as const, reason: "missing_key" };
+      }
 
     const systemPrompt = `You are an expert evaluator of AI-generated product analyses.
 Score the analysis on four dimensions, each 0–100:
