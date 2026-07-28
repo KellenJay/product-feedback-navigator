@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const gradeAnalysis = createServerFn({ method: "POST" })
   .middleware([attachSupabaseAuth, requireSupabaseAuth])
-  .validator((input: { analysisOutput: unknown; sessionId: string }) => {
+  .inputValidator((input: { analysisOutput: unknown; sessionId: string }) => {
     if (!input || typeof input !== "object") {
       throw new Error("Invalid grading input");
     }
