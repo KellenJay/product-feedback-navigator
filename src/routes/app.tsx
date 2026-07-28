@@ -178,38 +178,51 @@ function AnalyzePage() {
       prdStore.reset();
       marketContextStore.hydrate(null, newEntry.id);
       const analysisResult = data as AnalysisResult;
-      // Persist to cloud (background; non-blocking).
-      void saveAnalysis({
-        productName,
-        businessGoal,
-        mode,
-        source: sourceLabel,
-        rawFeedback: feedback,
-        result: analysisResult,
-      }).then((res) => {
-        if (res?.sessionId) {
-          // Replace the local-only entry id with the cloud session id so
-          // subsequent saves (roadmap, PRD, market context) reference the
-          // correct row.
-          setState({ entryId: res.sessionId });
-          marketContextStore.hydrate(null, res.sessionId);
-          // Fire-and-forget grading; writes to eval_runs on completion.
-          void gradeAnalysisFn({
-            data: { analysisOutput: analysisResult, sessionId: res.sessionId },
-          }).catch((err) => console.error("gradeAnalysis failed:", err));
-          // Auto-run market context once for this fresh analysis, bound
-          // to the cloud session id so it persists.
-          void fetchMarketContext(
-            productName,
-            businessGoal,
-            analysisResult.issues.slice(0, 3).map((i) => ({
-              title: i.title,
-              impactScore: i.impactScore,
-            })),
-            res.sessionId,
-          );
+      // Persist and dispatch grading in one background task. This path is
+      // intentionally shared by both feedback analysis and idea validation.
+      void (async () => {
+        const saved = await saveAnalysis({
+          productName,
+          businessGoal,
+          mode,
+          source: sourceLabel,
+          rawFeedback: feedback,
+          result: analysisResult,
+        });
+        if (!saved?.sessionId) {
+          console.error("Analysis was not saved; grading was not dispatched");
+          return;
         }
-      });
+
+        const sessionId = saved.sessionId;
+        // Replace the local-only entry id with the cloud session id so
+        // every dependent write references the saved analysis row.
+        setState({ entryId: sessionId });
+        marketContextStore.hydrate(null, sessionId);
+
+        // Fire-and-forget grading; do not delay results or market context.
+        void gradeAnalysisFn({
+          data: { analysisOutput: analysisResult, sessionId },
+        })
+          .then((grading) => {
+            if (!grading.ok) {
+              console.error("gradeAnalysis did not save an evaluation:", grading.reason);
+            }
+          })
+          .catch((err) => console.error("gradeAnalysis failed:", err));
+
+        // Auto-run market context once for this fresh analysis, bound
+        // to the same cloud session id so it persists.
+        void fetchMarketContext(
+          productName,
+          businessGoal,
+          analysisResult.issues.slice(0, 3).map((i) => ({
+            title: i.title,
+            impactScore: i.impactScore,
+          })),
+          sessionId,
+        );
+      })().catch((err) => console.error("Post-analysis save failed:", err));
       toast.success("Analysis complete");
       // Scroll to results
       setTimeout(() => {
