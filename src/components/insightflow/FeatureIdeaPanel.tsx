@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2, Mic, Sparkles, Square, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { roadmapStore } from "./roadmapStore";
 import { prdStore } from "./prdStore";
 import { marketContextStore } from "./marketContextStore";
 import { saveAnalysis } from "@/lib/cloudSync";
+import { gradeAnalysis } from "@/lib/gradeAnalysis.functions";
 import { useDictation } from "./useDictation";
 import { DocumentUploader, type UploadedDoc } from "@/components/common/DocumentUploader";
 import type { AnalysisResult } from "./types";
@@ -25,6 +27,7 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
   const [userId, setUserId] = useState<string | null>(null);
   const requestId = useMemo(() => crypto.randomUUID(), []);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
+  const gradeAnalysisFn = useServerFn(gradeAnalysis);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -113,18 +116,32 @@ export function FeatureIdeaPanel({ hasExisting }: Props) {
         result,
       });
       analyzeStore.set({ entryId: entry.id });
-      void saveAnalysis({
-        productName: name,
-        businessGoal: f,
-        mode: "deep-research",
-        source: `Feature idea: ${f.slice(0, 60)}`,
-        rawFeedback: researchQuery,
-        result,
-      }).then((res) => {
-        if (res?.sessionId) {
-          analyzeStore.set({ entryId: res.sessionId });
+      void (async () => {
+        const saved = await saveAnalysis({
+          productName: name,
+          businessGoal: f,
+          mode: "deep-research",
+          source: `Feature idea: ${f.slice(0, 60)}`,
+          rawFeedback: researchQuery,
+          result,
+        });
+        if (!saved?.sessionId) {
+          console.error("Feature analysis was not saved; grading was not dispatched");
+          return;
         }
-      });
+
+        const sessionId = saved.sessionId;
+        analyzeStore.set({ entryId: sessionId });
+        void gradeAnalysisFn({
+          data: { analysisOutput: result, sessionId },
+        })
+          .then((grading) => {
+            if (!grading.ok) {
+              console.error("gradeAnalysis did not save an evaluation:", grading.reason);
+            }
+          })
+          .catch((err) => console.error("gradeAnalysis failed:", err));
+      })().catch((err) => console.error("Feature analysis save failed:", err));
 
       toast.success("Roadmap generated", {
         description: "Scroll down to see your sprints and PRD.",
