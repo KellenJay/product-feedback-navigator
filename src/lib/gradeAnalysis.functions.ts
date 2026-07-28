@@ -58,7 +58,103 @@ export const gradeAnalysis = createServerFn({ method: "POST" })
     }
 
     const systemPrompt = `You are an expert evaluator of AI-generated product analyses.
-Score the analysis on four dimensions, each 0–100:
+
+Here are two reference examples to calibrate your scoring.
+
+Example 1 — Bad analysis:
+Input analysis:
+{
+  "executiveSummary": "Users are unhappy with the product.",
+  "issues": [
+    {
+      "title": "Bad UX",
+      "priority": "P1",
+      "impactScore": 95,
+      "description": "Users don't like the UX.",
+      "recommendation": "Improve the UX.",
+      "quotes": []
+    },
+    {
+      "title": "Slow performance",
+      "priority": "P1",
+      "impactScore": 90,
+      "description": "The app is slow.",
+      "recommendation": "Make it faster.",
+      "quotes": []
+    },
+    {
+      "title": "Missing notifications",
+      "priority": "P1",
+      "impactScore": 88,
+      "description": "Users want notifications.",
+      "recommendation": "Add notifications.",
+      "quotes": []
+    }
+  ]
+}
+
+Evaluation:
+{
+  "prioritization_score": 35,
+  "categorization_score": 40,
+  "actionability_score": 30,
+  "prd_completeness_score": 25,
+  "total_score": 32,
+  "reasoning": "Every issue is marked P1 with no differentiation, so prioritization is not credible. Categories are vague ('Bad UX') and recommendations are generic, not tied to evidence. One-line descriptions and no quotes make the output too thin to write a PRD from."
+}
+
+Example 2 — Good analysis:
+Input analysis:
+{
+  "executiveSummary": "Mobile users abandon checkout because the payment flow is buried, opaque, and lacks guest checkout. Fixing the top three issues could reduce checkout drop-off by an estimated 30-40%.",
+  "issues": [
+    {
+      "title": "Guest checkout missing",
+      "priority": "P1",
+      "impactScore": 92,
+      "description": "Forcing account creation before purchase causes a high drop-off rate on mobile, where users are impatient and distrust friction.",
+      "recommendation": "Add a guest-checkout path that collects email only for order confirmation and offers account creation post-purchase.",
+      "quotes": [
+        "I got to the payment screen and it asked me to create an account. I just closed the app.",
+        "Why do I need a password to buy one thing?"
+      ]
+    },
+    {
+      "title": "Total cost hidden until final step",
+      "priority": "P2",
+      "impactScore": 78,
+      "description": "Shipping and tax are revealed late, creating a perceived price jump at the last step.",
+      "recommendation": "Show an estimated order summary with shipping and tax as soon as the cart is opened, and update it live when the delivery address is entered.",
+      "quotes": [
+        "The price suddenly went up by $12 at the end. Felt like a trick.",
+        "I couldn't see the final cost until I was supposed to pay."
+      ]
+    },
+    {
+      "title": "Payment confirmation is slow and unclear",
+      "priority": "P3",
+      "impactScore": 55,
+      "description": "After tapping Pay, the spinner lasts several seconds with no clear status, making users think the transaction failed.",
+      "recommendation": "Add a progress indicator and immediate confirmation state, and surface human-readable error messages on decline.",
+      "quotes": [
+        "I tapped pay and nothing happened for ages. I thought it didn't go through.",
+        "It just said 'processing' forever. I paid twice by accident."
+      ]
+    }
+  ]
+}
+
+Evaluation:
+{
+  "prioritization_score": 90,
+  "categorization_score": 88,
+  "actionability_score": 92,
+  "prd_completeness_score": 85,
+  "total_score": 88,
+  "reasoning": "Priorities are well differentiated: guest checkout is correctly the only P1, while hidden costs and slow confirmation are P2/P3. Recommendations are specific and tied directly to quoted evidence. Issues are distinct and well named, and the analysis contains enough detail, including quotes, to write a PRD."
+}
+
+Now score the user's analysis on four dimensions, each 0–100:
 - prioritization_score: Is the P1/P2/P3 distribution sensible? P1s should be genuinely critical issues, not everything. Penalise if >60% of issues are P1, or if obvious critical bugs are marked P3.
 - categorization_score: Are issues distinct and well-named? Penalise duplicates, vague categories, or issues that should be merged.
 - actionability_score: Are recommendations specific and tied to evidence? Penalise vague advice like "improve UX" with no concrete direction.
