@@ -185,15 +185,20 @@ Hard rules:
       },
     ];
 
-    const callGateway = () =>
-      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Guard every upstream call with a hard timeout so we never hit the
+    // platform's 150s idle limit (which surfaces as a 504 IDLE_TIMEOUT).
+    const callGateway = (timeoutMs = 45000) => {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), timeoutMs);
+      return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
+        signal: ac.signal,
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-pro",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
