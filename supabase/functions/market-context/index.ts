@@ -272,16 +272,20 @@ Hard rules:
     const data = await response.json();
     const context = extractContext(data);
     if (!context) {
-      // One retry — Gemini sometimes skips the tool call on first try.
-      const retry = await callGateway();
-      if (retry.ok) {
-        const retryData = await retry.json();
-        const retryCtx = extractContext(retryData);
-        if (retryCtx) {
-          return new Response(JSON.stringify(retryCtx), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+      // One retry — the model sometimes skips the tool call on first try.
+      try {
+        const retry = await callGateway(30000);
+        if (retry.ok) {
+          const retryData = await retry.json();
+          const retryCtx = extractContext(retryData);
+          if (retryCtx) {
+            return new Response(JSON.stringify(retryCtx), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
         }
+      } catch (err) {
+        console.error("market-context retry timeout:", err);
       }
       console.error(
         "No structured context. Raw:",
