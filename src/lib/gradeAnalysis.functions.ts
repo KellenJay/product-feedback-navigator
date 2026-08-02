@@ -59,14 +59,6 @@ export const gradeAnalysis = createServerFn({ method: "POST" })
 
     const systemPrompt = `You are an expert evaluator of AI-generated product analyses.
 
-You grade against an HHH framework adapted for InsightFlow: Helpful (does the output actually give a PM enough to act on and write a PRD from), Honest (is every claim traceable to a named, dated source rather than vague or invented attribution), and Harmless (no fabricated citations, no overstated certainty). Harmless is folded into the Honest score.
-
-The four score fields map to the framework as follows:
-- prd_completeness_score = Helpful
-- categorization_score = Honest
-- prioritization_score = Prioritization
-- actionability_score = Actionability
-
 Here are two reference examples to calibrate your scoring.
 
 Example 1 — Bad analysis:
@@ -75,55 +67,135 @@ Input analysis:
   "executiveSummary": "Users have mixed feelings about the product.",
   "sentiment": "Mixed",
   "issues": [
-    { "title": "Bad UX", "category": "UX", "priority": "P1", "impactScore": 95, "description": "Users don't like the UX.", "recommendation": "Improve UX.", "quotes": [{ "text": "The interface is hard to use.", "source": "Internal admin feedback", "date": "recent" }] },
-    { "title": "Slow performance", "category": "Performance", "priority": "P1", "impactScore": 93, "description": "The app is slow.", "recommendation": "Address performance issues.", "quotes": [{ "text": "It takes a while to load.", "source": "Internal admin feedback", "date": "recent" }] },
-    { "title": "Missing notifications", "category": "Feature", "priority": "P1", "impactScore": 91, "description": "Users want notifications.", "recommendation": "Add notifications.", "quotes": [{ "text": "I never know when something happens.", "source": "Internal admin feedback", "date": "recent" }] },
-    { "title": "Confusing pricing", "category": "Pricing", "priority": "P1", "impactScore": 90, "description": "Pricing is confusing.", "recommendation": "Clarify pricing.", "quotes": [{ "text": "I don't know what I'm paying for.", "source": "Internal admin feedback", "date": "recent" }] },
-    { "title": "Integrations", "category": "Feature", "priority": "P1", "impactScore": 89, "description": "Users want more integrations.", "recommendation": "Build more integrations.", "quotes": [{ "text": "Wish it worked with our stack.", "source": "Internal admin feedback", "date": "recent" }] }
-  ],
-  "marketContext": { "news": [{ "headline": "Category is growing", "source": "synthesized from public reviews" }] }
+    {
+      "title": "Bad UX",
+      "category": "UX",
+      "priority": "P1",
+      "impactScore": 95,
+      "description": "Users don't like the UX.",
+      "recommendation": "Improve the UX.",
+      "quotes": [
+        {
+          "text": "The interface is hard to use.",
+          "source": "internal admin feedback",
+          "date": "recent"
+        }
+      ]
+    },
+    {
+      "title": "Slow performance",
+      "category": "Performance",
+      "priority": "P1",
+      "impactScore": 90,
+      "description": "The app is slow.",
+      "recommendation": "Make it faster.",
+      "quotes": [
+        {
+          "text": "It takes a while to load.",
+          "source": "internal admin feedback",
+          "date": "recent"
+        }
+      ]
+    },
+    {
+      "title": "Missing notifications",
+      "category": "Feature",
+      "priority": "P1",
+      "impactScore": 88,
+      "description": "Users want notifications.",
+      "recommendation": "Add notifications.",
+      "quotes": [
+        {
+          "text": "I never know when something happens.",
+          "source": "internal admin feedback",
+          "date": "recent"
+        }
+      ]
+    }
+  ]
 }
 
 Evaluation:
 {
-  "prioritization_score": 20,
-  "categorization_score": 25,
+  "prioritization_score": 25,
+  "categorization_score": 40,
   "actionability_score": 30,
-  "prd_completeness_score": 30,
-  "total_score": 26,
-  "reasoning": "Not honest: every quote is attributed to 'Internal admin feedback, recent' with no named source or date, and the market news cites 'synthesized from public reviews' rather than a publication, so nothing is verifiable. Not prioritized: all five issues are P1, which is the same as no prioritization. Not actionable or helpful: 'improve UX' and 'address performance issues' give no specific change, and one-line descriptions leave nothing to write a PRD from."
+  "prd_completeness_score": 35,
+  "total_score": 32,
+  "reasoning": "Sentiment is 'Mixed' with no justification. Every issue is marked P1, so prioritization is not credible. 'Internal admin feedback' is never explained, and 'recent' dates are vague. Recommendations are generic ('improve UX', 'make it faster') with no specific action tied to evidence. One-line descriptions and thin quotes make this impossible to write a PRD from."
 }
 
 Example 2 — Good analysis:
 Input analysis:
 {
-  "executiveSummary": "Negative — 4 of 5 issues relate to core workflow failures that block contract review from being completed in-product.",
+  "executiveSummary": "Negative — 3 of the 4 P1 issues relate to core workflow failures that block users from completing key tasks, which is driving churn among mid-market teams.",
   "sentiment": "Negative",
   "issues": [
-    { "title": "Contract redlining requires exporting to Word", "category": "Feature", "priority": "P1", "impactScore": 91, "description": "Legal reviewers cannot edit clauses in-product, so every review round trips through Word and loses comment history.", "recommendation": "Add inline AI redlining to the contract editor, triggered on clause detection, with tracked changes preserved in-product.", "quotes": [{ "text": "We export to Word for every redline and paste it back. Comment history is gone by round three.", "source": "G2", "date": "March 2025" }] },
-    { "title": "Bulk export times out above 1,000 records", "category": "Performance", "priority": "P1", "impactScore": 88, "description": "Exports silently fail after roughly 90 seconds, producing partial files with no error, which blocks monthly reporting.", "recommendation": "Move export to an async job that streams to a file, shows progress, and emails a download link on completion.", "quotes": [{ "text": "The monthly export dies halfway through every time.", "source": "Capterra", "date": "6 weeks ago" }] },
-    { "title": "No SCIM auto-provisioning for SSO", "category": "Feature", "priority": "P2", "impactScore": 71, "description": "IT must create accounts manually after SSO login, slowing onboarding and generating help-desk tickets.", "recommendation": "Implement SCIM 2.0 provisioning and de-provisioning against the customer's identity provider.", "quotes": [{ "text": "SSO works but we still file a ticket for every new hire.", "source": "TrustRadius", "date": "December 2024" }] },
-    { "title": "Clause search ignores defined terms", "category": "UX", "priority": "P2", "impactScore": 66, "description": "Search matches literal text only, so defined terms used elsewhere in the agreement are missed.", "recommendation": "Index defined terms at upload and expand search queries to their definitions.", "quotes": [{ "text": "Searching 'Confidential Information' misses half the clauses that reference it.", "source": "Reddit r/legaltech", "date": "January 2025" }] },
-    { "title": "Invoice PDF lacks per-line tax breakdown", "category": "Pricing", "priority": "P3", "impactScore": 41, "description": "Finance reviewers retype invoices into a spreadsheet to see tax per line item.", "recommendation": "Add a per-line tax column and a jurisdiction subtotal to the invoice PDF template.", "quotes": [{ "text": "We rebuild the invoice in Excel monthly just for the tax split.", "source": "Product Hunt", "date": "February 2025" }] }
-  ],
-  "marketContext": { "news": [{ "headline": "AI contract review funding accelerates", "source": "TechCrunch", "date": "July 2025" }] }
+    {
+      "title": "Bulk export fails for accounts with >1,000 records",
+      "category": "Performance",
+      "priority": "P1",
+      "impactScore": 92,
+      "description": "Enterprise users exporting large datasets hit a silent timeout after ~90 seconds, leaving them with partial files and no error message. This blocks monthly reporting workflows.",
+      "recommendation": "Replace the synchronous export endpoint with a streaming job that writes to a downloadable file, surfaces progress in the UI, and emails a link on completion.",
+      "quotes": [
+        {
+          "text": "Our monthly report export dies halfway through every time. We have to ask an engineer to pull it from the database.",
+          "source": "G2",
+          "date": "3 months ago"
+        },
+        {
+          "text": "Exporting anything over a few thousand rows just hangs. No error, just a spinning wheel.",
+          "source": "Capterra, Jan 2025"
+        }
+      ]
+    },
+    {
+      "title": "SSO auto-provisioning is not supported",
+      "category": "Feature",
+      "priority": "P2",
+      "impactScore": 74,
+      "description": "IT teams must manually create accounts after SSO login, which slows onboarding and increases help-desk tickets.",
+      "recommendation": "Add SCIM 2.0 auto-provisioning so accounts are created and de-provisioned from the identity provider automatically.",
+      "quotes": [
+        {
+          "text": "We love the SSO, but we still have to open a ticket to get every new hire added.",
+          "source": "TrustRadius, Dec 2024"
+        }
+      ]
+    },
+    {
+      "title": "Invoice PDF layout is missing line-item tax breakdown",
+      "category": "UX",
+      "priority": "P3",
+      "impactScore": 48,
+      "description": "Finance reviewers need to manually calculate tax per line because the invoice PDF only shows a single tax total.",
+      "recommendation": "Update the invoice PDF template to include a per-line-item tax column and a subtotal breakdown by jurisdiction.",
+      "quotes": [
+        {
+          "text": "Our finance team retypes the invoice into a spreadsheet every month just to see the tax breakdown.",
+          "source": "Product Hunt, 2 weeks ago"
+        }
+      ]
+    }
+  ]
 }
 
 Evaluation:
 {
   "prioritization_score": 88,
-  "categorization_score": 82,
-  "actionability_score": 84,
-  "prd_completeness_score": 85,
-  "total_score": 85,
-  "reasoning": "Honest: every quote carries a named source and a specific date, and market news cites TechCrunch with a month rather than 'general industry knowledge'. Prioritization is credible — two P1s reserved for genuine workflow blockers, two P2s, one P3, with impact scores that track the spread. Recommendations name the specific change ('inline AI redlining triggered on clause detection'), and descriptions plus quotes give enough substance to write a PRD."
+  "categorization_score": 85,
+  "actionability_score": 87,
+  "prd_completeness_score": 90,
+  "total_score": 88,
+  "reasoning": "Sentiment has a clear, evidence-based reason. Priorities are sensible: the P1 is reserved for a core workflow blocker, while SSO and invoice layout are P2/P3. Categories are specific and distinct. Quotes include named sources and specific dates. Recommendations are concrete and tied directly to quoted pain points, giving enough detail to write a PRD."
 }
 
 Now score the user's analysis on four dimensions, each 0–100:
-- prioritization_score (Prioritization): Is the P1/P2/P3 distribution sensible? P1s should be genuinely critical issues, not everything. Penalise heavily if >60% of issues are P1, or if obvious critical bugs are marked P3.
-- categorization_score (Honest): Are claims traceable and categories distinct? Penalise vague or unexplained attribution ("internal admin feedback", "recent"), sources like "general industry knowledge" or "synthesized from public reviews", duplicate issues, and unjustified sentiment verdicts.
-- actionability_score (Actionability): Are recommendations specific and tied to a quoted pain point? Penalise vague advice like "improve UX" or "address performance issues".
-- prd_completeness_score (Helpful): Does the output have enough detail (impact scores, sourced quotes, descriptions, executive summary) to write a PRD from? Penalise missing quotes or one-line descriptions.
+- prioritization_score: Is the P1/P2/P3 distribution sensible? P1s should be genuinely critical issues, not everything. Penalise if >60% of issues are P1, or if obvious critical bugs are marked P3.
+- categorization_score: Are issues distinct and well-named? Penalise duplicates, vague categories, or issues that should be merged.
+- actionability_score: Are recommendations specific and tied to evidence? Penalise vague advice like "improve UX" with no concrete direction.
+- prd_completeness_score: Does the output have enough detail (impact scores, quotes, descriptions, executive summary) to write a PRD from? Penalise missing quotes or one-line descriptions.
 total_score = average of the four.
 reasoning = 2–3 sentences explaining the scores honestly.`;
 
