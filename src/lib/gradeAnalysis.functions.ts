@@ -115,14 +115,16 @@ Input analysis:
   ]
 }
 
+Market news in this analysis cites "synthesized from public reviews" with no publication name.
+
 Evaluation:
 {
-  "prioritization_score": 25,
-  "categorization_score": 40,
-  "actionability_score": 30,
-  "prd_completeness_score": 35,
-  "total_score": 32,
-  "reasoning": "Sentiment is 'Mixed' with no justification. Every issue is marked P1, so prioritization is not credible. 'Internal admin feedback' is never explained, and 'recent' dates are vague. Recommendations are generic ('improve UX', 'make it faster') with no specific action tied to evidence. One-line descriptions and thin quotes make this impossible to write a PRD from."
+  "prioritization_score": 20,
+  "categorization_score": 35,
+  "actionability_score": 25,
+  "prd_completeness_score": 30,
+  "total_score": 28,
+  "reasoning": "Prioritization is 20 because every issue is P1, so there is no real ranking. Categorization is 35 because categories are generic buckets ('UX', 'Performance') applied to overlapping, vaguely titled issues. Actionability is 25 because recommendations like 'improve the UX' and 'make it faster' name no concrete change tied to evidence. PRD completeness is 30 because sentiment is 'Mixed' with no justification, descriptions are one line, quotes are dated only as 'recent', sources say 'internal admin feedback' with no context about what internal means, and market news is cited as 'synthesized from public reviews' with no publication name."
 }
 
 Example 2 — Good analysis:
@@ -181,14 +183,16 @@ Input analysis:
   ]
 }
 
+Market news in this analysis cites named publications (e.g. "TechCrunch, Feb 2025") rather than generic phrases.
+
 Evaluation:
 {
-  "prioritization_score": 88,
-  "categorization_score": 85,
-  "actionability_score": 87,
-  "prd_completeness_score": 90,
-  "total_score": 88,
-  "reasoning": "Sentiment has a clear, evidence-based reason. Priorities are sensible: the P1 is reserved for a core workflow blocker, while SSO and invoice layout are P2/P3. Categories are specific and distinct. Quotes include named sources and specific dates. Recommendations are concrete and tied directly to quoted pain points, giving enough detail to write a PRD."
+  "prioritization_score": 85,
+  "categorization_score": 82,
+  "actionability_score": 84,
+  "prd_completeness_score": 88,
+  "total_score": 85,
+  "reasoning": "Prioritization is 85 because P1 is reserved for a genuine blocker (bulk export failure) while SSO and invoice layout sit correctly at P2/P3. Categorization is 82 because Feature, Performance, and UX are distinct and each issue is specifically titled with no duplication. Actionability is 84 because each recommendation names a concrete change (streaming export job, SCIM 2.0 provisioning, per-line tax column) tied directly to a quoted pain point. PRD completeness is 88 because the sentiment verdict states its reason, descriptions explain impact, quotes carry named sources and specific dates like 'G2, March 2025', and market news cites actual publications."
 }
 
 Now score the user's analysis on four dimensions, each 0–100:
