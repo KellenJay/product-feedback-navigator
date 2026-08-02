@@ -21,9 +21,9 @@ export const gradeAnalysis = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     try {
-      const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-      if (!LOVABLE_API_KEY) {
-        console.error("gradeAnalysis: LOVABLE_API_KEY not configured");
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+      if (!OPENAI_API_KEY) {
+        console.error("gradeAnalysis: OPENAI_API_KEY not configured");
         return { ok: false as const, reason: "missing_key" };
       }
 
@@ -231,15 +231,14 @@ reasoning = 2–3 sentences explaining the scores honestly.`;
       },
     ];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Lovable-API-Key": LOVABLE_API_KEY,
-        "X-Lovable-AIG-SDK": "fetch",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
