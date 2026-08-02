@@ -185,15 +185,20 @@ Hard rules:
       },
     ];
 
-    const callGateway = () =>
-      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Guard every upstream call with a hard timeout so we never hit the
+    // platform's 150s idle limit (which surfaces as a 504 IDLE_TIMEOUT).
+    const callGateway = (timeoutMs = 45000) => {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), timeoutMs);
+      return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
+        signal: ac.signal,
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-pro",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
@@ -204,20 +209,31 @@ Hard rules:
             function: { name: "submit_market_context" },
           },
         }),
-      });
+      }).finally(() => clearTimeout(t));
+    };
 
-    // Retry on transient upstream failures (502/503/504) with exponential backoff.
-    let response = await callGateway();
-    let attempts = 0;
-    while (
-      !response.ok &&
-      [502, 503, 504].includes(response.status) &&
-      attempts < 2
-    ) {
-      attempts++;
-      await new Promise((r) => setTimeout(r, 600 * attempts));
+    // One retry only, on transient upstream failures, to stay well inside the
+    // platform request budget.
+    let response: Response;
+    try {
       response = await callGateway();
+      if (!response.ok && [502, 503, 504].includes(response.status)) {
+        await new Promise((r) => setTimeout(r, 600));
+        response = await callGateway(35000);
+      }
+    } catch (err) {
+      console.error("market-context gateway timeout/abort:", err);
+      return new Response(
+        JSON.stringify({
+          error: "Market research timed out. Please try again.",
+        }),
+        {
+          status: 504,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
+
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -256,16 +272,20 @@ Hard rules:
     const data = await response.json();
     const context = extractContext(data);
     if (!context) {
-      // One retry — Gemini sometimes skips the tool call on first try.
-      const retry = await callGateway();
-      if (retry.ok) {
-        const retryData = await retry.json();
-        const retryCtx = extractContext(retryData);
-        if (retryCtx) {
-          return new Response(JSON.stringify(retryCtx), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+      // One retry — the model sometimes skips the tool call on first try.
+      try {
+        const retry = await callGateway(30000);
+        if (retry.ok) {
+          const retryData = await retry.json();
+          const retryCtx = extractContext(retryData);
+          if (retryCtx) {
+            return new Response(JSON.stringify(retryCtx), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
         }
+      } catch (err) {
+        console.error("market-context retry timeout:", err);
       }
       console.error(
         "No structured context. Raw:",
