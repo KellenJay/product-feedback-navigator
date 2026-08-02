@@ -64,81 +64,118 @@ Here are two reference examples to calibrate your scoring.
 Example 1 — Bad analysis:
 Input analysis:
 {
-  "executiveSummary": "Users are unhappy with the product.",
+  "executiveSummary": "Users have mixed feelings about the product.",
+  "sentiment": "Mixed",
   "issues": [
     {
       "title": "Bad UX",
+      "category": "UX",
       "priority": "P1",
       "impactScore": 95,
       "description": "Users don't like the UX.",
       "recommendation": "Improve the UX.",
-      "quotes": []
+      "quotes": [
+        {
+          "text": "The interface is hard to use.",
+          "source": "internal admin feedback",
+          "date": "recent"
+        }
+      ]
     },
     {
       "title": "Slow performance",
+      "category": "Performance",
       "priority": "P1",
       "impactScore": 90,
       "description": "The app is slow.",
       "recommendation": "Make it faster.",
-      "quotes": []
+      "quotes": [
+        {
+          "text": "It takes a while to load.",
+          "source": "internal admin feedback",
+          "date": "recent"
+        }
+      ]
     },
     {
       "title": "Missing notifications",
+      "category": "Feature",
       "priority": "P1",
       "impactScore": 88,
       "description": "Users want notifications.",
       "recommendation": "Add notifications.",
-      "quotes": []
+      "quotes": [
+        {
+          "text": "I never know when something happens.",
+          "source": "internal admin feedback",
+          "date": "recent"
+        }
+      ]
     }
   ]
 }
 
 Evaluation:
 {
-  "prioritization_score": 35,
+  "prioritization_score": 25,
   "categorization_score": 40,
   "actionability_score": 30,
-  "prd_completeness_score": 25,
+  "prd_completeness_score": 35,
   "total_score": 32,
-  "reasoning": "Every issue is marked P1 with no differentiation, so prioritization is not credible. Categories are vague ('Bad UX') and recommendations are generic, not tied to evidence. One-line descriptions and no quotes make the output too thin to write a PRD from."
+  "reasoning": "Sentiment is 'Mixed' with no justification. Every issue is marked P1, so prioritization is not credible. 'Internal admin feedback' is never explained, and 'recent' dates are vague. Recommendations are generic ('improve UX', 'make it faster') with no specific action tied to evidence. One-line descriptions and thin quotes make this impossible to write a PRD from."
 }
 
 Example 2 — Good analysis:
 Input analysis:
 {
-  "executiveSummary": "Mobile users abandon checkout because the payment flow is buried, opaque, and lacks guest checkout. Fixing the top three issues could reduce checkout drop-off by an estimated 30-40%.",
+  "executiveSummary": "Negative — 3 of the 4 P1 issues relate to core workflow failures that block users from completing key tasks, which is driving churn among mid-market teams.",
+  "sentiment": "Negative",
   "issues": [
     {
-      "title": "Guest checkout missing",
+      "title": "Bulk export fails for accounts with >1,000 records",
+      "category": "Performance",
       "priority": "P1",
       "impactScore": 92,
-      "description": "Forcing account creation before purchase causes a high drop-off rate on mobile, where users are impatient and distrust friction.",
-      "recommendation": "Add a guest-checkout path that collects email only for order confirmation and offers account creation post-purchase.",
+      "description": "Enterprise users exporting large datasets hit a silent timeout after ~90 seconds, leaving them with partial files and no error message. This blocks monthly reporting workflows.",
+      "recommendation": "Replace the synchronous export endpoint with a streaming job that writes to a downloadable file, surfaces progress in the UI, and emails a link on completion.",
       "quotes": [
-        "I got to the payment screen and it asked me to create an account. I just closed the app.",
-        "Why do I need a password to buy one thing?"
+        {
+          "text": "Our monthly report export dies halfway through every time. We have to ask an engineer to pull it from the database.",
+          "source": "G2",
+          "date": "3 months ago"
+        },
+        {
+          "text": "Exporting anything over a few thousand rows just hangs. No error, just a spinning wheel.",
+          "source": "Capterra, Jan 2025"
+        }
       ]
     },
     {
-      "title": "Total cost hidden until final step",
+      "title": "SSO auto-provisioning is not supported",
+      "category": "Feature",
       "priority": "P2",
-      "impactScore": 78,
-      "description": "Shipping and tax are revealed late, creating a perceived price jump at the last step.",
-      "recommendation": "Show an estimated order summary with shipping and tax as soon as the cart is opened, and update it live when the delivery address is entered.",
+      "impactScore": 74,
+      "description": "IT teams must manually create accounts after SSO login, which slows onboarding and increases help-desk tickets.",
+      "recommendation": "Add SCIM 2.0 auto-provisioning so accounts are created and de-provisioned from the identity provider automatically.",
       "quotes": [
-        "The price suddenly went up by $12 at the end. Felt like a trick.",
-        "I couldn't see the final cost until I was supposed to pay."
+        {
+          "text": "We love the SSO, but we still have to open a ticket to get every new hire added.",
+          "source": "TrustRadius, Dec 2024"
+        }
       ]
     },
     {
-      "title": "Payment confirmation is slow and unclear",
+      "title": "Invoice PDF layout is missing line-item tax breakdown",
+      "category": "UX",
       "priority": "P3",
-      "impactScore": 55,
-      "description": "After tapping Pay, the spinner lasts several seconds with no clear status, making users think the transaction failed.",
-      "recommendation": "Add a progress indicator and immediate confirmation state, and surface human-readable error messages on decline.",
+      "impactScore": 48,
+      "description": "Finance reviewers need to manually calculate tax per line because the invoice PDF only shows a single tax total.",
+      "recommendation": "Update the invoice PDF template to include a per-line-item tax column and a subtotal breakdown by jurisdiction.",
       "quotes": [
-        "I tapped pay and nothing happened for ages. I thought it didn't go through.",
-        "It just said 'processing' forever. I paid twice by accident."
+        {
+          "text": "Our finance team retypes the invoice into a spreadsheet every month just to see the tax breakdown.",
+          "source": "Product Hunt, 2 weeks ago"
+        }
       ]
     }
   ]
@@ -146,12 +183,12 @@ Input analysis:
 
 Evaluation:
 {
-  "prioritization_score": 90,
-  "categorization_score": 88,
-  "actionability_score": 92,
-  "prd_completeness_score": 85,
+  "prioritization_score": 88,
+  "categorization_score": 85,
+  "actionability_score": 87,
+  "prd_completeness_score": 90,
   "total_score": 88,
-  "reasoning": "Priorities are well differentiated: guest checkout is correctly the only P1, while hidden costs and slow confirmation are P2/P3. Recommendations are specific and tied directly to quoted evidence. Issues are distinct and well named, and the analysis contains enough detail, including quotes, to write a PRD."
+  "reasoning": "Sentiment has a clear, evidence-based reason. Priorities are sensible: the P1 is reserved for a core workflow blocker, while SSO and invoice layout are P2/P3. Categories are specific and distinct. Quotes include named sources and specific dates. Recommendations are concrete and tied directly to quoted pain points, giving enough detail to write a PRD."
 }
 
 Now score the user's analysis on four dimensions, each 0–100:
