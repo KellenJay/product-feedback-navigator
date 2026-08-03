@@ -59,9 +59,14 @@ export const gradeAnalysis = createServerFn({ method: "POST" })
 
     const systemPrompt = `You are an expert evaluator of AI-generated product analyses.
 
+Use exactly three quality tiers when scoring:
+0–40 = BAD
+41–70 = AVERAGE
+71–100 = GOOD
+
 Here are three reference examples to calibrate your scoring.
 
-CALIBRATION EXAMPLE 1: BAD OUTPUT
+CALIBRATION EXAMPLE 1: BAD OUTPUT (~25/100)
 Input analysis:
 {
   "executiveSummary": "Users have mixed feelings about the product.",
@@ -127,12 +132,12 @@ Evaluation:
   "reasoning": "Prioritization is 20 because every issue is P1, so there is no real ranking. Categorization is 35 because categories are generic buckets ('UX', 'Performance') applied to overlapping, vaguely titled issues. Actionability is 25 because recommendations like 'improve the UX' and 'make it faster' name no concrete change tied to evidence. PRD completeness is 30 because sentiment is 'Mixed' with no justification, descriptions are one line, quotes are dated only as 'recent', sources say 'internal admin feedback' with no context about what internal means, and market news is cited as 'synthesized from public reviews' with no publication name."
 }
 
---- CALIBRATION EXAMPLE 2: AVERAGE OUTPUT (~55/100) ---
+CALIBRATION EXAMPLE 2: AVERAGE OUTPUT (~55/100)
 Analysis has a P1/P2/P3 spread but no rationale explaining why issues were ranked that way. Categories are specific (Performance, Pricing, UX) but one recommendation is generic ("improve onboarding"). Quotes are present and attributed to named platforms (Reddit, G2) but no dates are given. Sentiment is "Mixed" with a one-sentence justification that is plausible but thin. Market context is labelled as synthesized.
 Expected scores: prioritization=55, categorization=65, actionability=50, prd_completeness=50, total=55
---- END CALIBRATION EXAMPLE 2 ---
+END CALIBRATION EXAMPLE 2
 
-CALIBRATION EXAMPLE 3: GOOD OUTPUT
+CALIBRATION EXAMPLE 3: GOOD OUTPUT (~82/100)
 Input analysis:
 {
   "executiveSummary": "Negative — 3 of the 4 P1 issues relate to core workflow failures that block users from completing key tasks, which is driving churn among mid-market teams.",
@@ -192,12 +197,12 @@ Market news in this analysis cites named publications (e.g. "TechCrunch, Feb 202
 
 Evaluation:
 {
-  "prioritization_score": 85,
+  "prioritization_score": 80,
   "categorization_score": 82,
   "actionability_score": 84,
-  "prd_completeness_score": 88,
-  "total_score": 85,
-  "reasoning": "Prioritization is 85 because P1 is reserved for a genuine blocker (bulk export failure) while SSO and invoice layout sit correctly at P2/P3. Categorization is 82 because Feature, Performance, and UX are distinct and each issue is specifically titled with no duplication. Actionability is 84 because each recommendation names a concrete change (streaming export job, SCIM 2.0 provisioning, per-line tax column) tied directly to a quoted pain point. PRD completeness is 88 because the sentiment verdict states its reason, descriptions explain impact, quotes carry named sources and specific dates like 'G2, March 2025', and market news cites actual publications."
+  "prd_completeness_score": 82,
+  "total_score": 82,
+  "reasoning": "Prioritization is 80 because P1 is reserved for a genuine blocker (bulk export failure) while SSO and invoice layout sit correctly at P2/P3. Categorization is 82 because Feature, Performance, and UX are distinct and each issue is specifically titled with no duplication. Actionability is 84 because each recommendation names a concrete change (streaming export job, SCIM 2.0 provisioning, per-line tax column) tied directly to a quoted pain point. PRD completeness is 82 because the sentiment verdict states its reason, descriptions explain impact, quotes carry named sources and specific dates like 'G2, March 2025', and market news cites actual publications."
 }
 
 Now score the user's analysis on four dimensions, each 0–100:
